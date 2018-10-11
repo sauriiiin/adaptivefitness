@@ -61,8 +61,12 @@ ggplot(data.orfs, aes(x=fitness)) +
   geom_density(fill="#F44336", color="#757575",alpha = 0.3) +
   geom_density(data = data.control, fill="#3F51B5", color="#757575", alpha = 0.3) +
   geom_density(data = data.dels, fill="#BDBDBD", color="#757575", alpha = 0.3) +
-  scale_fill_continuous(labels = c("beneficial","controls","deleterious"),
-                                  guide = guide_legend(label.position = "left", label.hjust = 1))
+  scale_fill_manual(name = "ORF Type", labels = c("beneficial","controls","deleterious")) +
+  labs(title = "Fitness Distribution", x = "Fitness", y = "Density")
+  
+  
+#scale_fill_continuous(labels = c("beneficial","controls","deleterious"),
+#                                  guide = guide_legend(label.position = "left", label.hjust = 1))
 
 ##### END
 dbDisconnect(conn)
