@@ -3,12 +3,67 @@
 ##### Author  : Saurin Parikh (dr.saurin.parikh@gmail.com)
 ##### Date    : 10/11/2018
 
+##### INITIALIZE
+#install.packages("RMariaDB")
+#install.packages("ggplot2")
 library(RMariaDB)
+library(ggplot2)
 source("R/functions/initialize.sql.R")
+conn <- initialize.sql("saurin_test")
 
-mydb <- initialize.sql("saurin_test")
+##### FETCH DATA
 
-dbListFields(mydb, '1536_PS2_previous')
+query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
+where hours = 12 and orf_name = 'BF_control' and fitness > 0"))
+data.control = dbFetch(query, n=-1)
 
+if (dbHasCompleted(query)) {
+  dbClearResult(query)
+} else {
+  print("Error Running Query")
+}
 
-dbDisconnect(mydb)
+query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
+where hours = 12 and fitness > 0
+and orf_name in
+(select orf_name from PT_SA_CN_6144_RES_eFDR
+where hours = 12 and effect_cs = 1 and cs_median > 1.1)
+order by fitness desc"))
+data.orfs = dbFetch(query, n=-1)
+
+if (dbHasCompleted(query)) {
+  dbClearResult(query)
+} else {
+  print("Error Running Query")
+}
+
+query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
+where hours = 12 and fitness > 0
+and orf_name in
+(select orf_name from PT_SA_CN_6144_RES_eFDR
+where hours = 12 and effect_cs = -1)
+order by fitness desc"))
+data.dels = dbFetch(query, n=-1)
+
+if (dbHasCompleted(query)) {
+  dbClearResult(query)
+} else {
+  print("Error Running Query")
+}
+
+##### PLOTS
+
+ggplot(data.orfs, aes(x=fitness, fill=orf_name)) +
+  geom_density(alpha = 0.3) +
+  geom_density(data = data.control, alpha = 0.3)
+
+ggplot(data.orfs, aes(x=fitness)) +
+  geom_density(fill="#F44336", color="#757575",alpha = 0.3) +
+  geom_density(data = data.control, fill="#3F51B5", color="#757575", alpha = 0.3) +
+  geom_density(data = data.dels, fill="#BDBDBD", color="#757575", alpha = 0.3) +
+  scale_fill_continuous(labels = c("beneficial","controls","deleterious"),
+                                  guide = guide_legend(label.position = "left", label.hjust = 1))
+
+##### END
+dbDisconnect(conn)
+
