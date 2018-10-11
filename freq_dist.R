@@ -13,7 +13,7 @@ conn <- initialize.sql("saurin_test")
 
 ##### FETCH DATA
 
-query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
+query = dbSendQuery(conn, ("select orf_name, fitness from PT2_PGLU_FS_6144_FITNESS
 where hours = 12 and orf_name = 'BF_control' and fitness > 0"))
 data.control = dbFetch(query, n=-1)
 
@@ -23,11 +23,11 @@ if (dbHasCompleted(query)) {
   print("Error Running Query")
 }
 
-query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
+query = dbSendQuery(conn, ("select orf_name, fitness from PT2_PGLU_FS_6144_FITNESS
 where hours = 12 and fitness > 0
 and orf_name in
-(select orf_name from PT_SA_CN_6144_RES_eFDR
-where hours = 12 and effect_cs = 1 and cs_median > 1.1)
+(select orf_name from PT2_PGLU_FS_6144_RES_eFDR
+where hours = 12 and effect_cs = 1 and cs_median > 1.1 and N >=6)
 order by fitness desc"))
 data.orfs = dbFetch(query, n=-1)
 
@@ -37,10 +37,10 @@ if (dbHasCompleted(query)) {
   print("Error Running Query")
 }
 
-query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
+query = dbSendQuery(conn, ("select orf_name, fitness from PT2_PGLU_FS_6144_FITNESS
 where hours = 12 and fitness > 0
 and orf_name in
-(select orf_name from PT_SA_CN_6144_RES_eFDR
+(select orf_name from PT2_PGLU_FS_6144_RES_eFDR
 where hours = 12 and effect_cs = -1)
 order by fitness desc"))
 data.dels = dbFetch(query, n=-1)
@@ -57,16 +57,13 @@ ggplot(data.orfs, aes(x=fitness, fill=orf_name)) +
   geom_density(alpha = 0.3) +
   geom_density(data = data.control, alpha = 0.3)
 
-ggplot(data.orfs, aes(x=fitness)) +
-  geom_density(fill="#F44336", color="#757575",alpha = 0.3) +
-  geom_density(data = data.control, fill="#3F51B5", color="#757575", alpha = 0.3) +
-  geom_density(data = data.dels, fill="#BDBDBD", color="#757575", alpha = 0.3) +
-  scale_fill_manual(name = "ORF Type", labels = c("beneficial","controls","deleterious")) +
-  labs(title = "Fitness Distribution", x = "Fitness", y = "Density")
+#ggplot(data.orfs, aes(x=fitness)) +
+#  geom_density(fill="#F44336", color="#757575",alpha = 0.3) +
+#  geom_density(data = data.control, fill="#3F51B5", color="#757575", alpha = 0.3) +
+#  geom_density(data = data.dels, fill="#BDBDBD", color="#757575", alpha = 0.3) +
+#  scale_fill_manual(name = "ORF Type", labels = c("beneficial","controls","deleterious")) +
+#  labs(title = "Fitness Distribution", x = "Fitness", y = "Density")
   
-  
-#scale_fill_continuous(labels = c("beneficial","controls","deleterious"),
-#                                  guide = guide_legend(label.position = "left", label.hjust = 1))
 
 ##### END
 dbDisconnect(conn)
