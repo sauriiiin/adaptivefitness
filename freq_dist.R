@@ -27,7 +27,7 @@ query = dbSendQuery(conn, ("select orf_name, fitness from PT2_PGLU_FS_6144_FITNE
 where hours = 12 and fitness > 0
 and orf_name in
 (select orf_name from PT2_PGLU_FS_6144_RES_eFDR
-where hours = 12 and effect_cs = 1 and cs_median > 1.1 and N >=6)
+where hours = 12 and effect_cs = 1)
 order by fitness desc"))
 data.orfs = dbFetch(query, n=-1)
 
@@ -53,16 +53,21 @@ if (dbHasCompleted(query)) {
 
 ##### PLOTS
 
-ggplot(data.orfs, aes(x=fitness, fill=orf_name)) +
-  geom_density(alpha = 0.3) +
-  geom_density(data = data.control, alpha = 0.3)
+#ggplot(data.orfs, aes(x=fitness, fill=orf_name)) +
+#  geom_density(alpha = 0.3) +
+#  geom_density(data = data.control, alpha = 0.3)
 
-#ggplot(data.orfs, aes(x=fitness)) +
-#  geom_density(fill="#F44336", color="#757575",alpha = 0.3) +
-#  geom_density(data = data.control, fill="#3F51B5", color="#757575", alpha = 0.3) +
-#  geom_density(data = data.dels, fill="#BDBDBD", color="#757575", alpha = 0.3) +
-#  scale_fill_manual(name = "ORF Type", labels = c("beneficial","controls","deleterious")) +
-#  labs(title = "Fitness Distribution", x = "Fitness", y = "Density")
+ggplot(data.orfs, aes(x=fitness)) +
+  geom_density(fill="#F44336", color="#757575",alpha = 0.3) +
+  geom_density(data = data.control, fill="#3F51B5", color="#757575", alpha = 0.3) +
+  geom_density(data = data.dels, fill="#BDBDBD", color="#757575", alpha = 0.3) +
+  scale_fill_manual(name = "ORF Type", labels = c("beneficial","controls","deleterious")) +
+  scale_x_continuous(breaks = round(seq(0, 2, by = 0.1),1)) +
+  labs(title = "Fitness Distribution", x = "Fitness", y = "Density") +
+  theme_classic() +
+  theme(axis.text=element_text(size=10),
+        axis.title=element_text(size=20),
+        plot.title=element_text(size=20,hjust =.5))
   
 
 ##### END
