@@ -64,8 +64,8 @@ ggplot(data.orfs, aes(x=fitness)) +
   scale_fill_manual(name = "ORF Type", labels = c("beneficial","controls","deleterious")) +
   scale_x_continuous(breaks = round(seq(0, 2, by = 0.1),1)) +
   labs(title = "Fitness Distribution", x = "Fitness", y = "Density") +
-  theme_classic() +
-  theme(axis.text=element_text(size=10),
+  theme_light()+
+  theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20),
         plot.title=element_text(size=20,hjust =.5))
   
