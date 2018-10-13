@@ -13,7 +13,7 @@ conn <- initialize.sql("saurin_test")
 
 ##### FETCH DATA
 
-query = dbSendQuery(conn, ("select orf_name, fitness from PT2_PGLU_FS_6144_FITNESS
+query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
 where hours = 12 and orf_name = 'BF_control' and fitness > 0"))
 data.control = dbFetch(query, n=-1)
 
@@ -23,10 +23,10 @@ if (dbHasCompleted(query)) {
   print("Error Running Query")
 }
 
-query = dbSendQuery(conn, ("select orf_name, fitness from PT2_PGLU_FS_6144_FITNESS
+query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
 where hours = 12 and fitness > 0
 and orf_name in
-(select orf_name from PT2_PGLU_FS_6144_RES_eFDR
+(select orf_name from PT_SA_CN_6144_RES_eFDR
 where hours = 12 and effect_cs = 1)
 order by fitness desc"))
 data.orfs = dbFetch(query, n=-1)
@@ -37,10 +37,10 @@ if (dbHasCompleted(query)) {
   print("Error Running Query")
 }
 
-query = dbSendQuery(conn, ("select orf_name, fitness from PT2_PGLU_FS_6144_FITNESS
-where hours = 12 and fitness > 0
+query = dbSendQuery(conn, ("select orf_name, fitness from PT_SA_CN_6144_FITNESS
+where hours = 12
 and orf_name in
-(select orf_name from PT2_PGLU_FS_6144_RES_eFDR
+(select orf_name from PT_SA_CN_6144_RES_eFDR
 where hours = 12 and effect_cs = -1)
 order by fitness desc"))
 data.dels = dbFetch(query, n=-1)
@@ -51,6 +51,8 @@ if (dbHasCompleted(query)) {
   print("Error Running Query")
 }
 
+#data.dels$fitness[data.dels$fitness < 0]
+
 ##### PLOTS
 
 #ggplot(data.orfs, aes(x=fitness, fill=orf_name)) +
@@ -59,6 +61,7 @@ if (dbHasCompleted(query)) {
 
 ggplot(data.orfs, aes(x=fitness)) +
   geom_density(fill="#F44336", color="#757575",alpha = 0.3) +
+  #scale_y_continuous(trans="log10") +
   geom_density(data = data.control, fill="#3F51B5", color="#757575", alpha = 0.3) +
   geom_density(data = data.dels, fill="#BDBDBD", color="#757575", alpha = 0.3) +
   scale_fill_manual(name = "ORF Type", labels = c("beneficial","controls","deleterious")) +
