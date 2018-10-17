@@ -67,10 +67,15 @@ ggplot() +
   scale_x_continuous(breaks = round(seq(0, 2, by = 0.1),1)) +
   labs(title = "Fitness Distribution", x = "Fitness", y = "Density", fill = "Strain Type", col = "Strain Type") +
   #scale_fill_manual(labels = c("Deleterious", "Beneficial", "Reference"), values = c("#F44336", "#3F51B5", "#BDBDBD")) +
-  theme_light()+
+  theme_bw()+
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20),
-        plot.title=element_text(size=20,hjust =.5))
+        plot.title=element_text(size=20,hjust =.5),
+        #panel.grid.major = element_blank(),
+        #panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA))
+ggsave("figs/overall_distribution_PT_SA_noback.png",bg="transparent",height = 9, width = 12)
   
 ##### END
 dbDisconnect(conn)
