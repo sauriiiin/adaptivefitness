@@ -60,14 +60,14 @@ if (dbHasCompleted(query)) {
 #  geom_density(data = data.control, alpha = 0.3)
 
 ggplot() +
-  geom_density(data = data.dels, aes(x=fitness) ,fill="#D32F2F", color="#757575",alpha = 0.3) +
+  geom_density(data = data.dels, aes(x=fitness) ,fill="#D32F2F", color="#757575",alpha = 0.5) +
   #scale_y_continuous(trans="log10") +
-  geom_density(data = data.orfs, aes(x=fitness), fill="#4CAF50", color="#757575", alpha = 0.3) +
-  geom_density(data = data.control, aes(x=fitness), fill="#303F9F", color="#757575", alpha = 0.3) +
+  geom_density(data = data.orfs, aes(x=fitness), fill="#4CAF50", color="#757575", alpha = 0.5) +
+  geom_density(data = data.control, aes(x=fitness), fill="#303F9F", color="#757575", alpha = 0.5) +
   scale_x_continuous(breaks = round(seq(0, 2, by = 0.1),1)) +
   labs(title = "Fitness Distribution", x = "Fitness", y = "Density", fill = "Strain Type", col = "Strain Type") +
   #scale_fill_manual(labels = c("Deleterious", "Beneficial", "Reference"), values = c("#F44336", "#3F51B5", "#BDBDBD")) +
-  theme_bw()+
+  theme_linedraw()+
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20),
         plot.title=element_text(size=20,hjust =.5),
