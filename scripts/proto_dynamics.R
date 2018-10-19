@@ -32,6 +32,8 @@ if (dbHasCompleted(query)) {
 
 ##### PLOTS
 trial <- melt(data, id.vars = "orf_name")
-ggplot(trial, aes(variable, value, group=factor(orf_name))) + geom_line(aes(color=factor(orf_name)))
+ggplot(trial, aes(variable, value, group=factor(orf_name))) +
+  geom_line(aes(color=factor(orf_name))) +
+  theme(legend.position="none")
 
 
