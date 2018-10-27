@@ -13,16 +13,23 @@ source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
 ##### FETCH DATA
-query = dbSendQuery(conn, ("select a.orf_name, a.cs_median cs_ps1,
-b.cs_median cs_ps2,
-c.cs_median cs_fs
-from PT2_PGLU_PS1_6144_RES_eFDR a,
-PT2_PGLU_PS2_6144_RES_eFDR b,
-PT2_PGLU_FS_6144_RES_eFDR c
-where a.protogene = 1
-and a.hours = 12 and b.hours = 12 and c.hours = 12
-and a.orf_name = b.orf_name and b.orf_name = c.orf_name"))
-data = dbFetch(query, n=-1)
+#query = dbSendQuery(conn, ("select a.orf_name, a.cs_median cs_ps1,
+#b.cs_median cs_ps2,
+#c.cs_median cs_fs
+#from PT2_PGLU_PS1_6144_RES_eFDR a,
+#PT2_PGLU_PS2_6144_RES_eFDR b,
+#PT2_PGLU_FS_6144_RES_eFDR c
+#where a.protogene = 1
+#and a.hours = 12 and b.hours = 12 and c.hours = 12
+#and a.orf_name = b.orf_name and b.orf_name = c.orf_name"))
+#data = dbFetch(query, n=-1)
+
+query = dbSendQuery(conn, ("select orf_name, hours, cs_median
+from PT2_PGAL_FS_6144_RES_eFDR
+where orf_name in
+(select orf_name from PT2_PGAL_FS_6144_RES_eFDR
+where hours = 12 and effect_cs = 1)
+and hours < 16"))
 
 if (dbHasCompleted(query)) {
   dbClearResult(query)
@@ -31,7 +38,7 @@ if (dbHasCompleted(query)) {
 }
 
 ##### PLOTS
-trial <- melt(data, id.vars = "orf_name")
+dat.fs <- melt(data, id.vars = "orf_name")
 ggplot(trial, aes(variable, value, group=factor(orf_name))) +
   geom_line(aes(color=factor(orf_name))) +
   theme(legend.position="none")
