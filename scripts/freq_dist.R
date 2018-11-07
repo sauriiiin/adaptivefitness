@@ -14,7 +14,7 @@ conn <- initialize.sql("saurin_test")
 ##### FETCH DATA
 
 query = dbSendQuery(conn, ("select orf_name, fitness from YBR_RAF_6144_FITNESS
-where hours = 30 and orf_name = 'BF_control' and fitness > 0"))
+where hours = 58 and orf_name = 'BF_control' and fitness > 0"))
 data.control = dbFetch(query, n=-1)
 
 if (dbHasCompleted(query)) {
@@ -24,7 +24,7 @@ if (dbHasCompleted(query)) {
 }
 
 query = dbSendQuery(conn, ("select orf_name, fitness from YBR_RAF_6144_FITNESS
-where hours = 30 and orf_name = 'YBR196C-A' and fitness > 0"))
+where hours = 58 and orf_name = 'YBR196C-A' and fitness > 0"))
 data.orfs = dbFetch(query, n=-1)
 
 if (dbHasCompleted(query)) {
@@ -79,7 +79,7 @@ ggplot() +
   geom_density(data = data.orfs, aes(x=fitness), fill="#4CAF50", color="#757575", alpha = 0.5) +
   geom_density(data = data.control, aes(x=fitness), fill="#303F9F", color="#757575", alpha = 0.5) +
   #scale_x_continuous(breaks = round(seq(0, 2, by = 0.1),1)) +
-  labs(title = "Probability Distribution", x = "Fitness", y = "Density", fill = "Strain Type", col = "Strain Type") +
+  labs(title = "SD-URA+GAL+RAF+G418", x = "Fitness", y = "Density", fill = "Strain Type", col = "Strain Type") +
   #scale_fill_manual(labels = c("Deleterious", "Beneficial", "Reference"), values = c("#F44336", "#3F51B5", "#BDBDBD")) +
   xlim(.5, 1.5) +
   theme_gray()+
@@ -90,7 +90,7 @@ ggplot() +
         #panel.grid.minor = element_blank(),
         panel.background = element_rect(fill = "transparent", colour = NA),
         plot.background = element_rect(fill = "transparent", colour = NA))
-#ggsave("figs/overall_distribution_PT_SA_noback.png",bg="transparent",height = 9, width = 12)
+ggsave("figs/ybr_raf_6144_58.png",bg="transparent",height = 9, width = 12)
 
 ##### END
 dbDisconnect(conn)
