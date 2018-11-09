@@ -11,20 +11,20 @@ library(ggplot2)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
-##### FETCH DATA
+##### FETCH DATA [MODIFY THIS FOR EXPT]
 
-query = dbSendQuery(conn, ("select orf_name, fitness from YBR_RAF_6144_FITNESS
-where hours = 58 and orf_name = 'BF_control' and fitness > 0"))
-data.control = dbFetch(query, n=-1)
+#query = dbSendQuery(conn, ("select orf_name, average from YBR_RAF_6144_FITNESS
+#where hours = 58 and orf_name = 'BF_control' and average > 0"))
+#data.control = dbFetch(query, n=-1)
 
-if (dbHasCompleted(query)) {
-  dbClearResult(query)
-} else {
-  print("Error Running Query")
-}
+#if (dbHasCompleted(query)) {
+#  dbClearResult(query)
+#} else {
+#  print("Error Running Query")
+#}
 
-query = dbSendQuery(conn, ("select orf_name, fitness from YBR_RAF_6144_FITNESS
-where hours = 58 and orf_name = 'YBR196C-A' and fitness > 0"))
+query = dbSendQuery(conn, ("select orf_name, average from YBR_RAF_1536_FITNESS
+where hours = 58 and average > 0"))
 data.orfs = dbFetch(query, n=-1)
 
 if (dbHasCompleted(query)) {
@@ -76,12 +76,11 @@ if (dbHasCompleted(query)) {
 ##### YBR DATA
 
 ggplot() +
-  geom_density(data = data.orfs, aes(x=fitness), fill="#4CAF50", color="#757575", alpha = 0.5) +
-  geom_density(data = data.control, aes(x=fitness), fill="#303F9F", color="#757575", alpha = 0.5) +
+  geom_density(data = data.orfs, aes(average, fill = orf_name), alpha = 0.5) +
   #scale_x_continuous(breaks = round(seq(0, 2, by = 0.1),1)) +
-  labs(title = "SD-URA+GAL+RAF+G418", x = "Fitness", y = "Density", fill = "Strain Type", col = "Strain Type") +
+  labs(title = "SD-URA+GAL+RAF+G418 (1536 @ 58hrs)", x = "Pixels", y = "Density", fill = "Strain Type", col = "Strain Type") +
   #scale_fill_manual(labels = c("Deleterious", "Beneficial", "Reference"), values = c("#F44336", "#3F51B5", "#BDBDBD")) +
-  xlim(.5, 1.5) +
+  xlim(400, 1500) +
   theme_gray()+
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20),
@@ -90,7 +89,7 @@ ggplot() +
         #panel.grid.minor = element_blank(),
         panel.background = element_rect(fill = "transparent", colour = NA),
         plot.background = element_rect(fill = "transparent", colour = NA))
-ggsave("figs/ybr_raf_6144_58.png",bg="transparent",height = 9, width = 12)
+ggsave("figs/ybr_raf_1536_58_pix.png",bg="transparent",height = 9, width = 12)
 
 ##### END
 dbDisconnect(conn)
