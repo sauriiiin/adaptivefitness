@@ -23,8 +23,11 @@ conn <- initialize.sql("saurin_test")
 #  print("Error Running Query")
 #}
 
-query = dbSendQuery(conn, ("select orf_name, average from YBR_RAF_1536_FITNESS
-where hours = 58 and average > 0"))
+query = dbSendQuery(conn, ("select b.orf_name, b.cs_median, b.effect_size, a.effect_cs, a.protogene
+from PT2_PGLU_FS_6144_RES_eFDR a, PT2_PGLU_FS_6144_FITNESS_ES b
+where a.hours = 12 and a.hours = b.hours
+and a.orf_name = b.orf_name
+and a.effect_cs >= 0"))
 data.orfs = dbFetch(query, n=-1)
 
 if (dbHasCompleted(query)) {
@@ -73,14 +76,25 @@ if (dbHasCompleted(query)) {
 #        plot.background = element_rect(fill = "transparent", colour = NA))
 #ggsave("figs/overall_distribution_PT_SA_noback.png",bg="transparent",height = 9, width = 12)
 
-##### YBR DATA
+##### FREQ DISTS
 
-ggplot() +
-  geom_density(data = data.orfs, aes(average, fill = orf_name), alpha = 0.5) +
-  #scale_x_continuous(breaks = round(seq(0, 2, by = 0.1),1)) +
-  labs(title = "SD-URA+GAL+RAF+G418 (1536 @ 58hrs)", x = "Pixels", y = "Density", fill = "Strain Type", col = "Strain Type") +
-  #scale_fill_manual(labels = c("Deleterious", "Beneficial", "Reference"), values = c("#F44336", "#3F51B5", "#BDBDBD")) +
-  xlim(400, 1500) +
+for (i in 1:length(data.orfs$protogene)){
+  if (data.orfs$protogene[i] == 1) {
+    data.orfs$proto[i] <- 'Y'
+  } else {
+    data.orfs$proto[i] <- 'N'
+  }
+}
+
+wilcox <- wilcox.test(data.orfs$effect_size[data.orfs$proto == 'Y'],
+                      data.orfs$effect_size[data.orfs$proto == 'N'])
+
+wilcox$p.value
+
+ggplot(data.orfs, aes(x = effect_size, fill = proto)) +
+  geom_density( alpha=0.5) +
+  labs(title = sprintf("pgalR (p = %.5f)", wilcox$p.value) , x = "normalized median cs", y = "density", fill = "Protogene") +
+  #xlim(0.1, 4) +
   theme_gray()+
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20),
@@ -89,7 +103,23 @@ ggplot() +
         #panel.grid.minor = element_blank(),
         panel.background = element_rect(fill = "transparent", colour = NA),
         plot.background = element_rect(fill = "transparent", colour = NA))
-ggsave("figs/ybr_raf_1536_58_pix.png",bg="transparent",height = 9, width = 12)
+#ggsave("figs/pgalR_proto.png",bg="transparent",height = 9, width = 12)
+
+
+##### BOX PLOTS
+ggplot(data.orfs, aes(x = proto, y = effect_size, fill=proto)) + 
+  geom_boxplot(outlier.colour="black", outlier.shape=16,
+               outlier.size=4) +
+  labs(title = sprintf("pglu \n p = %.5f", wilcox$p.value), x = "Proto-gene", y = "Effect Size", fill = "Proto-gene") +
+  ylim(0,2) +
+  theme_gray()+
+  theme(axis.text=element_text(size=14),
+        axis.title=element_text(size=20),
+        plot.title=element_text(size=20,hjust =.5),
+        panel.background = element_rect(fill = "transparent", colour = NA),
+        plot.background = element_rect(fill = "transparent", colour = NA),
+        legend.position="none")
+ggsave("figs/pglu_proto_es.png",bg="transparent",height = 9, width = 12)
 
 ##### END
 dbDisconnect(conn)
