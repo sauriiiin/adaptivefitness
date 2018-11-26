@@ -13,7 +13,7 @@ conn <- initialize.sql("saurin_test")
 
 
 ##### DATA GRAB
-query = dbSendQuery(conn, ("select distinct a.orf_name, b.aromaticity, b.aromaticity, b.pI, b.protogene
+query = dbSendQuery(conn, ("select distinct a.orf_name, b.aromaticity, b.stability, b.pI, b.protogene
 from PT2_pos2orf_name a, NT_PROPERTIES b
 where a.orf_name = b.orf_name"))
 nt_prop = dbFetch(query, n=-1)
@@ -25,8 +25,8 @@ if (dbHasCompleted(query)) {
 }
 
 query = dbSendQuery(conn, ("select b.*
-from PT2R_PGAL_FS_6144_RES_eFDR a, NT_PROPERTIES b
-where a.hours = 21 and a.effect_cs = 1
+from PT2_PGLU_FS_6144_RES_eFDR a, NT_PROPERTIES b
+where a.hours = 16 and a.effect_cs = 1
 and a.orf_name = b.orf_name"))
 ben_orfs = dbFetch(query, n=-1)
 
@@ -56,19 +56,19 @@ for (i in 1:length(ben_orfs$protogene)){
 
 ##### STATS
 
-w_all <- wilcox.test(nt_prop$aromaticity[nt_prop$proto == 'proto-gene'],
-                     nt_prop$aromaticity[nt_prop$proto == 'gene'])
+w_all <- wilcox.test(nt_prop$pI[nt_prop$proto == 'proto-gene'],
+                     nt_prop$pI[nt_prop$proto == 'gene'])
 
-w_ben <- wilcox.test(ben_orfs$aromaticity[ben_orfs$proto == 'proto-gene'],
-                     ben_orfs$aromaticity[ben_orfs$proto == 'gene'])
+w_ben <- wilcox.test(ben_orfs$pI[ben_orfs$proto == 'proto-gene'],
+                     ben_orfs$pI[ben_orfs$proto == 'gene'])
 
 ##### BOX PLOTS
 
-ggplot(nt_prop, aes(x = proto, y = aromaticity, fill=proto)) + 
+ggplot(nt_prop, aes(x = proto, y = pI, fill=proto)) + 
   geom_boxplot(outlier.colour="black", outlier.shape=16,
                outlier.size=4) +
-  labs(title = sprintf("Overall \n p = %.5f", w_all$p.value), x = "ORF Type", y = "Aromaticity", fill = "Proto") +
-  ylim(0,0.35) +
+  labs(title = sprintf("Overall \n p = %.5f", w_all$p.value), x = "ORF Type", y = "pI", fill = "Proto") +
+  ylim(3,14) +
   theme_gray()+
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20),
@@ -76,13 +76,13 @@ ggplot(nt_prop, aes(x = proto, y = aromaticity, fill=proto)) +
         panel.background = element_rect(fill = "transparent", colour = NA),
         plot.background = element_rect(fill = "transparent", colour = NA),
         legend.position="none")
-ggsave("figs/overall_aromaticity_pt2.png",bg="transparent",height = 9, width = 12)
+ggsave("figs/overall_pI_pt2.png",bg="transparent",height = 9, width = 12)
 
-ggplot(ben_orfs, aes(x = proto, y = aromaticity, fill=proto)) + 
+ggplot(ben_orfs, aes(x = proto, y = pI, fill=proto)) + 
   geom_boxplot(outlier.colour="black", outlier.shape=16,
                outlier.size=4) +
-  labs(title = sprintf("pgalR \n p = %.5f", w_ben$p.value), x = "ORF Type", y = "Aromaticity", fill = "Proto") +
-  ylim(0,.35) +
+  labs(title = sprintf("pglu \n p = %.5f", w_ben$p.value), x = "ORF Type", y = "pI", fill = "Proto") +
+  ylim(3,14) +
   theme_gray()+
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=20),
@@ -90,7 +90,7 @@ ggplot(ben_orfs, aes(x = proto, y = aromaticity, fill=proto)) +
         panel.background = element_rect(fill = "transparent", colour = NA),
         plot.background = element_rect(fill = "transparent", colour = NA),
         legend.position="none")
-ggsave("figs/pgalR_aromaticity.png",bg="transparent",height = 9, width = 12)
+ggsave("figs/pglu_pI.png",bg="transparent",height = 9, width = 12)
 
 ##### END
 dbDisconnect(conn)
