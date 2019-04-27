@@ -26,33 +26,26 @@ p2c_info[2] = '6144plate'
 p2c_info[3] = '6144col'
 p2c_info[4] = '6144row'
 
-cont.name  = 'BF_control'
-dbFetch(query, n=-1)
+hours = dbGetQuery(conn, sprintf('select distinct hours from %s order by hours asc', tablename_fit))
 
-query = dbSendQuery(conn, sprintf('select distinct hours from %s order by hours asc', tablename_fit))
-hours = dbFetch(query,n=-1)
-
-query = dbSendQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
+p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
                                   p2c_info[1],
                                   p2c_info[2],
                                   p2c_info[3],
                                   p2c_info[4]))
-p2c = dbFetch(query,n=-1)
 
-query = dbSendQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
+n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
                                   p2c_info[2],
                                   p2c_info[1],
                                   p2c_info[2]))
-n_plates = dbFetch(query, n=-1) 
 
 ##### LOCATE THE BIG SMALL COLONIES
 
 for (hr in 7:length(hours$hours)) {
   for (pl in n_plates$`6144plate`) {
-    query = dbSendQuery(conn, sprintf('select * from %s a, %s b where a.hours = %d and a.pos = b.pos and b.%s = %d order by b.%s, b.%s',
+    fitdat = dbGetQuery(conn, sprintf('select * from %s a, %s b where a.hours = %d and a.pos = b.pos and b.%s = %d order by b.%s, b.%s',
                                       tablename_fit,p2c_info[1],hours$hours[hr],p2c_info[2],
                                       pl,p2c_info[3],p2c_info[4]))
-    fitdat = dbFetch(query,n=-1)
     fitdat$fitness[fitdat$orf_name != 'BF_control'] = NA
     lims = quantile(fitdat$fitness, c(.025, .975),na.rm = TRUE) 
     
@@ -60,28 +53,50 @@ for (hr in 7:length(hours$hours)) {
     fitdat$colsize[fitdat$fitness > lims[[2]]] = "Very Big"
     fitdat$colsize[is.na(fitdat$colsize)] = "Normal"
     
+    fitdat$se = fitdat$average - fitdat$bg
+    fitdat$se[fitdat$orf_name != 'BF_control'] = NA
+    fitdat$prediction[fitdat$se < 0] = 'Overestimate'
+    fitdat$prediction[fitdat$se > 0] = 'Underestimate'
+    fitdat$prediction[fitdat$se == 0] = 'Exact'
+    
+    
+    # ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+    #   geom_point(aes(size = fitness, col = colsize),alpha=0.7) +
+    #   scale_size_continuous(guide=F) +
+    #   scale_color_discrete(name="Colony Size") +
+    #   theme_light() +
+    #   labs(title = sprintf("%s Fitness",expt),
+    #        subtitle = sprintf("Plate %d @ %d hrs",pl,hours$hours[hr]),
+    #        x = " Column",
+    #        y = "Row") +
+    #   scale_x_continuous(breaks = seq(1,96,1), minor_breaks = seq(-5,100,1)) +
+    #   scale_y_continuous(breaks = seq(1,64,1), minor_breaks = seq(-5,70,1)) +
+    #   theme(axis.text.x = element_text(size=5),
+    #         axis.text.y = element_text(size=5))
+    # ggsave(sprintf("%scolsize/colsize%s_%d%d.png",
+    #                out_path,expt_name,hours$hours[hr],pl),
+    #        width = 12,height = 8)
+    
     ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
-      geom_point(aes(size = fitness, col = colsize),alpha=0.7) +
+      geom_point(aes(size = average, col = prediction, shape = colsize),alpha=0.7) +
       scale_size_continuous(guide=F) +
-      scale_color_discrete(name="Colony Size") +
       theme_light() +
-      labs(title = sprintf("%s",expt_name),
+      labs(title = sprintf("%s Error",expt),
            subtitle = sprintf("Plate %d @ %d hrs",pl,hours$hours[hr]),
            x = " Column",
            y = "Row") +
       scale_x_continuous(breaks = seq(1,96,1), minor_breaks = seq(-5,100,1)) +
       scale_y_continuous(breaks = seq(1,64,1), minor_breaks = seq(-5,70,1)) +
+      scale_colour_manual(name="Prediction",
+                         values=c("Overestimate"="#F44336","Underestimate"="#536DFE","Exact"="#4CAF50"),
+                         breaks=c("Underestimate","Exact","Overestimate")) +
+      scale_shape_manual(name="Colony Size",
+                         values=c(1,19,19),guide=F) +
       theme(axis.text.x = element_text(size=5),
             axis.text.y = element_text(size=5))
-    
-    ggsave(sprintf("%scolsize/colsize%s_%d%d.png",
+    ggsave(sprintf("%scolsize/posse%s_%d%d.png",
                    out_path,expt_name,hours$hours[hr],pl),
            width = 12,height = 8)
-    
-    # query = dbSendQuery(conn, sprintf("select a.* from %s a, %s b where a.hours = %d and a.pos = b.pos and b.%s = %d and orf_name = '%s' order by b.%s, b.%s",
-    #                                   tablename_fit,p2c_info[1],hours$hours[hr],p2c_info[2],
-    #                                   pl,cont.name,p2c_info[3],p2c_info[4]))
-    # contpos = dbFetch(query,n=-1)
   }
 }
 
