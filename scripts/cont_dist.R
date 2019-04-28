@@ -82,7 +82,7 @@ for (hr in 7:length(hours$hours)) {
     ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
       geom_point(aes(x = `6144col`, y = `6144row`),shape = 20,size=0.5) +
       geom_point(aes(x = `6144col`, y = `6144row`, shape = Gap),na.rm = T) +
-      geom_point(aes(size = average, col = prediction, shape = colsize),alpha=0.7) +
+      geom_point(aes(size = average, col = prediction, shape = colsize),alpha=0.9) +
       scale_size_continuous(name="Pixel Count") +
       labs(title = sprintf("%s Reference Colonies",expt),
            subtitle = sprintf("Plate %d @ %d hrs",pl,hours$hours[hr]),
