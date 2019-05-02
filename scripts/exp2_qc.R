@@ -34,6 +34,7 @@ qc12345 <- dbGetQuery(conn,
                       a.qc, a.flag, a.comments
                       from QC_SEQ_ANALYSIS a, PROTOGENE_COLLECTION b
                       where a.qc < 6 and a.strain_id = b.strain_id')
+
 qc12345$pos <- as.integer(qc12345$pos)
 
 pos2coorPC$seq[pos2coorPC$pos %in% qc.res$pos | pos2coorPC$pos %in% qc12345$pos] = 1
@@ -49,34 +50,35 @@ pos2coorPC$result[pos2coorPC$pos %in% pc$pos] = 'ORF Present'
 pos2coorPC$result[pos2coorPC$pos %in% qc.res$pos | pos2coorPC$pos %in% qc12345$pos] = 'Sequenced'
 pos2coorPC$result[pos2coorPC$pos %in% qc.res$pos[qc.res$flag == 2] | pos2coorPC$pos %in% qc12345$pos[qc12345$flag == 2]] = 'Flagged'
 pos2coorPC$result[pos2coorPC$pos %in% qc.res$pos[qc.res$comments == 'switched to other orf']] = 'Mismatch'
+pos2coorPC$result[pos2coorPC$pos %in% qc12345$pos[qc12345$comments == 'switched to other orf']] = 'Mismatch'
 
 ##### VISUALIZE DATA
 
-pl <- 28
-
-ggplot(data = pos2coorPC[pos2coorPC$`384plate` == pl,], aes(x = `384col`, y = `384row`)) +
-  geom_point(aes(x = `384col`, y = `384row`),shape = 20,size=1,na.rm = T) +
-  geom_point(aes(x = `384col`, y = `384row`,col = result, shape = result),size=3,na.rm = T) +
-  #geom_point(aes(size = average, col = prediction, shape = colsize),alpha=0.9) +
-  #scale_size_continuous(name="Results") +
-  labs(title = "PROTOGENE COLLECTION",
-       subtitle = sprintf("Plate %d",pl),
-       x = " Column",
-       y = "Row") +
-  scale_x_continuous(breaks = seq(1,24,1), minor_breaks = seq(-5,30,1)) +
-  scale_y_continuous(breaks = seq(1,16,1), minor_breaks = seq(-5,22,1), trans = 'reverse') +
-  scale_colour_manual(name="Result",
-                      values=c("Flagged"="red","ORF Present"="black","Sequenced"="green","Mismatch" = "blue"),
-                      breaks=c("ORF Present","Sequenced","Mismatch","Flagged")) +
-  scale_shape_manual(name="Colony Kind",
-                     values=c(8,19,19,19),
-                     breaks=c("ORF Present","Sequenced","Mismatch","Flagged"),
-                     guide=F) +
-  theme_light() +
-  theme(axis.text.x = element_text(size=7),
-        axis.text.y = element_text(size=7))
-ggsave(sprintf("figs/pc_plates/Plate%d.png",pl),
-       width = 21,height = 14)
+for (pl in 23:28) {
+  ggplot(data = pos2coorPC[pos2coorPC$`384plate` == pl,], aes(x = `384col`, y = `384row`)) +
+    geom_point(aes(x = `384col`, y = `384row`),shape = 20,size=1,na.rm = T) +
+    geom_point(aes(x = `384col`, y = `384row`,col = result, shape = result),size=5,na.rm = T) +
+    #geom_point(aes(size = average, col = prediction, shape = colsize),alpha=0.9) +
+    #scale_size_continuous(name="Results") +
+    labs(title = "PROTOGENE COLLECTION",
+         subtitle = sprintf("Plate %d",pl),
+         x = " Column",
+         y = "Row") +
+    scale_x_continuous(breaks = seq(1,24,1), minor_breaks = seq(-5,30,1)) +
+    scale_y_continuous(breaks = seq(1,16,1), minor_breaks = seq(-5,22,1), trans = 'reverse') +
+    scale_colour_manual(name="Result",
+                        values=c("Flagged"="red","ORF Present"="grey90","Sequenced"="green","Mismatch" = "blue"),
+                        breaks=c("ORF Present","Sequenced","Mismatch","Flagged")) +
+    scale_shape_manual(name="Colony Kind",
+                       values=c("ORF Present"=19,"Sequenced"=19,"Mismatch"=19,"Flagged"=8),
+                       breaks=c("ORF Present","Sequenced","Mismatch","Flagged"),
+                       guide=F) +
+    theme_dark() +
+    theme(axis.text.x = element_text(size=7),
+          axis.text.y = element_text(size=7))
+  ggsave(sprintf("figs/pc_plates/Plate%d.png",pl),
+         width = 15,height = 10) 
+}
 
 
 
