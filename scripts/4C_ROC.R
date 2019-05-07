@@ -5,10 +5,12 @@
 ##### INITIALIZE
 #install.packages("RMariaDB")
 #install.packages("ggplot2")
-library(RMariaDB)
+# library(RMariaDB)
 library(ggplot2)
-source("R/functions/initialize.sql.R")
-conn <- initialize.sql("saurin_test")
+# source("R/functions/initialize.sql.R")
+# conn <- initialize.sql("saurin_test")
+
+data <- read.csv(file="rawdata/4C3_GA1_TEMP_P_ES_17.csv", header=TRUE, sep=",")
 
 out_path = 'figs/';
 expt_name = '4C3_GA1'
@@ -16,21 +18,23 @@ hr = 17
 alldat <- data.frame()
 
 #####
-
 # query <- 'select a.orf_name, a.hours, b.p 
 # from 4C3_GA1_TEMP_6144_FITNESS_STATS a, 4C3_GA1_TEMP_6144_PVALUE b 
 # where a.orf_name = b.orf_name and a.hours = b.hours 
 # order by p asc'
-query <- 'select a.orf_name, a.hours, a.cs_mean - 1.0009 es, b.p
-from 4C3_GA1_TEMP_6144_FITNESS_STATS a, 4C3_GA1_TEMP_6144_PVALUE b
-where a.orf_name = b.orf_name and a.hours = b.hours
-and abs(a.cs_mean - 1.0009) <= .5
-order by  p asc'
-data <- dbGetQuery(conn, query)
+# query <- 'select a.orf_name, a.hours, a.cs_mean - 1.0009 es, b.p
+# from 4C3_GA1_TEMP_6144_FITNESS_STATS a, 4C3_GA1_TEMP_6144_PVALUE b
+# where a.orf_name = b.orf_name and a.hours = b.hours
+# and abs(a.cs_mean - 1.0009) <= .5
+# order by  p asc'
+# data <- dbGetQuery(conn, query)
 data <- data[data$orf_name != 'BFC100',]
+data$es <- abs(data$es)
 
-fpdat <- data[data$hours == 17,]
-tpdat <- data[data$hours != 17,]
+data.temp <- data[data$es <= 0.5,]
+
+fpdat <- data.temp[data.temp$hours == 17,]
+tpdat <- data.temp[data.temp$hours != 17,]
 fp <- NULL
 tp <- NULL
 
@@ -71,6 +75,7 @@ ggsave(sprintf("%s%s_ROC_%d.png",
                out_path,expt_name,hr),
        width = 10,height = 10)
 
+fit <- lm(alldat$p ~ alldat$FalsePositive + I(alldat$FalsePositive^2) +  I(alldat$FalsePositive^3))
 
 
 ggplot() +
@@ -85,7 +90,8 @@ ggplot() +
        y = "True Positive Rate") +
   scale_x_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
-                     limits = c(0,100)) +
+                     limits = c(0,100),
+                     sec.axis = sec_axis(~fit$coefficients[[1]]+.*fit$coefficients[[2]]+(.^2)*fit$coefficients[[3]])) +
   scale_y_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
                      limits = c(0,100)) +
