@@ -89,7 +89,7 @@ ggplot() +
   scale_y_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
                      limits = c(0,100)) +
-  scale_colour_manual(name="Max. Effect Size",
+  scale_colour_manual(name="Effect Size Threshold",
                       breaks=c("5%","10%","15%","20%","50%"),
                       values=c("5%"="#D32F2F","10%"="#536DFE","15%"="#388E3C","20%"="#795548","50%"="#00BCD4")) +
   theme_light() +
