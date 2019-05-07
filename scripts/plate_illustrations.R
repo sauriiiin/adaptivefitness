@@ -61,23 +61,31 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`),shape = 20,size=0.5) +
   geom_point(aes(x = `6144col`, y = `6144row`,
                  col = source,
-                 size = fitness,
-                 shape = colony),alpha=0.9,na.rm = T) +
+                 size = bg,
+                 shape = colony),na.rm = T) +
   scale_size_continuous(guide=F) +
-  labs(x = "Column",
+  labs(title = "Source Plate Wise Representation",
+       x = "Column",
        y = "Row") +
   scale_x_continuous(breaks = seq(1,96,1), minor_breaks = seq(-5,100,1)) +
   scale_y_continuous(breaks = seq(1,64,1), minor_breaks = seq(-5,70,1), trans = 'reverse') +
   scale_colour_manual(name="Source",
-                     values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#00BCD4"),
+                     values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
                      breaks=c("TL","TR","BL","BR"),
                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
   scale_shape_manual(name="Colony Kind",
-                     values=c(15,17,19),
+                     values=c(7,15,19),
                      breaks=c("Reference","Query","Gap")) +
   theme_light() +
-  theme(axis.text.x = element_text(size=7),
-        axis.text.y = element_text(size=7))
+  theme(axis.text.x = element_text(size=10),
+        axis.title.x = element_text(size=15),
+        axis.text.y = element_text(size=10),
+        axis.title.y = element_text(size=15),
+        legend.text = element_text(size=13),
+        legend.title = element_text(size=15,face="bold"),
+        legend.position = "top",
+        plot.title = element_text(size=20,hjust = 0.5),
+        plot.subtitle = element_text(size=13,hjust = 0.5))
 ggsave(sprintf("%s%s_6144_%d%d.png",
                out_path,expt_name,hr,pl),
        width = 21,height = 14)
