@@ -57,6 +57,8 @@ fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
 fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
 fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 
+fitdat$bg <- fitdat$bg/10
+
 ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`),shape = 20,size=0.5) +
   geom_point(aes(x = `6144col`, y = `6144row`,
@@ -64,23 +66,25 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
                  size = bg,
                  shape = colony),na.rm = T) +
   scale_size_continuous(guide=F) +
-  labs(title = "Source Plate Wise Representation",
-       x = "Column",
-       y = "Row") +
-  scale_x_continuous(breaks = seq(1,96,1), minor_breaks = seq(-5,100,1)) +
-  scale_y_continuous(breaks = seq(1,64,1), minor_breaks = seq(-5,70,1), trans = 'reverse') +
+  labs(title = "",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+  scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
   scale_colour_manual(name="Source",
                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
                      breaks=c("TL","TR","BL","BR"),
-                     labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+                     labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide=F) +
   scale_shape_manual(name="Colony Kind",
                      values=c(7,15,19),
-                     breaks=c("Reference","Query","Gap")) +
+                     breaks=c("Reference","Query","Gap"),guide=F) +
   theme_light() +
-  theme(axis.text.x = element_text(size=10),
-        axis.title.x = element_text(size=15),
-        axis.text.y = element_text(size=10),
-        axis.title.y = element_text(size=15),
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
         legend.text = element_text(size=13),
         legend.title = element_text(size=15,face="bold"),
         legend.position = "top",
