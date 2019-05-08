@@ -57,7 +57,7 @@ ggplot(data = plotdat, aes(x = FalsePositive  , y = TruePositive)) +
   labs(title = "LID ROC Curve",
        subtitle = "Control Experiment @ 17hrs",
        x = "False Positive Rate",
-       y = "True Positive Rate") +
+       y = "Power") +
   scale_x_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
                      limits = c(0,100)) +
@@ -88,7 +88,7 @@ ggplot() +
   labs(title = "LI Detector",
        subtitle = "ROC Curve",
        x = "False Positive Rate",
-       y = "True Positive Rate") +
+       y = "Power") +
   scale_x_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
                      limits = c(0,100)) +
