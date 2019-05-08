@@ -79,6 +79,7 @@ fit <- lm(alldat$p ~ alldat$FalsePositive + I(alldat$FalsePositive^2) +  I(allda
 
 
 ggplot() +
+  geom_line(data = alldat[alldat$ES==50,], aes(x = FalsePositive, y = p*100, col = 'p')) +
   geom_line(data = alldat[alldat$ES==5,], aes(x = FalsePositive, y = TruePositive, col = '5%')) +
   geom_line(data = alldat[alldat$ES==10,], aes(x = FalsePositive, y = TruePositive, col = '10%')) +
   geom_line(data = alldat[alldat$ES==15,], aes(x = FalsePositive, y = TruePositive, col = '15%')) +
@@ -90,19 +91,24 @@ ggplot() +
        y = "True Positive Rate") +
   scale_x_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
-                     limits = c(0,100),
-                     sec.axis = sec_axis(~fit$coefficients[[1]]+.*fit$coefficients[[2]]+(.^2)*fit$coefficients[[3]])) +
+                     limits = c(0,100)) +
   scale_y_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
-                     limits = c(0,100)) +
+                     limits = c(0,100),
+                     sec.axis = sec_axis(~./100,
+                                         breaks = seq(0,1,0.1),
+                                         name='p-value')) +
   scale_colour_manual(name="Effect Size Threshold",
                       breaks=c("5%","10%","15%","20%","50%"),
-                      values=c("5%"="#D32F2F","10%"="#536DFE","15%"="#388E3C","20%"="#795548","50%"="#00BCD4")) +
+                      values=c("5%"="#D32F2F","10%"="#536DFE","15%"="#388E3C","20%"="#795548","50%"="#00BCD4","p"="#9C27B0")) +
   theme_light() +
   theme(axis.text.x = element_text(size=10),
         axis.title.x = element_text(size=15),
         axis.text.y = element_text(size=10),
         axis.title.y = element_text(size=15),
+        axis.line.y.right = element_line(color = "#9C27B0"),
+        axis.text.y.right = element_text(size=10, color = "#9C27B0"),
+        axis.title.y.right = element_text(size=15, color = "#9C27B0"),
         legend.text = element_text(size=13),
         legend.title = element_text(size=15),
         legend.position = "bottom",
