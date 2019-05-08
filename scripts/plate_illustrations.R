@@ -75,14 +75,15 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide=F) +
   scale_shape_manual(name="Colony Kind",
                      values=c(7,15,19),
+                     # values=c(19,19,19),
                      breaks=c("Reference","Query","Gap"),guide=F) +
-  theme_light() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
+       # panel.border = element_rect(colour = "black", fill=NA, size=1),
         legend.text = element_text(size=13),
         legend.title = element_text(size=15,face="bold"),
         legend.position = "top",
@@ -91,11 +92,4 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
 ggsave(sprintf("%s%s_6144_%d%d.png",
                out_path,expt_name,hr,pl),
        width = 21,height = 14)
-
-
-
-
-
-
-
 
