@@ -57,8 +57,6 @@ fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
 fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
 fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 
-fitdat$bg <- fitdat$bg/10
-
 ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`),shape = 20,size=0.5) +
   geom_point(aes(x = `6144col`, y = `6144row`,
