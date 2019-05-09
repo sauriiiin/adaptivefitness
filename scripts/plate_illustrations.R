@@ -33,6 +33,10 @@ p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
                                p2c_info[2],
                                p2c_info[3],
                                p2c_info[4]))
+p2c1536 = dbGetQuery(conn, 'select 1536plate, 1536row, 1536col
+                     from 4C3_pos2coor1536
+                     where 1536plate = 1
+                     order by 1536col asc, 1536row asc')
 
 n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
                                     p2c_info[2],
@@ -53,16 +57,25 @@ fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
 fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
 fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
 
+# fitdat <- fitdat[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1,]
+# fitdat <- cbind(fitdat,p2c1536)
+# 
+# fitdat$source[fitdat$`1536row`%%2==1 & fitdat$`1536col`%%2==1] = 'TL'
+# fitdat$source[fitdat$`1536row`%%2==0 & fitdat$`1536col`%%2==1] = 'BL'
+# fitdat$source[fitdat$`1536row`%%2==1 & fitdat$`1536col`%%2==0] = 'TR'
+# fitdat$source[fitdat$`1536row`%%2==0 & fitdat$`1536col`%%2==0] = 'BR'
+
 fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
 fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
 fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 
 ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
-  geom_point(aes(x = `6144col`, y = `6144row`),shape = 20,size=0.5) +
+  # geom_point(aes(x = `6144col`, y = `6144row`),shape = 20,size=0.001) +
   geom_point(aes(x = `6144col`, y = `6144row`,
                  col = source,
                  size = bg,
-                 shape = colony),na.rm = T) +
+                 shape = colony,
+                 alpha = colony),na.rm = T) +
   scale_size_continuous(guide=F) +
   labs(title = "",
        x = "",
@@ -74,9 +87,12 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
                      breaks=c("TL","TR","BL","BR"),
                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide=F) +
   scale_shape_manual(name="Colony Kind",
-                     values=c(7,15,19),
+                     values=c("Gap"=18,"Query"=15,"Reference"=1),
                      # values=c(19,19,19),
                      breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_size_continuous(range = c(0, 2),guide=F) +
+  scale_alpha_manual(values=c("Gap"=0.2,"Query"=1,"Reference"=0.6),
+                     guide=F) +
   theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
@@ -86,10 +102,10 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
        # panel.border = element_rect(colour = "black", fill=NA, size=1),
         legend.text = element_text(size=13),
         legend.title = element_text(size=15,face="bold"),
-        legend.position = "top",
+        legend.position = "right",
         plot.title = element_text(size=20,hjust = 0.5),
         plot.subtitle = element_text(size=13,hjust = 0.5))
-ggsave(sprintf("%s%s_6144_%d%d.png",
+ggsave(sprintf("%s%s_step1.png",
                out_path,expt_name,hr,pl),
-       width = 21,height = 14)
+       width = 6,height = 4)
 
