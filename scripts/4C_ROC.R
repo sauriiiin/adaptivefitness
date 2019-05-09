@@ -31,25 +31,23 @@ alldat <- data.frame()
 data <- data[data$orf_name != 'BFC100',]
 data$es <- abs(data$es)
 
-data.temp <- data[data$es <= 0.5,]
-
-fpdat <- data.temp[data.temp$hours == 17,]
-tpdat <- data.temp[data.temp$hours != 17,]
-fp <- NULL
-tp <- NULL
-
-for (i in 1:length(unique(data$p))) {
-  p <- unique(data$p)[i]
-  fp[i] <- dim(fpdat[fpdat$p <= p,])[1]/dim(fpdat)[1] * 100
-  tp[i] <- dim(tpdat[tpdat$p <= p,])[1]/dim(tpdat)[1] * 100
+for (es in c(0.05,0.1,0.15,0.2,0.5)) {
+  data.temp <- data[data$es <= es,]
+  fpdat <- data.temp[data.temp$hours == 17,]
+  tpdat <- data.temp[data.temp$hours != 17,]
+  fp <- NULL
+  tp <- NULL
+  for (i in 1:length(unique(data$p))) {
+    p <- unique(data$p)[i]
+    fp[i] <- dim(fpdat[fpdat$p <= p,])[1]/dim(fpdat)[1] * 100
+    tp[i] <- dim(tpdat[tpdat$p <= p,])[1]/dim(tpdat)[1] * 100
+  }
+  plotdat <- data.frame(unique(data$p),fp,tp)
+  colnames(plotdat) <- c('p','FalsePositive','TruePositive')
+  plotdat$ES <- es*100
+  
+  alldat <- rbind(alldat,plotdat)
 }
-
-plotdat <- data.frame(unique(data$p),fp,tp)
-colnames(plotdat) <- c('p','FalsePositive','TruePositive')
-plotdat$ES <- 50
-
-alldat <- rbind(alldat,plotdat)
-
 
 ggplot(data = plotdat, aes(x = FalsePositive  , y = TruePositive)) +
   geom_line(col = '#FF5252') +
