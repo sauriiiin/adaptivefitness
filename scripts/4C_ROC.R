@@ -49,35 +49,8 @@ for (es in c(0.05,0.1,0.15,0.2,0.5)) {
   alldat <- rbind(alldat,plotdat)
 }
 
-ggplot(data = plotdat, aes(x = FalsePositive  , y = TruePositive)) +
-  geom_line(col = '#FF5252') +
-  geom_point(col = '#303F9F', size = 2) +
-  labs(title = "LID ROC Curve",
-       subtitle = "Control Experiment @ 17hrs",
-       x = "False Positive Rate",
-       y = "Power") +
-  scale_x_continuous(breaks = seq(0,100,10),
-                     minor_breaks = seq(0,100,5),
-                     limits = c(0,100)) +
-  scale_y_continuous(breaks = seq(0,100,10),
-                     minor_breaks = seq(0,100,5),
-                     limits = c(0,100)) +
-  theme_light() +
-  theme(axis.text.x = element_text(size=10),
-        axis.title.x = element_text(size=15),
-        axis.text.y = element_text(size=10),
-        axis.title.y = element_text(size=15),
-        plot.title = element_text(size=20,hjust = 0.5),
-        plot.subtitle = element_text(size=13,hjust = 0.5))
-ggsave(sprintf("%s%s_ROC_%d.png",
-               out_path,expt_name,hr),
-       width = 10,height = 10)
-
-fit <- lm(alldat$p ~ alldat$FalsePositive + I(alldat$FalsePositive^2) +  I(alldat$FalsePositive^3))
-
-
 ggplot() +
-  geom_line(data = alldat[alldat$ES==50,], aes(x = FalsePositive, y = p*100, col = 'p')) +
+  geom_line(data = alldat[alldat$ES==50,], aes(x = FalsePositive, y = p*100, col = 'p'), linetype = "dotdash") +
   geom_line(data = alldat[alldat$ES==5,], aes(x = FalsePositive, y = TruePositive, col = '5%')) +
   geom_line(data = alldat[alldat$ES==10,], aes(x = FalsePositive, y = TruePositive, col = '10%')) +
   geom_line(data = alldat[alldat$ES==15,], aes(x = FalsePositive, y = TruePositive, col = '15%')) +
