@@ -60,14 +60,16 @@ g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
         axis.title.x = element_text(size=15),
         axis.text.y = element_text(size=10),
         axis.title.y = element_text(size=15),
+        # axis.title = element_blank(),
         legend.text = element_text(size=13),
         legend.title = element_text(size=15),
         legend.position = "bottom",
         plot.title = element_text(size=20,hjust = 0.5),
-        plot.subtitle = element_text(size=13,hjust = 0.5))
-ggsave(sprintf("%s%s_FPR.png",
+        plot.subtitle = element_text(size=13,hjust = 0.5)) +
+  # coord_cartesian(xlim = c(0, 0.1), ylim = c(0, 0.1))
+ggsave(sprintf("%s%s_FPR_ZOOM.png",
                out_path,expt_name),
-       width = 10,height = 11)
+       width = 10,height = 10)
 
 
 
