@@ -33,10 +33,10 @@ p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
                                p2c_info[2],
                                p2c_info[3],
                                p2c_info[4]))
-p2c1536 = dbGetQuery(conn, 'select 1536plate, 1536row, 1536col
-                     from 4C3_pos2coor1536
-                     where 1536plate = 1
-                     order by 1536col asc, 1536row asc')
+p2c384 = dbGetQuery(conn, 'select 384plate, 384row, 384col
+                     from 3P2_pos2coor384
+                     where 384plate = 1
+                     order by 384col asc, 384row asc')
 
 n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
                                     p2c_info[2],
@@ -51,24 +51,27 @@ pl = n_plates[[1]][1]
 fitdat = dbGetQuery(conn, sprintf('select * from %s a, %s b where a.hours = %d and a.pos = b.pos and b.%s = %d order by b.%s, b.%s',
                                   tablename_fit,p2c_info[1],hr,p2c_info[2],
                                   pl,p2c_info[3],p2c_info[4]))
+fitdat$bg[is.na(fitdat$average)] = NA
 
 fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
 fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
 fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
 fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
 
-# fitdat <- fitdat[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1,]
-# fitdat <- cbind(fitdat,p2c1536)
+# fitdat <- fitdat[fitdat$`6144row` %in% 23:(23+15) & fitdat$`6144col` %in% 41:(41+23),]
 # 
-# fitdat$source[fitdat$`1536row`%%2==1 & fitdat$`1536col`%%2==1] = 'TL'
-# fitdat$source[fitdat$`1536row`%%2==0 & fitdat$`1536col`%%2==1] = 'BL'
-# fitdat$source[fitdat$`1536row`%%2==1 & fitdat$`1536col`%%2==0] = 'TR'
-# fitdat$source[fitdat$`1536row`%%2==0 & fitdat$`1536col`%%2==0] = 'BR'
+# fitdat <- cbind(fitdat,p2c384)
+# 
+# fitdat$source[fitdat$`384row`%%2==1 & fitdat$`384col`%%2==1] = 'TL'
+# fitdat$source[fitdat$`384row`%%2==0 & fitdat$`384col`%%2==1] = 'BL'
+# fitdat$source[fitdat$`384row`%%2==1 & fitdat$`384col`%%2==0] = 'TR'
+# fitdat$source[fitdat$`384row`%%2==0 & fitdat$`384col`%%2==0] = 'BR'
 
 fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
 fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
 fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 
+##### FIGURE 1B
 ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   # geom_point(aes(x = `6144col`, y = `6144row`),shape = 20,size=0.001) +
   geom_point(aes(x = `6144col`, y = `6144row`,
@@ -77,9 +80,9 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
                  shape = colony,
                  alpha = colony),na.rm = T) +
   scale_size_continuous(guide=F) +
-  labs(title = "",
-       x = "",
-       y = "") +
+  # labs(title = "",
+  #      x = "",
+  #      y = "") +
   scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
   scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
   scale_colour_manual(name="Source",
@@ -87,19 +90,19 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
                      breaks=c("TL","TR","BL","BR"),
                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide=F) +
   scale_shape_manual(name="Colony Kind",
-                     values=c("Gap"=18,"Query"=15,"Reference"=1),
-                     # values=c(19,19,19),
+                     values=c("Gap"=1,"Query"=15,"Reference"=18),
+                     # values=c("Gap"=1,"Query"=18,"Reference"=18),
                      breaks=c("Reference","Query","Gap"),guide=F) +
-  scale_size_continuous(range = c(0, 2),guide=F) +
-  scale_alpha_manual(values=c("Gap"=0.2,"Query"=1,"Reference"=0.6),
+  scale_size_continuous(range = c(2, 3),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_linedraw() +
+  theme_classic() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-       # panel.border = element_rect(colour = "black", fill=NA, size=1),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
         legend.text = element_text(size=13),
         legend.title = element_text(size=15,face="bold"),
         legend.position = "right",
@@ -107,5 +110,50 @@ ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
         plot.subtitle = element_text(size=13,hjust = 0.5))
 ggsave(sprintf("%s%s_step1.png",
                out_path,expt_name,hr,pl),
-       width = 6,height = 4)
+       width = 3,height = 2)
+
+
+##### FIGURE 2A
+min = min(fitdat$average, na.rm=T)
+max = max(fitdat$average, na.rm=T)
+
+ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`),shape=20,size=0.00001) +
+  geom_point(aes(x = `6144col`, y = `6144row`,
+                 col = average,
+                 shape = colony,
+                 alpha = colony),na.rm = T) +
+  # labs(title = "",
+  #      x = "",
+  #      y = "") +
+  scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+  scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+  scale_color_distiller(name = "Pixel Count",
+                        limits = c(min,max),
+                        palette = "Set1") +
+  # scale_colour_gradientn(colours = terrain.colors(10),
+  #                        guide=F) +
+  # scale_color_gradient2(midpoint=mean(fitdat$average,na.rm = T),
+  #                       low="blue",mid="yellow",
+  #                       high="red",guide=F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        # legend.text = element_text(size=13),
+        # legend.title = element_text(size=15,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=20,hjust = 0.5),
+        plot.subtitle = element_text(size=13,hjust = 0.5))
+ggsave(sprintf("%s%s_HM_AVG.png",
+               out_path,expt_name,hr,pl),
+       width = 10,height = 6)
 
