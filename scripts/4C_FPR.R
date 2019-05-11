@@ -34,9 +34,9 @@ for (hr in unique(data$hours)) {
   if (i == 1) {
     colnames(pdata) = c('hours','p','fpr')
     g = ggplot() + 
-      geom_line(data = pdata[pdata$hours == hr,], aes(x = p, y = fpr, col = as.character(hours)))
+      geom_line(data = pdata[pdata$hours == hr,], aes(x = p, y = fpr, col = as.character(hours)), lwd = 1.5)
   } else {
-    g = g + geom_line(data = pdata[pdata$hours == hr,], aes(x = p, y = fpr, col = as.character(hours)))
+    g = g + geom_line(data = pdata[pdata$hours == hr,], aes(x = p, y = fpr, col = as.character(hours)), lwd = 1.5)
   }
   i = i + 1
 }
@@ -45,11 +45,11 @@ g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
               linetype = 'dashed', lwd = 1.1, alpha = 0.7) +
   labs(x = "P-value cut-off",
        y = "False Positive Rate") +
-  scale_x_continuous(breaks = seq(0,1,0.1),
-                     minor_breaks = seq(0,1,0.05),
+  scale_x_continuous(breaks = seq(0,1,0.01),
+                     minor_breaks = seq(0,1,0.005),
                      limits = c(0,1)) +
-  scale_y_continuous(breaks = seq(0,1,0.1),
-                     minor_breaks = seq(0,1,0.05),
+  scale_y_continuous(breaks = seq(0,1,0.01),
+                     minor_breaks = seq(0,1,0.005),
                      limits = c(0,1)) +
   scale_color_manual(name = "Hours",
                      breaks=c("8","10","14","16","18"),
@@ -66,7 +66,7 @@ g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
         legend.position = "bottom",
         plot.title = element_text(size=20,hjust = 0.5),
         plot.subtitle = element_text(size=13,hjust = 0.5)) +
-  # coord_cartesian(xlim = c(0, 0.1), ylim = c(0, 0.1))
+  coord_cartesian(xlim = c(0, 0.1), ylim = c(0, 0.1))
 ggsave(sprintf("%s%s_FPR_ZOOM.png",
                out_path,expt_name),
        width = 10,height = 10)
