@@ -78,7 +78,7 @@ f <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
                       breaks=c("TL","TR","BL","BR"),
                       labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide = F) +
   scale_x_continuous(breaks = seq(0,2,0.05),
-                     minor_breaks = seq(0,2,0.01),
+                     minor_breaks = seq(0,2,0.025),
                      limits = c(0.8,1.2)) +
   scale_y_continuous(breaks = seq(0,15,1),
                      minor_breaks = seq(0,15,0.5),
