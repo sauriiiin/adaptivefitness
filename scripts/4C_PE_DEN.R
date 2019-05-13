@@ -106,7 +106,6 @@ nf <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
                      limits = c(0,12)) +
   labs(x = 'Fitness', y = '') +
   theme_linedraw()
-#add NIL fit plot here, but firt modify fetch query to get everything at once, or just add another one, whichever simpler.
 
 grid.arrange(a,f,nf,nrow=1)
 
