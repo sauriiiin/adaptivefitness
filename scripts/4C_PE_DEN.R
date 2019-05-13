@@ -18,6 +18,7 @@ out_path = 'figs/illustrations/';
 density = 6144;
 
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
 tablename_p2o = '4C3_pos2orf_name1';
 tablename_bpos = '4C3_borderpos';
 
@@ -39,12 +40,17 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
                                     p2c_info[2],
                                     p2c_info[1],
                                     p2c_info[2]))
-
 hr = hours[[1]][9]
 pl = n_plates[[1]][1]
 
-fitdat = dbGetQuery(conn, sprintf('select * from %s a, %s b where a.hours = %d and a.pos = b.pos and b.%s = %d order by b.%s, b.%s',
-                                  tablename_fit,p2c_info[1],hr,p2c_info[2],
+fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.average, a.fitness,
+                                  b.bg nbg, b.average naverage, b.fitness nfitness
+                                  from %s a, %s b, %s c
+                                  where a.hours = %d and a.hours = b.hours
+                                  and a.pos = b.pos and b.pos = c.pos
+                                  and c.%s = %d order by c.%s, c.%s',
+                                  tablename_fit,tablename_nfit,
+                                  p2c_info[1],hr,p2c_info[2],
                                   pl,p2c_info[3],p2c_info[4]))
 fitdat$bg[is.na(fitdat$average)] = NA
 min = min(fitdat$average, na.rm=T)
@@ -83,12 +89,26 @@ f <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
   scale_y_continuous(breaks = seq(0,15,1),
                      minor_breaks = seq(0,15,0.5),
                      limits = c(0,12)) +
-  labs(x = 'Fitness', y = 'Density') +
+  labs(x = 'Fitness', y = '') +
   theme_linedraw()
 
+nf <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
+  geom_density(lwd = 1.2) + 
+  scale_colour_manual(name="Source",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                      breaks=c("TL","TR","BL","BR"),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_x_continuous(breaks = seq(0,2,0.05),
+                     minor_breaks = seq(0,2,0.025),
+                     limits = c(0.8,1.2)) +
+  scale_y_continuous(breaks = seq(0,15,1),
+                     minor_breaks = seq(0,15,0.5),
+                     limits = c(0,12)) +
+  labs(x = 'Fitness', y = '') +
+  theme_linedraw()
 #add NIL fit plot here, but firt modify fetch query to get everything at once, or just add another one, whichever simpler.
 
-grid.arrange(a,f,nrow=1)
+grid.arrange(a,f,nf,nrow=1)
 
 
 
