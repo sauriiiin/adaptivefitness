@@ -326,12 +326,14 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
     ggsave(sprintf("%s%s_NEIGH_%d_%d.png",
                    out_path,expt_name,hr,pl),
            width = 10,height = 10)
+    
+    # png(sprintf("%s%s_NEIGH_%d_%d.png",
+    #             out_path,expt_name,
+    #             hr,pl),
+    #     width = 1000, height = 1200)
+    # ggMarginal(p, groupColour = T, type = 'density')
+    # dev.off()
   }
 }
 
-# png(sprintf("%s%s_NEIGH_%d_%d.png",
-#             out_path,expt_name,
-#             hr,pl),
-#     width = 1000, height = 1200)
-# ggMarginal(p, groupColour = T, type = 'density')
-# dev.off()
+## Identify positions on the plate where the outliers of the difference analysis are
