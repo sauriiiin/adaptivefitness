@@ -272,3 +272,7 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
 }
 
 
+##### SCATTER PLOT OF THE NEIGHBOR DIFFERENCES AND FITNESS
+### h0 direct correlation
+
+
