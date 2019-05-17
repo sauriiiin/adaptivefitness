@@ -5,6 +5,7 @@
 ##### INITIALIZE
 library(RMariaDB)
 library(ggplot2)
+library(ggExtra)
 library(gridExtra)
 source("R/functions/initialize.sql.R")
 
@@ -120,10 +121,12 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
                                       from %s a, %s b
                                       where a.hours = %d
                                       and a.pos = b.pos
-                                      and b.%s = %d order by b.%s, b.%s',
+                                      and b.%s = %d and a.orf_name = %s
+                                      order by b.%s, b.%s',
                                       tablename_fit,
                                       p2c_info[1],hr,p2c_info[2],
-                                      pl,p2c_info[3],p2c_info[4]))
+                                      pl,'"BF_control"',
+                                      p2c_info[3],p2c_info[4]))
     
     fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
     fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
@@ -134,20 +137,33 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
     dif_avg <- NULL
     var_avg <- NULL
     source <- NULL
-    for (col in unique(fitdat$`6144col`)[11:86]) {
-      for (row in unique(fitdat$`6144row`)[11:54]) {
-        if (!is.na(fitdat$orf_name[fitdat$`6144col` == col & fitdat$`6144row` == row])) {
+    cnt = 1
+    for (sr in unique(fitdat$source)) {
+      temp <- fitdat[fitdat$source == sr,]
+      for (i in seq(2,length(unique(temp$`6144col`)))) {
+        col <- unique(temp$`6144col`)[i]
+        lf <- unique(temp$`6144col`)[i-1]
+        rt <- unique(temp$`6144col`)[i+1]
+        for (ii in seq(2,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+          row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+          up <- unique(temp$`6144row`[temp$`6144col` == col])[ii-1]
+          dw <- unique(temp$`6144row`[temp$`6144col` == col])[ii+1]
           if (fitdat$orf_name[fitdat$`6144col` == col & fitdat$`6144row` == row] == 'BF_control') {
-            a <- fitdat$average[fitdat$`6144col` == col & fitdat$`6144row` == row]
-            u <- fitdat$average[fitdat$`6144col` == col & fitdat$`6144row` == row - 4]
-            d <- fitdat$average[fitdat$`6144col` == col & fitdat$`6144row` == row + 4]
-            l <- fitdat$average[fitdat$`6144col` == col - 4 & fitdat$`6144row` == row]
-            r <- fitdat$average[fitdat$`6144col` == col + 4 & fitdat$`6144row` == row]
-            fitdat$var[fitdat$`6144col` == col & fitdat$`6144row` == row] = sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
-            mn_avg <- c(mn_avg, mean(c(u,d,l,r),na.rm = T))
-            dif_avg <- c(dif_avg, (a - mean(c(u,d,l,r),na.rm = T))/a*100)
-            var_avg <- c(var_avg, sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T))
-            source <- c(source, fitdat$source[fitdat$`6144col` == col & fitdat$`6144row` == row])
+            if (!is.na(fitdat$average[fitdat$`6144col` == col & fitdat$`6144row` == row])) {
+              a <- fitdat$average[fitdat$`6144col` == col & fitdat$`6144row` == row]
+              u <- fitdat$average[fitdat$`6144col` == col & fitdat$`6144row` == up]
+              d <- fitdat$average[fitdat$`6144col` == col & fitdat$`6144row` == dw]
+              l <- fitdat$average[fitdat$`6144col` == lf & fitdat$`6144row` == row]
+              r <- fitdat$average[fitdat$`6144col` == rt & fitdat$`6144row` == row]
+              fitdat$var[fitdat$`6144col` == col & fitdat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
+              fitdat$neigh[fitdat$`6144col` == col & fitdat$`6144row` == row] <-  mean(c(u,d,l,r),na.rm = T)
+              fitdat$diff[fitdat$`6144col` == col & fitdat$`6144row` == row] <- a - mean(c(u,d,l,r),na.rm = T)
+              mn_avg <- c(mn_avg, mean(c(u,d,l,r),na.rm = T))
+              dif_avg <- c(dif_avg, (a - mean(c(u,d,l,r),na.rm = T))/a*100)
+              var_avg <- c(var_avg, sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T))
+              source <- c(source, fitdat$source[fitdat$`6144col` == col & fitdat$`6144row` == row])
+              cnt <- cnt + 1
+            }
           }
         }
       }
@@ -268,11 +284,54 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
         width = 3200, height = 1400)
     grid.arrange(diff_plot,fit_plot,nrow=1)
     dev.off()
+    
+    ##### SCATTER PLOT OF THE NEIGHBOR DIFFERENCES AND FITNESS
+    ### h0 direct correlation
+    
+    ggplot(fitdat[fitdat$orf_name == 'BF_control',]) +
+      geom_abline(linetype = 2, col = 'red', lwd = 1.2) +
+      geom_abline(linetype = 2, col = 'blue', lwd = 1,
+                  intercept = 2 * sd(fitdat$diff, na.rm = T)) +
+      geom_abline(linetype = 2, col = 'blue', lwd = 1,
+                  intercept = -2 * sd(fitdat$diff, na.rm = T)) +
+      geom_point(aes(x=average, y=neigh, col = source)) +
+      scale_colour_manual(name="Source",
+                          values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                          breaks=c("TL","TR","BL","BR"),
+                          labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+      labs(title = "Comparison With Neighbors: References",
+           subtitle = sprintf("%s | %d hours | Plate %d",
+                              expt, hr, pl),
+           x = "Pixel Count",
+           y = "Neighbor Pixel Count Average") +
+      scale_x_continuous(breaks = seq(0,1000,100),
+                         minor_breaks = seq(0,1000,25)) +
+      scale_y_continuous(breaks = seq(0,1000,100),
+                         minor_breaks = seq(0,1000,25)) +
+      theme_linedraw() +
+      theme(axis.text.x = element_text(size=10),
+            axis.title.x = element_text(size=15),
+            axis.text.y = element_text(size=10),
+            axis.title.y = element_text(size=15),
+            legend.position = c(0.8,0.2),
+            legend.background = element_rect(fill="gray90",
+                                             size=.5,
+                                             linetype="dotted"),
+            legend.text = element_text(size=10),
+            legend.title =  element_text(size=15),
+            plot.title = element_text(size=20,hjust = 0.5),
+            plot.subtitle = element_text(size=13,hjust = 0.5)) +
+      coord_cartesian(xlim = c(200,600),
+                      ylim = c(200,600))
+    ggsave(sprintf("%s%s_NEIGH_%d_%d.png",
+                   out_path,expt_name,hr,pl),
+           width = 10,height = 10)
   }
 }
 
-
-##### SCATTER PLOT OF THE NEIGHBOR DIFFERENCES AND FITNESS
-### h0 direct correlation
-
-
+# png(sprintf("%s%s_NEIGH_%d_%d.png",
+#             out_path,expt_name,
+#             hr,pl),
+#     width = 1000, height = 1200)
+# ggMarginal(p, groupColour = T, type = 'density')
+# dev.off()
