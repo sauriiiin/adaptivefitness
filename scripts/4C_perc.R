@@ -114,7 +114,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
                                     p2c_info[1],
                                     p2c_info[2]))
 
-for (hr in hours[[1]][7:length(hours[[1]])]) {
+for (hr in hours[[1]][8:length(hours[[1]])]) {
   for (pl in n_plates[[1]]) {
     fitdat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
@@ -200,13 +200,11 @@ for (hr in hours[[1]][7:length(hours[[1]])]) {
     # grid.arrange(avg_plot,var_plot,nrow=1)
     # dev.off()
     
-    ggplot(var_avg, aes(x=diff, col=source)) +
+    diff_plot <- ggplot(var_avg, aes(x=diff, col=source)) +
       geom_density(lwd = 2) +
       labs(title = "Neighbor Differences: References",
-           subtitle = sprintf("%s | %d hours | Plate %d | L = %d | R = %d",
-                              expt, hr, pl,
-                              dim(var_avg[var_avg$diff < 0,])[1],
-                              dim(var_avg[var_avg$diff > 0,])[1]),
+           subtitle = sprintf("%s | %d hours | Plate %d",
+                              expt, hr, pl),
            x = "Pixel Difference %",
            y = "Density") +
       scale_colour_manual(name="Source",
@@ -215,21 +213,62 @@ for (hr in hours[[1]][7:length(hours[[1]])]) {
                           labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
       scale_x_continuous(breaks = seq(-40,40,4),
                          minor_breaks = seq(-40,40,2)) +
-      scale_y_continuous(breaks = seq(0,1,0.02),
-                         minor_breaks = seq(0,1,0.01)) +
+      scale_y_continuous(breaks = seq(0,1,0.01),
+                         minor_breaks = seq(0,1,0.005)) +
       theme_linedraw() +
-      theme(legend.position = c(0.9,0.83),
+      theme(axis.text.x = element_text(size=20),
+            axis.title.x = element_text(size=28),
+            axis.text.y = element_text(size=20),
+            axis.title.y = element_text(size=28),
+            legend.text = element_text(size=22),
+            legend.title = element_text(size=25),
+            legend.position = c(0.9,0.83),
             legend.background = element_rect(fill="lightblue", 
-                                             size=0.5, linetype="solid")) +
-      coord_cartesian(xlim = c(-12, 16),
+                                             size=0.5, linetype="solid"),
+            plot.title = element_text(size=30,hjust = 0.5),
+            plot.subtitle = element_text(size=25,hjust = 0.5))  +
+      coord_cartesian(xlim = c(-16, 16),
                       ylim = c(0, 0.15))
-    ggsave(sprintf("%s%s_NEIGH_DIFF_%d_%d.png",
-                   out_path,expt_name,hr,pl),
-           width = 10,height = 10)
+    # ggsave(sprintf("%s%s_NEIGH_DIFF_%d_%d.png",
+    #                out_path,expt_name,hr,pl),
+    #        width = 10,height = 10)
+    
+    fit_plot <- ggplot(fitdat[fitdat$orf_name == 'BF_control',], aes(x=fitness, col=source)) +
+      geom_density(lwd = 2) +
+      labs(title = "Fitness Distribution: References",
+           subtitle = sprintf("%s | %d hours | Plate %d",
+                              expt, hr, pl),
+           x = "Fitness",
+           y = "") +
+      scale_colour_manual(name="Source",
+                          values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                          breaks=c("TL","TR","BL","BR"),
+                          labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+      scale_x_continuous(breaks = seq(0,2,0.1),
+                         minor_breaks = seq(0,2,0.05)) +
+      scale_y_continuous(breaks = seq(0,15,1),
+                         minor_breaks = seq(0,15,0.5)) +
+      theme_linedraw() +
+      theme(axis.text.x = element_text(size=20),
+            axis.title.x = element_text(size=28),
+            axis.text.y = element_text(size=20),
+            axis.title.y = element_text(size=28),
+            legend.text = element_text(size=22),
+            legend.title = element_text(size=25),
+            legend.position = c(0.9,0.83),
+            legend.background = element_rect(fill="lightblue", 
+                                             size=0.5, linetype="solid"),
+            plot.title = element_text(size=30,hjust = 0.5),
+            plot.subtitle = element_text(size=25,hjust = 0.5)) +
+      coord_cartesian(xlim = c(0.7, 1.3),
+                      ylim = c(0, 12))
+    png(sprintf("%s%s_NEIGH_DIFFIT_%d_%d.png",
+                out_path,expt_name,
+                hr,pl),
+        width = 3200, height = 1400)
+    grid.arrange(diff_plot,fit_plot,nrow=1)
+    dev.off()
   }
 }
-
-dim(var_avg[var_avg$diff > 0,])[1]
-dim(var_avg[var_avg$diff < 0,])[1]
 
 
