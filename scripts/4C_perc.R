@@ -167,6 +167,10 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
           }
         }
       }
+      diff_std <- sd(fitdat$diff[fitdat$source == sr],na.rm = T)
+      diff_mean <- mean(fitdat$diff[fitdat$source == sr],na.rm = T)
+      fitdat$outlier[fitdat$source == sr & !is.na(fitdat$average) & fitdat$diff > (diff_mean + 2*diff_std)] = 'Right'
+      fitdat$outlier[fitdat$source == sr & !is.na(fitdat$average) & fitdat$diff < (diff_mean - 2*diff_std)] = 'Left'
     }
     var_avg <- data.frame(mn_avg,dif_avg,var_avg,source)
     colnames(var_avg) <- c("mean","diff","var","source")
@@ -333,7 +337,9 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
     #     width = 1000, height = 1200)
     # ggMarginal(p, groupColour = T, type = 'density')
     # dev.off()
+    
+    ## Identify positions on the plate where the outliers of the difference analysis are
+    ggplot(fitdat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
   }
 }
-
-## Identify positions on the plate where the outliers of the difference analysis are
