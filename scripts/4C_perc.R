@@ -117,6 +117,21 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
 
 for (hr in hours[[1]][8:length(hours[[1]])]) {
   for (pl in n_plates[[1]]) {
+    alldat = dbGetQuery(conn, sprintf('select a.*, b.*
+                                      from %s a, %s b
+                                      where a.hours = %d
+                                      and a.pos = b.pos
+                                      and b.%s = %d
+                                      order by b.%s, b.%s',
+                                      tablename_fit,
+                                      p2c_info[1],hr,p2c_info[2],
+                                      pl,
+                                      p2c_info[3],p2c_info[4]))
+   
+    alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
+    alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
+    alldat$colony[is.na(alldat$orf_name)] = 'Gap'
+    
     fitdat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
                                       where a.hours = %d
@@ -339,7 +354,26 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
     # dev.off()
     
     ## Identify positions on the plate where the outliers of the difference analysis are
-    ggplot(fitdat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
+    
+    ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, col = colony, shape = colony)) +
+      geom_point(data =fitdat, aes(x = `6144col`, y = `6144row`, col = outlier)) +
+      labs(title = "Reference Outliers",
+           subtitle = sprintf("%s | %d hours | Plate %d",
+                              expt, hr, pl),
+           x = "Columns",
+           y = "Rows") +
+      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+      scale_color_manual(name="Colony Kind",
+                         values=c("Gap"="blue","Query"="blue","Reference"="blue",
+                                  "Left"="red","Right"="green"),guide=F) +
+      scale_shape_manual(name="Colony Kind",
+                         values=c("Gap"=1,"Query"=19,"Reference"=19),
+                         breaks=c("Reference","Query","Gap"),guide=F) +
+      scale_alpha_manual(values=c("Gap"=0.7,"Query"=0.7,"Reference"=0.7,
+                                   "Left"=1,"Right"=1),guide=F) +
+      theme_linedraw()
+      
   }
 }
