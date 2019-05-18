@@ -62,59 +62,36 @@ fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
 fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
 
 
-a <- ggplot(data = fitdat, aes(x=average, col = source)) +
+ggplot(data = fitdat, aes(x=average, col = source)) +
   geom_density(lwd = 1.2) + 
   scale_colour_manual(name="Source",
                       values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
                       breaks=c("TL","TR","BL","BR"),
-                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide = F) +
-  scale_x_continuous(breaks = seq(0,1000,100),
-                     minor_breaks = seq(0,1000,20),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_x_continuous(breaks = seq(0,1000,50),
+                     minor_breaks = seq(0,1000,25),
                      limits = c(min,max)) +
-  scale_y_continuous(breaks = seq(0,0.02,0.005),
-                     minor_breaks = seq(0,0.02,0.001),
+  scale_y_continuous(breaks = seq(0,1,0.002),
+                     minor_breaks = seq(0,1,0.001),
                      limits = c(0,0.02)) +
-  labs(title = 'Raw counts',
+  labs(title = 'D. Raw colony sizes',
     x = 'Observed Pixel Count', y = 'Density') +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=20),
-        axis.title.x = element_text(size=25),
-        axis.text.y = element_text(size=20),
-        axis.title.y = element_text(size=25),
-        legend.text = element_text(size=20),
-        legend.title = element_text(size=25),
-        legend.position = c(0.85,0.85),
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.position = 'bottom',
         legend.background = element_rect(fill="lightblue", 
                                          size=0.5, linetype="solid"),
-        plot.title = element_text(size=30,hjust = 0.5))
+        plot.title = element_text(size=25,hjust = -0.15))
+ggsave(sprintf("%s%s_PE_DEN_D.png",
+               out_path,expt_name),
+       width = 10,height = 10.5)
 
-f <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
-  geom_density(lwd = 1.2) + 
-  scale_colour_manual(name="Source",
-                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
-                      breaks=c("TL","TR","BL","BR"),
-                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide = F) +
-  scale_x_continuous(breaks = seq(0,2,0.05),
-                     minor_breaks = seq(0,2,0.025),
-                     limits = c(0.7,1.3)) +
-  scale_y_continuous(breaks = seq(0,15,1),
-                     minor_breaks = seq(0,15,0.5),
-                     limits = c(0,12)) +
-  labs(title= 'With Source Normalization',
-       x = 'Fitness', y = '') +
-  theme_linedraw() +
-  theme(axis.text.x = element_text(size=20),
-        axis.title.x = element_text(size=25),
-        axis.text.y = element_text(size=20),
-        axis.title.y = element_text(size=25),
-        legend.text = element_text(size=20),
-        legend.title = element_text(size=25),
-        legend.position = c(0.85,0.85),
-        legend.background = element_rect(fill="lightblue", 
-                                         size=0.5, linetype="solid"),
-        plot.title = element_text(size=30,hjust = 0.5))
-
-nf <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
+ggplot(data = fitdat, aes(x=fitness, col = source)) +
   geom_density(lwd = 1.2) + 
   scale_colour_manual(name="Source",
                       values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
@@ -126,25 +103,51 @@ nf <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
   scale_y_continuous(breaks = seq(0,15,1),
                      minor_breaks = seq(0,15,0.5),
                      limits = c(0,12)) +
-  labs(title= 'W/O Source Normalization',
-    x = 'Fitness', y = '') +
+  labs(title= 'E. With Source Normalization',
+       x = 'Fitness', y = 'Density') +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=20),
-        axis.title.x = element_text(size=25),
-        axis.text.y = element_text(size=20),
-        axis.title.y = element_text(size=25),
-        legend.text = element_text(size=20),
-        legend.title = element_text(size=25),
-        legend.position = c(0.9,0.9),
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.position = 'bottom',
         legend.background = element_rect(fill="lightblue", 
                                          size=0.5, linetype="solid"),
-        plot.title = element_text(size=30,hjust = 0.5))
+        plot.title = element_text(size=25,hjust = -0.13))
+ggsave(sprintf("%s%s_PE_DEN_E.png",
+               out_path,expt_name),
+       width = 10,height = 10.5)
 
-png(sprintf("%s%s_PE_DEN.png",
-            out_path,expt_name),
-    width = 3000, height = 1000)
-grid.arrange(a,f,nf,nrow=1)
-dev.off()
+ggplot(data = fitdat, aes(x=nfitness, col = source)) +
+  geom_density(lwd = 1.2) + 
+  scale_colour_manual(name="Source",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                      breaks=c("TL","TR","BL","BR"),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_x_continuous(breaks = seq(0,2,0.05),
+                     minor_breaks = seq(0,2,0.025),
+                     limits = c(0.7,1.3)) +
+  scale_y_continuous(breaks = seq(0,15,1),
+                     minor_breaks = seq(0,15,0.5),
+                     limits = c(0,12)) +
+  labs(title= 'F. Without Source Normalization',
+    x = 'Fitness', y = 'Density') +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.position = 'bottom',
+        legend.background = element_rect(fill="lightblue", 
+                                         size=0.5, linetype="solid"),
+        plot.title = element_text(size=25,hjust = -0.13))
+ggsave(sprintf("%s%s_PE_DEN_F.png",
+               out_path,expt_name),
+       width = 10,height = 10.5)
 
 
 
