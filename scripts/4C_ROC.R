@@ -7,6 +7,8 @@
 #install.packages("ggplot2")
 # library(RMariaDB)
 library(ggplot2)
+library(tidyverse)
+library(egg)
 # source("R/functions/initialize.sql.R")
 # conn <- initialize.sql("saurin_test")
 
@@ -51,7 +53,7 @@ for (es in c(0.05,0.1,0.15,0.2,0.5)) {
 
 lw = 1.2
 
-ggplot() +
+roc <- ggplot() +
   geom_line(data = alldat[alldat$ES==50,],
             aes(x = FalsePositive, y = p*100, col = 'p'),
             linetype = "dotdash", lwd = lw) +
@@ -70,7 +72,7 @@ ggplot() +
   geom_line(data = alldat[alldat$ES==50,],
             aes(x = FalsePositive, y = TruePositive, col = '50%'),
             lwd = lw) +
-  labs(title = "D. ROC Curve",
+  labs(title = "D. ROC curve",
        x = "False Positive Rate",
        y = "Power") +
   scale_x_continuous(breaks = seq(0,100,10),
@@ -97,17 +99,18 @@ ggplot() +
         legend.text = element_text(size=15),
         legend.title = element_text(size=20),
         legend.position = "bottom",
-        plot.title = element_text(size=25,hjust = -0.115))
+        plot.title = element_text(size=25,hjust = -0.1))
 ggsave(sprintf("%s%s_ROC_%d.png",
                out_path,expt_name,hr),
-       width = 10,height = 10.5)
+       width = 10.5,height = 10.5)
 
 
-
-
-
-
-
-
+##### RUN 4C_ROC, FPR and POW and then do this:
+fig4 <- ggarrange(fpr, fpr.zoom, pow, roc,
+          nrow = 2)
+ggsave(sprintf("%s%s_FIG4.png",
+               out_path,expt_name),
+       fig4,
+       width = 20,height = 20)
 
 
