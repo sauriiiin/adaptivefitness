@@ -443,13 +443,13 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
 fig3 <- ggarrange(obs, pre, fit,
                   nrow = 1)
 ggsave(sprintf("%sfigure3.png",out_path),
-       fig3.top,
+       fig3,
        width = 30,height = 6.5)
 
 fig4 <- ggarrange(raw, src.nrm, no.src.nrm,
                       nrow = 1)
 ggsave(sprintf("%sfigure4.png",out_path),
-       fig3.bot,
+       fig4,
        width = 30,height = 11)
 
 
