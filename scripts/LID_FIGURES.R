@@ -13,7 +13,7 @@ conn <- initialize.sql("saurin_test")
 ##### INITIALIZE
 expt_name = '4C3_GA1'
 expt = 'FS1-1'
-out_path = 'figs/';
+out_path = 'figs/lid_paper/';
 density = 6144;
 
 tablename_pval = sprintf('%s_%d_PVALUE',expt_name,density)
@@ -212,7 +212,250 @@ roc <- ggplot() +
 ##### FINAL FIG4
 fig4 <- ggarrange(fpr, fpr.zoom, pow, roc,
                   nrow = 2)
-ggsave(sprintf("%s%s_FIG4.png",
-               out_path,expt_name),
+ggsave(sprintf("%sfigure4.png",out_path),
        fig4,
        width = 20,height = 20)
+
+
+##### FIGURE 3
+tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
+tablename_p2o = '4C3_pos2orf_name1';
+tablename_bpos = '4C3_borderpos';
+
+p2c_info = NULL
+p2c_info[1] = '4C3_pos2coor6144'
+p2c_info[2] = '6144plate'
+p2c_info[3] = '6144col'
+p2c_info[4] = '6144row'
+
+p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
+                               p2c_info[1],
+                               p2c_info[2],
+                               p2c_info[3],
+                               p2c_info[4]))
+
+n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
+                                    p2c_info[2],
+                                    p2c_info[1],
+                                    p2c_info[2]))
+hr = hours[[1]][9]
+pl = n_plates[[1]][1]
+
+fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.average, a.fitness,
+                                  b.bg nbg, b.average naverage, b.fitness nfitness
+                                  from %s a, %s b, %s c
+                                  where a.hours = %d and a.hours = b.hours
+                                  and a.pos = b.pos and b.pos = c.pos
+                                  and c.%s = %d order by c.%s, c.%s',
+                                  tablename_fit,tablename_nfit,
+                                  p2c_info[1],hr,p2c_info[2],
+                                  pl,p2c_info[3],p2c_info[4]))
+fitdat$bg[is.na(fitdat$average)] = NA
+min = min(fitdat$average, na.rm=T)
+max = max(fitdat$average, na.rm=T)
+
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
+
+fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
+fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
+fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
+
+##### A
+obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
+                 shape = colony,
+                 alpha = colony),size = 7,na.rm = T) +
+  labs(title = "A. Observed Colony Size (Pixel Count)",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1),limits = c(5,92)) +
+  scale_y_continuous(breaks = seq(1,64,1),limits = c(60,5),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1") +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0))
+
+##### B
+pre <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
+                 shape = colony,
+                 alpha = colony),size = 7,na.rm = T) +
+  labs(title = "B. Predicted Colony Size (Pixel Count)",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1),limits = c(5,92)) +
+  scale_y_continuous(breaks = seq(1,64,1),limits = c(60,5),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1") +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0))
+
+##### C
+fit <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = fitness,
+                 shape = colony,
+                 alpha = colony),size = 7,na.rm = T) +
+  labs(title = "C. Fitness Landscape",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1),limits = c(5,92)) +
+  scale_y_continuous(breaks = seq(1,64,1),limits = c(60,5),trans = 'reverse') +
+  scale_color_distiller(name = "FIT",
+                        limits = c(0.7,1.3),
+                        breaks = c(0.70,0.85,1.00,1.15,1.30),
+                        palette = "Set1") +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0))
+
+##### D
+raw <- ggplot(data = fitdat, aes(x=average, col = source)) +
+  geom_density(lwd = 1.2) + 
+  scale_colour_manual(name="Source",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                      breaks=c("TL","TR","BL","BR"),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_x_continuous(breaks = seq(0,1000,50),
+                     minor_breaks = seq(0,1000,25),
+                     limits = c(min,max)) +
+  scale_y_continuous(breaks = seq(0,1,0.002),
+                     minor_breaks = seq(0,1,0.001),
+                     limits = c(0,0.02)) +
+  labs(title = 'D. Raw colony sizes',
+       x = 'Observed Pixel Count', y = 'Density') +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.position = 'bottom',
+        legend.background = element_rect(fill="lightblue", 
+                                         size=0.5, linetype="solid"),
+        plot.title = element_text(size=25,hjust = -0.15))
+
+##### E
+src.nrm <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
+  geom_density(lwd = 1.2) + 
+  scale_colour_manual(name="Source",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                      breaks=c("TL","TR","BL","BR"),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_x_continuous(breaks = seq(0,2,0.05),
+                     minor_breaks = seq(0,2,0.025),
+                     limits = c(0.7,1.3)) +
+  scale_y_continuous(breaks = seq(0,15,1),
+                     minor_breaks = seq(0,15,0.5),
+                     limits = c(0,12)) +
+  labs(title= 'E. With Source Normalization',
+       x = 'Fitness', y = 'Density') +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.position = 'bottom',
+        legend.background = element_rect(fill="lightblue", 
+                                         size=0.5, linetype="solid"),
+        plot.title = element_text(size=25,hjust = -0.13))
+
+##### F
+no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
+  geom_density(lwd = 1.2) + 
+  scale_colour_manual(name="Source",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                      breaks=c("TL","TR","BL","BR"),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_x_continuous(breaks = seq(0,2,0.05),
+                     minor_breaks = seq(0,2,0.025),
+                     limits = c(0.7,1.3)) +
+  scale_y_continuous(breaks = seq(0,15,1),
+                     minor_breaks = seq(0,15,0.5),
+                     limits = c(0,12)) +
+  labs(title= 'F. Without Source Normalization',
+       x = 'Fitness', y = 'Density') +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.position = 'bottom',
+        legend.background = element_rect(fill="lightblue", 
+                                         size=0.5, linetype="solid"),
+        plot.title = element_text(size=25,hjust = -0.13))
+
+##### FINAL FIG 3
+fig3.top <- ggarrange(obs, pre, fit,
+                  nrow = 1)
+ggsave(sprintf("%sfigure3_top.png",out_path),
+       fig3.top,
+       width = 30,height = 6.5)
+
+fig3.bot <- ggarrange(raw, src.nrm, no.src.nrm,
+                      nrow = 1)
+ggsave(sprintf("%sfigure3_bot.png",out_path),
+       fig3.bot,
+       width = 30,height = 11)
+
+
+
+
+
+
+
+
