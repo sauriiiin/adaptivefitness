@@ -46,7 +46,7 @@ for (hr in unique(data$hours)) {
 fpr <- g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
                      linetype = 'dashed', lwd = 1.1, alpha = 0.7) +
   labs(title = "A. False positive rate",
-       x = "P-value cut-off",
+       x = "p-value cut-off",
        y = "False Positive Rate") +
   scale_x_continuous(breaks = seq(0,1,0.1),
                      minor_breaks = seq(0,1,0.05),
@@ -75,7 +75,7 @@ fpr <- g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
 fpr.zoom <- g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
                           linetype = 'dashed', lwd = 1.1, alpha = 0.7) +
   labs(title = "B. False positive rate for p < 0.1",
-       x = "P-value cut-off",
+       x = "p-value cut-off",
        y = "False Positive Rate") +
   scale_x_continuous(breaks = seq(0,1,0.01),
                      minor_breaks = seq(0,1,0.005),
@@ -182,7 +182,7 @@ roc <- ggplot() +
             lwd = lw) +
   labs(title = "D. ROC curve",
        x = "False Positive Rate",
-       y = "Power") +
+       y = "True Positive Rate") +
   scale_x_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5),
                      limits = c(0,100)) +
@@ -979,4 +979,125 @@ fig1.s5 <- ggarrange(fs1, fs2,
 ggsave(sprintf("%sfigure1_s5.png",out_path),
        fig1.s5,
        width = 10,height = 3.5)
+
+
+##### FIGURE S2
+pl = 1
+vpdat = dbGetQuery(conn, sprintf('select *
+                                  from %s a, %s b
+                                  where a.pos = b.pos
+                                  and a.hours in (10,14,18)
+                                  and b.%s = %d
+                                  order by a.hours, b.%s, b.%s',
+                                  tablename_fit,
+                                  p2c_info[1],p2c_info[2],
+                                  pl,p2c_info[3],p2c_info[4]))
+vpdat$average[is.na(vpdat$average)] = 0
+
+vpdat$colony[vpdat$orf_name == 'BF_control'] = 'Reference'
+vpdat$colony[vpdat$orf_name != 'BF_control'] = 'Query'
+vpdat$colony[is.na(vpdat$orf_name)] = 'Gap'
+
+vp10 <- vpdat[vpdat$hours == 10,]
+vp14 <- vpdat[vpdat$hours == 14,]
+vp18 <- vpdat[vpdat$hours == 18,]
+
+vp10$average[vp10$colony == 'Reference'] <- vp14$average[vp14$colony == 'Reference']
+vp18$average[vp18$colony == 'Reference'] <- vp14$average[vp14$colony == 'Reference']
+
+
+v10 <- ggplot(vp10) +
+  geom_point(aes(x = `6144col`, y = `6144row`,
+                 col = colony,
+                 size = average),
+             shape = 19) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#00796B",
+                                "Query" = "#673AB7",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  scale_size(range = c(0, 5), guide = F) +
+  labs(title = "A. t(R) = 14 hours, t(Q) = 10 hours",
+       x = 'Columns',
+       y = 'Rows') +
+  scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
+  scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=5),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size=5),
+        axis.title.y =  element_blank(),
+        legend.text = element_text(size=5),
+        legend.title = element_text(size=7),
+        legend.position = 'bottom',
+        plot.title = element_text(size=9,hjust = 0)) +
+  coord_cartesian(xlim = c(32,56),
+                  ylim = c(38,22))
+
+v14 <- ggplot(vp14) +
+  geom_point(aes(x = `6144col`, y = `6144row`,
+                 col = colony,
+                 size = average),
+             shape = 19) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#00796B",
+                                "Query" = "#673AB7",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  scale_size(range = c(0, 5), guide = F) +
+  labs(title = "B. t(R) = 14 hours, t(Q) = 14 hours",
+       x = 'Columns',
+       y = 'Rows') +
+  scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
+  scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=5),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size=5),
+        axis.title.y =  element_blank(),
+        legend.text = element_text(size=5),
+        legend.title = element_text(size=7),
+        legend.position = 'bottom',
+        plot.title = element_text(size=9,hjust = 0)) +
+  coord_cartesian(xlim = c(32,56),
+                  ylim = c(38,22))
+
+v18 <- ggplot(vp18) +
+  geom_point(aes(x = `6144col`, y = `6144row`,
+                 col = colony,
+                 size = average),
+             shape = 19) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#00796B",
+                                "Query" = "#673AB7",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  scale_size(range = c(0, 5), guide = F) +
+  labs(title = "C. t(R) = 14 hours, t(Q) = 18 hours",
+       x = 'Columns',
+       y = 'Rows') +
+  scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
+  scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=5),
+        axis.title.x = element_blank(),
+        axis.text.y = element_text(size=5),
+        axis.title.y =  element_blank(),
+        legend.text = element_text(size=5),
+        legend.title = element_text(size=7),
+        legend.position = 'bottom',
+        plot.title = element_text(size=9,hjust = 0)) +
+  coord_cartesian(xlim = c(32,56),
+                  ylim = c(38,22))
+
+
+fig.s2 <- ggarrange(v10, v14, v18,
+                     nrow = 1)
+ggsave(sprintf("%sfigure_s2.png",out_path),
+       fig.s2,
+       width = 15,height = 3.5)
+
 
