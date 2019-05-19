@@ -1003,13 +1003,19 @@ vp14 <- vpdat[vpdat$hours == 14,]
 vp18 <- vpdat[vpdat$hours == 18,]
 
 vp10$average[vp10$colony == 'Reference'] <- vp14$average[vp14$colony == 'Reference']
-vp18$average[vp18$colony == 'Reference'] <- vp14$average[vp14$colony == 'Reference']
+vp10$bg <- vp14$bg
+vp10$fitness <- vp10$average/vp10$bg
 
+vp18$average[vp18$colony == 'Reference'] <- vp14$average[vp14$colony == 'Reference']
+vp18$bg <- vp14$bg
+vp18$fitness <- vp18$average/vp18$bg
+
+fit.range <- c(0.5,1.5)
 
 v10 <- ggplot(vp10) +
   geom_point(aes(x = `6144col`, y = `6144row`,
                  col = colony,
-                 size = average),
+                 size = fitness),
              shape = 19) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c('Reference', 'Query', 'Gap'),
@@ -1017,28 +1023,28 @@ v10 <- ggplot(vp10) +
                                 "Query" = "#673AB7",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  scale_size(range = c(0, 5), guide = F) +
+  scale_size(limits = fit.range, guide = F) +
   labs(title = "A. t(R) = 14 hours, t(Q) = 10 hours",
        x = 'Columns',
        y = 'Rows') +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=5),
+  theme(axis.text.x = element_text(size=10),
         axis.title.x = element_blank(),
-        axis.text.y = element_text(size=5),
+        axis.text.y = element_text(size=10),
         axis.title.y =  element_blank(),
-        legend.text = element_text(size=5),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=15),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_text(size=20,hjust = 0)) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
 v14 <- ggplot(vp14) +
   geom_point(aes(x = `6144col`, y = `6144row`,
                  col = colony,
-                 size = average),
+                 size = fitness),
              shape = 19) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c('Reference', 'Query', 'Gap'),
@@ -1046,28 +1052,28 @@ v14 <- ggplot(vp14) +
                                 "Query" = "#673AB7",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  scale_size(range = c(0, 5), guide = F) +
+  scale_size(limits = fit.range, guide = F) +
   labs(title = "B. t(R) = 14 hours, t(Q) = 14 hours",
        x = 'Columns',
        y = 'Rows') +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=5),
+  theme(axis.text.x = element_text(size=10),
         axis.title.x = element_blank(),
-        axis.text.y = element_text(size=5),
+        axis.text.y = element_text(size=10),
         axis.title.y =  element_blank(),
-        legend.text = element_text(size=5),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=15),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_text(size=20,hjust = 0)) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
 v18 <- ggplot(vp18) +
   geom_point(aes(x = `6144col`, y = `6144row`,
                  col = colony,
-                 size = average),
+                 size = fitness),
              shape = 19) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c('Reference', 'Query', 'Gap'),
@@ -1075,21 +1081,21 @@ v18 <- ggplot(vp18) +
                                 "Query" = "#673AB7",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  scale_size(range = c(0, 5), guide = F) +
+  scale_size(limits = fit.range, guide = F) +
   labs(title = "C. t(R) = 14 hours, t(Q) = 18 hours",
        x = 'Columns',
        y = 'Rows') +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=5),
+  theme(axis.text.x = element_text(size=10),
         axis.title.x = element_blank(),
-        axis.text.y = element_text(size=5),
+        axis.text.y = element_text(size=10),
         axis.title.y =  element_blank(),
-        legend.text = element_text(size=5),
-        legend.title = element_text(size=7),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=15),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_text(size=20,hjust = 0)) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
@@ -1098,6 +1104,6 @@ fig.s2 <- ggarrange(v10, v14, v18,
                      nrow = 1)
 ggsave(sprintf("%sfigure_s2.png",out_path),
        fig.s2,
-       width = 15,height = 3.5)
+       width = 30/1.5,height = 7/1.5)
 
 
