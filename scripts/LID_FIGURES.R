@@ -20,7 +20,7 @@ tablename_pval = sprintf('%s_%d_PVALUE',expt_name,density)
 hours = dbGetQuery(conn, sprintf('select distinct hours from %s order by hours asc', tablename_pval))
 pvals = seq(0,1,0.01)
 
-##### FIGURE 4
+##### FIGURE 5
 data = dbGetQuery(conn, sprintf('select * from %s',tablename_pval))
 data = data[data$orf_name != 'BFC100',]
 pdata = data.frame()
@@ -209,15 +209,15 @@ roc <- ggplot() +
         legend.position = "bottom",
         plot.title = element_text(size=25,hjust = -0.1))
 
-##### FINAL FIG4
-fig4 <- ggarrange(fpr, fpr.zoom, pow, roc,
+##### FINAL FIG5
+fig5 <- ggarrange(fpr, fpr.zoom, pow, roc,
                   nrow = 2)
-ggsave(sprintf("%sfigure4.png",out_path),
-       fig4,
+ggsave(sprintf("%sfigure5.png",out_path),
+       fig5,
        width = 20,height = 20)
 
 
-##### FIGURE 3
+##### FIGURE 3 & 4
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
 tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
 tablename_p2o = '4C3_pos2orf_name1';
@@ -264,7 +264,7 @@ fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
 fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
 fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 
-##### A
+##### 3A
 obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
@@ -295,7 +295,7 @@ obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
         plot.title = element_text(size=25,hjust = 0),
         plot.subtitle = element_text(size=20,hjust = 0))
 
-##### B
+##### 3B
 pre <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
                  shape = colony,
@@ -326,7 +326,7 @@ pre <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
         plot.title = element_text(size=25,hjust = 0),
         plot.subtitle = element_text(size=20,hjust = 0))
 
-##### C
+##### 3C
 fit <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = fitness,
                  shape = colony,
@@ -358,7 +358,7 @@ fit <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
         plot.title = element_text(size=25,hjust = 0),
         plot.subtitle = element_text(size=20,hjust = 0))
 
-##### D
+##### 4A
 raw <- ggplot(data = fitdat, aes(x=average, col = source)) +
   geom_density(lwd = 1.2) + 
   scale_colour_manual(name="Source",
@@ -371,7 +371,7 @@ raw <- ggplot(data = fitdat, aes(x=average, col = source)) +
   scale_y_continuous(breaks = seq(0,1,0.002),
                      minor_breaks = seq(0,1,0.001),
                      limits = c(0,0.02)) +
-  labs(title = 'D. Raw colony sizes',
+  labs(title = 'A. Raw colony sizes',
        x = 'Observed Pixel Count', y = 'Density') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=15),
@@ -385,7 +385,7 @@ raw <- ggplot(data = fitdat, aes(x=average, col = source)) +
                                          size=0.5, linetype="solid"),
         plot.title = element_text(size=25,hjust = -0.15))
 
-##### E
+##### 4B
 src.nrm <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
   geom_density(lwd = 1.2) + 
   scale_colour_manual(name="Source",
@@ -398,7 +398,7 @@ src.nrm <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
   scale_y_continuous(breaks = seq(0,15,1),
                      minor_breaks = seq(0,15,0.5),
                      limits = c(0,12)) +
-  labs(title= 'E. With Source Normalization',
+  labs(title= 'B. With Source Normalization',
        x = 'Fitness', y = 'Density') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=15),
@@ -412,7 +412,7 @@ src.nrm <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
                                          size=0.5, linetype="solid"),
         plot.title = element_text(size=25,hjust = -0.13))
 
-##### F
+##### 4C
 no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
   geom_density(lwd = 1.2) + 
   scale_colour_manual(name="Source",
@@ -425,7 +425,7 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
   scale_y_continuous(breaks = seq(0,15,1),
                      minor_breaks = seq(0,15,0.5),
                      limits = c(0,12)) +
-  labs(title= 'F. Without Source Normalization',
+  labs(title= 'C. Without Source Normalization',
        x = 'Fitness', y = 'Density') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=15),
@@ -440,15 +440,15 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
         plot.title = element_text(size=25,hjust = -0.13))
 
 ##### FINAL FIG 3
-fig3.top <- ggarrange(obs, pre, fit,
+fig3 <- ggarrange(obs, pre, fit,
                   nrow = 1)
-ggsave(sprintf("%sfigure3_top.png",out_path),
+ggsave(sprintf("%sfigure3.png",out_path),
        fig3.top,
        width = 30,height = 6.5)
 
-fig3.bot <- ggarrange(raw, src.nrm, no.src.nrm,
+fig4 <- ggarrange(raw, src.nrm, no.src.nrm,
                       nrow = 1)
-ggsave(sprintf("%sfigure3_bot.png",out_path),
+ggsave(sprintf("%sfigure4.png",out_path),
        fig3.bot,
        width = 30,height = 11)
 
