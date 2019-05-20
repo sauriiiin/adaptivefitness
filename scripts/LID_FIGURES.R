@@ -3,6 +3,7 @@
 ##### Date    : 05/18/2019
 
 ##### INITIALIZE
+library(RMariaDB)
 library(readxl)
 library(ggplot2)
 library(tidyverse)
@@ -218,7 +219,8 @@ ggsave(sprintf("%sfigure5.png",out_path),
 
 
 ##### FIGURE 3 & 4
-tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+# tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
 tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
 tablename_p2o = '4C3_pos2orf_name1';
 tablename_bpos = '4C3_borderpos';
@@ -252,8 +254,11 @@ fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.aver
                                   p2c_info[1],hr,p2c_info[2],
                                   pl,p2c_info[3],p2c_info[4]))
 fitdat$bg[is.na(fitdat$average)] = NA
-min = min(fitdat$average, na.rm=T)
-max = max(fitdat$average, na.rm=T)
+# min = min(fitdat$average, na.rm=T)
+# max = max(fitdat$average, na.rm=T)
+
+min = 250
+max = 600
 
 fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
 fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
@@ -268,12 +273,12 @@ fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
-                 alpha = colony),size = 7,na.rm = T) +
+                 alpha = colony),size = 6,na.rm = T) +
   labs(title = "A. Observed Colony Size (Pixel Count)",
        x = "",
        y = "") +
-  scale_x_continuous(breaks = seq(1,96,1),limits = c(5,92)) +
-  scale_y_continuous(breaks = seq(1,64,1),limits = c(60,5),trans = 'reverse') +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
                         limits = c(min,max),
                         palette = "Set1") +
@@ -293,7 +298,9 @@ obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
         legend.title = element_text(size=20,face="bold"),
         legend.position = "right",
         plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0))
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
 
 ##### 3B
 pre <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
