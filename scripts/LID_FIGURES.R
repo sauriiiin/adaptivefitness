@@ -1199,3 +1199,40 @@ ggsave(sprintf("%sfigure_s3.png",out_path),
        sca,
        width = 10,height = 10)
 
+sca2 <- ggplot(sca.dat) +
+  geom_point(aes(x=average, y=bg, col = source, shape = colony),alpha = 0.7) +
+  scale_colour_manual(name="Source",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                      breaks=c("TL","TR","BL","BR"),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Reference"=18,"Query"=15,"Gap"=1),
+                     breaks=c("Reference","Query","Gap")) +
+  labs(title = "S3. Accuracy of background prediction",
+       x = "Observed Colony Size (Pixel Count)",
+       y = "Predicted Colony Size (Pixel Count)") +
+  scale_x_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  scale_y_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=10),
+        axis.title.x = element_text(size=15),
+        axis.text.y = element_text(size=10),
+        axis.title.y = element_text(size=15),
+        legend.position = c(0.8,0.2),
+        legend.background = element_rect(fill="gray90",
+                                         size=.5,
+                                         linetype="dotted"),
+        legend.text = element_text(size=10),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=20,hjust = -0.1)) +
+  guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+         shape = guide_legend(override.aes = list(size=3))) +
+  coord_cartesian(xlim = c(0,600),
+                  ylim = c(0,600))
+
+ggsave(sprintf("%sfigure_s3_2.png",out_path),
+       sca2,
+       width = 10,height = 10)
+
