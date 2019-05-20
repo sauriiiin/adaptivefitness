@@ -439,7 +439,7 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
                                          size=0.5, linetype="solid"),
         plot.title = element_text(size=25,hjust = -0.13))
 
-##### FINAL FIG 3
+##### FINAL FIG 3 & 4
 fig3 <- ggarrange(obs, pre, fit,
                   nrow = 1)
 ggsave(sprintf("%sfigure3.png",out_path),
@@ -453,7 +453,7 @@ ggsave(sprintf("%sfigure4.png",out_path),
        width = 30,height = 11)
 
 
-##### FIGURE 1
+##### FIGURE (S)1
 p2c_info_384 = NULL
 p2c_info_384[1] = '4C3_pos2coor384'
 p2c_info_384[2] = '384plate'
@@ -503,22 +503,22 @@ gly1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
              size = 5) +
   scale_color_manual(name = 'Colony Type',
                        breaks = c('Reference', 'Query', 'Gap'),
-                       values = c("Reference" = "#FFC107",
+                       values = c("Reference" = "#303F9F",
                                   "Query" = "#303F9F",
                                   "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Glycerol Stock #1") +
+  labs(y = "A. Glycerol Stocks") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=5),
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=5),
-        axis.title.y =  element_blank(),
+        axis.title.y = element_text(size=12),
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
   
@@ -528,11 +528,11 @@ gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
              size = 5) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
+                     values = c("Reference" = "#303F9F",
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Glycerol Stock #2") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -543,7 +543,7 @@ gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -553,11 +553,11 @@ gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
              size = 5) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
+                     values = c("Reference" = "#303F9F",
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Glycerol Stock #3") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -568,7 +568,7 @@ gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -578,11 +578,11 @@ gly4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
              size = 5) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
+                     values = c("Reference" = "#303F9F",
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Glycerol Stock #4") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -593,7 +593,7 @@ gly4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -613,18 +613,18 @@ wc1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Working Copy #1") +
+  labs(y = "B. Working Copies") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=5),
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=5),
-        axis.title.y =  element_blank(),
+        axis.title.y = element_text(size=12),
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -638,7 +638,7 @@ wc2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Working Copy #2") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -649,7 +649,7 @@ wc2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -663,7 +663,7 @@ wc3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Working Copy #3") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -674,7 +674,7 @@ wc3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -688,7 +688,7 @@ wc4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Working Copy #4") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -699,7 +699,7 @@ wc4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -720,18 +720,18 @@ sp1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Starting Plate #1") +
+  labs(y = "Starting Plates") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=5),
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=5),
-        axis.title.y =  element_blank(),
+        axis.title.y = element_text(size=12),
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -745,7 +745,7 @@ sp2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Starting Plate #2") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -756,7 +756,7 @@ sp2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -770,7 +770,7 @@ sp3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Starting Plate #3") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -781,7 +781,7 @@ sp3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -795,7 +795,7 @@ sp4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Starting Plate #4") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
   scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
   theme_linedraw() +
@@ -806,7 +806,7 @@ sp4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
@@ -827,18 +827,18 @@ ps1 <- ggplot(lay.1536[lay.1536$`1536plate` == 1,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Pre-screen Plate #1") +
+  labs(y = "C. Pre-screen Plates") +
   scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
   scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=5),
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=5),
-        axis.title.y =  element_blank(),
+        axis.title.y = element_text(size=12),
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,48),
                   ylim = c(32,1))
 
@@ -852,7 +852,7 @@ ps2 <- ggplot(lay.1536[lay.1536$`1536plate` == 2,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Pre-screen Plate #2") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
   scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
   theme_linedraw() +
@@ -863,7 +863,7 @@ ps2 <- ggplot(lay.1536[lay.1536$`1536plate` == 2,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,48),
                   ylim = c(32,1))
 
@@ -877,7 +877,7 @@ ps3 <- ggplot(lay.1536[lay.1536$`1536plate` == 3,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Pre-screen Plate #3") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
   scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
   theme_linedraw() +
@@ -888,7 +888,7 @@ ps3 <- ggplot(lay.1536[lay.1536$`1536plate` == 3,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,48),
                   ylim = c(32,1))
 
@@ -902,7 +902,7 @@ ps4 <- ggplot(lay.1536[lay.1536$`1536plate` == 4,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Pre-screen Plate #4") +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
   scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
   theme_linedraw() +
@@ -913,7 +913,7 @@ ps4 <- ggplot(lay.1536[lay.1536$`1536plate` == 4,]) +
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,48),
                   ylim = c(32,1))
 
@@ -934,18 +934,18 @@ fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Final screen Plate #1") +
+  labs(y = "D. Final Screen Plates") +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=5),
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=5),
-        axis.title.y =  element_blank(),
+        axis.title.y = element_text(size=12),
         legend.text = element_text(size=5),
         legend.title = element_text(size=7),
         legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        plot.title = element_blank()) +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
@@ -957,9 +957,8 @@ fs2 <- ggplot(lay.6144[lay.6144$`6144plate` == 2,]) +
                      breaks = c('Reference', 'Query', 'Gap'),
                      values = c("Reference" = "#FFC107",
                                 "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "Final screen Plate #2") +
+                                "Gap" = "#FF5252")) +
+  labs(title = "") +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
   theme_linedraw() +
@@ -967,10 +966,11 @@ fs2 <- ggplot(lay.6144[lay.6144$`6144plate` == 2,]) +
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=5),
         axis.title.y =  element_blank(),
-        legend.text = element_text(size=5),
-        legend.title = element_text(size=7),
-        legend.position = 'bottom',
-        plot.title = element_text(size=9,hjust = 0)) +
+        legend.text = element_text(size=12),
+        legend.title = element_text(size=12),
+        legend.position = 'right',
+        plot.title = element_blank()) +
+  guides(color = guide_legend(override.aes = list(size=6))) +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
@@ -978,7 +978,7 @@ fig1.s5 <- ggarrange(fs1, fs2,
                      nrow = 1)
 ggsave(sprintf("%sfigure1_s5.png",out_path),
        fig1.s5,
-       width = 10,height = 3.5)
+       width = 11.5,height = 3.5)
 
 
 ##### FIGURE S2
@@ -1023,7 +1023,7 @@ v10 <- ggplot(vp10) +
                                 "Query" = "#673AB7",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  scale_size(limits = fit.range, guide = F) +
+  scale_size(limits = fit.range, range = c(0, 11), guide = F) +
   labs(title = "A. t(R) = 14 hours, t(Q) = 10 hours",
        x = 'Columns',
        y = 'Rows') +
@@ -1034,10 +1034,11 @@ v10 <- ggplot(vp10) +
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=10),
         axis.title.y =  element_blank(),
-        legend.text = element_text(size=10),
-        legend.title = element_text(size=15),
-        legend.position = 'bottom',
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18),
+        legend.position = 'right',
         plot.title = element_text(size=20,hjust = 0)) +
+  guides(color = guide_legend(override.aes = list(size=5))) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
@@ -1047,13 +1048,12 @@ v14 <- ggplot(vp14) +
                  size = fitness),
              shape = 19) +
   scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
+                     breaks = c('Reference', 'Query'),
                      values = c("Reference" = "#00796B",
                                 "Query" = "#673AB7",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  scale_size(limits = fit.range, guide = F) +
-  labs(title = "B. t(R) = 14 hours, t(Q) = 14 hours",
+                                "Gap" = "#FF5252")) +
+  scale_size(limits = fit.range, range = c(0, 11), guide = F) +
+  labs(title = "C. t(R) = 14 hours, t(Q) = 14 hours",
        x = 'Columns',
        y = 'Rows') +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
@@ -1063,10 +1063,11 @@ v14 <- ggplot(vp14) +
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=10),
         axis.title.y =  element_blank(),
-        legend.text = element_text(size=10),
-        legend.title = element_text(size=15),
-        legend.position = 'bottom',
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18),
+        legend.position = 'right',
         plot.title = element_text(size=20,hjust = 0)) +
+  guides(color = guide_legend(override.aes = list(size=5))) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
@@ -1081,8 +1082,8 @@ v18 <- ggplot(vp18) +
                                 "Query" = "#673AB7",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  scale_size(limits = fit.range, guide = F) +
-  labs(title = "C. t(R) = 14 hours, t(Q) = 18 hours",
+  scale_size(limits = fit.range, range = c(0, 11), guide = F) +
+  labs(title = "B. t(R) = 14 hours, t(Q) = 18 hours",
        x = 'Columns',
        y = 'Rows') +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
@@ -1092,18 +1093,19 @@ v18 <- ggplot(vp18) +
         axis.title.x = element_blank(),
         axis.text.y = element_text(size=10),
         axis.title.y =  element_blank(),
-        legend.text = element_text(size=10),
-        legend.title = element_text(size=15),
-        legend.position = 'bottom',
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18),
+        legend.position = 'right',
         plot.title = element_text(size=20,hjust = 0)) +
+  guides(color = guide_legend(override.aes = list(size=5))) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
 
-fig.s2 <- ggarrange(v10, v14, v18,
+fig.s2 <- ggarrange(v10, v18, v14,
                      nrow = 1)
 ggsave(sprintf("%sfigure_s2.png",out_path),
        fig.s2,
-       width = 30/1.5,height = 7/1.5)
+       width = 30,height = 7)
 
 
