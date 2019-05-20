@@ -1120,11 +1120,82 @@ v18 <- ggplot(vp18) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
-
 fig.s2 <- ggarrange(v10, v18, v14,
                      nrow = 1)
 ggsave(sprintf("%sfigure_s2.png",out_path),
        fig.s2,
        width = 30,height = 7.2)
 
+##### FIGURE S3
+pl = 1
+sca.dat = dbGetQuery(conn, sprintf('select *
+                                  from %s a, %s b
+                                  where a.pos = b.pos
+                                  and b.%s = %d
+                                  order by a.hours, b.%s, b.%s',
+                                 tablename_fit,
+                                 p2c_info[1],p2c_info[2],
+                                 pl,p2c_info[3],p2c_info[4]))
+
+sca.dat$bg[is.na(sca.dat$average)] = NA
+min = min(sca.dat$average, na.rm=T)
+max = max(sca.dat$average, na.rm=T)
+
+sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==1] = 'TL'
+sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==1] = 'BL'
+sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==0] = 'TR'
+sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==0] = 'BR'
+
+sca.dat$colony[sca.dat$orf_name == 'BF_control'] = 'Reference'
+sca.dat$colony[sca.dat$orf_name != 'BF_control'] = 'Query'
+sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
+
+# sca.dat <- sca.dat[sca.dat$hours > 10,]
+
+m <- lm(bg ~ average, sca.dat)
+
+sca <- ggplot(sca.dat) +
+  geom_point(aes(x=average, y=bg, col = hours),alpha = 0.7) +
+  # geom_abline(linetype = 2, col = '#FFC107', lwd = 1.2) +
+  geom_smooth(data = sca.dat, aes(x=average, y=bg),
+              method = "lm", se=FALSE, color="#FFC107", linetype = 2,
+              formula = y ~ x) +
+  # scale_colour_manual(name="Source",
+  #                     values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+  #                     breaks=c("TL","TR","BL","BR"),
+  #                     labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_color_distiller(name = "Hours",
+                        limits = c(0,18),
+                        breaks = seq(0,18,3),
+                        palette = "Dark2") +
+  labs(title = "S3. Accuracy of background prediction",
+       x = "Observed Colony Size (Pixel Count)",
+       y = "Predicted Colony Size (Pixel Count)") +
+  scale_x_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  scale_y_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=10),
+        axis.title.x = element_text(size=15),
+        axis.text.y = element_text(size=10),
+        axis.title.y = element_text(size=15),
+        legend.position = c(0.8,0.2),
+        legend.background = element_rect(fill="gray90",
+                                         size=.5,
+                                         linetype="dotted"),
+        legend.text = element_text(size=10),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=20,hjust = -0.1)) +
+  # guides(color = guide_legend(override.aes = list(size=3))) +
+  coord_cartesian(xlim = c(0,600),
+                  ylim = c(0,600)) +
+  geom_text(x = 290, y = 300,
+            color = "#FFC107",
+            label = sprintf('R2 = %0.3f',summary(m)$r.squared),
+            angle = 45)
+
+ggsave(sprintf("%sfigure_s3.png",out_path),
+       sca,
+       width = 10,height = 10)
 
