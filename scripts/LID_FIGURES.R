@@ -364,7 +364,8 @@ raw <- ggplot(data = fitdat, aes(x=average, col = source)) +
   scale_colour_manual(name="Source",
                       values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
                       breaks=c("TL","TR","BL","BR"),
-                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),
+                      guide = F) +
   scale_x_continuous(breaks = seq(0,1000,50),
                      minor_breaks = seq(0,1000,25),
                      limits = c(min,max)) +
@@ -383,7 +384,8 @@ raw <- ggplot(data = fitdat, aes(x=average, col = source)) +
         legend.position = 'bottom',
         legend.background = element_rect(fill="lightblue", 
                                          size=0.5, linetype="solid"),
-        plot.title = element_text(size=25,hjust = -0.15))
+        plot.title = element_text(size=25,hjust = -0.15)) +
+  coord_cartesian(ylim = c(0,0.018))
 
 ##### 4B
 src.nrm <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
@@ -410,7 +412,8 @@ src.nrm <- ggplot(data = fitdat, aes(x=fitness, col = source)) +
         legend.position = 'bottom',
         legend.background = element_rect(fill="lightblue", 
                                          size=0.5, linetype="solid"),
-        plot.title = element_text(size=25,hjust = -0.13))
+        plot.title = element_text(size=25,hjust = -0.13)) +
+  coord_cartesian(ylim = c(0,11))
 
 ##### 4C
 no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
@@ -418,7 +421,8 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
   scale_colour_manual(name="Source",
                       values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
                       breaks=c("TL","TR","BL","BR"),
-                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),
+                      guide = F) +
   scale_x_continuous(breaks = seq(0,2,0.05),
                      minor_breaks = seq(0,2,0.025),
                      limits = c(0.7,1.3)) +
@@ -437,7 +441,8 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
         legend.position = 'bottom',
         legend.background = element_rect(fill="lightblue", 
                                          size=0.5, linetype="solid"),
-        plot.title = element_text(size=25,hjust = -0.13))
+        plot.title = element_text(size=25,hjust = -0.13)) +
+  coord_cartesian(ylim = c(0,11))
 
 ##### FINAL FIG 3 & 4
 fig3 <- ggarrange(obs, pre, fit,
@@ -526,7 +531,7 @@ gly1 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
   
-gly2 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
+gly2 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 2,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
              shape = 15,
              size = 5) +
@@ -552,7 +557,7 @@ gly2 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
-gly3 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
+gly3 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 3,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
              shape = 15,
              size = 5) +
@@ -578,7 +583,7 @@ gly3 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
-gly4 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
+gly4 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 4,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
              shape = 15,
              size = 5) +
@@ -1053,7 +1058,6 @@ v10 <- ggplot(vp10) +
         legend.title = element_text(size=18),
         legend.position = 'right',
         plot.title = element_text(size=20,hjust = 0)) +
-  guides(color = guide_legend(override.aes = list(size=5))) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
@@ -1066,7 +1070,8 @@ v14 <- ggplot(vp14) +
                      breaks = c('Reference', 'Query'),
                      values = c("Reference" = "#00796B",
                                 "Query" = "#673AB7",
-                                "Gap" = "#FF5252")) +
+                                "Gap" = "#FF5252"),
+                     guide = F) +
   scale_size(limits = fit.range, range = c(0, 11), guide = F) +
   labs(title = "C. t(R) = 14 hours, t(Q) = 14 hours",
        x = 'Columns',
@@ -1082,7 +1087,6 @@ v14 <- ggplot(vp14) +
         legend.title = element_text(size=18),
         legend.position = 'right',
         plot.title = element_text(size=20,hjust = 0)) +
-  guides(color = guide_legend(override.aes = list(size=5))) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
@@ -1092,7 +1096,7 @@ v18 <- ggplot(vp18) +
                  size = fitness),
              shape = 19) +
   scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
+                     breaks = c('Reference', 'Query'),
                      values = c("Reference" = "#00796B",
                                 "Query" = "#673AB7",
                                 "Gap" = "#FF5252"),
@@ -1110,9 +1114,9 @@ v18 <- ggplot(vp18) +
         axis.title.y =  element_blank(),
         legend.text = element_text(size=15),
         legend.title = element_text(size=18),
-        legend.position = 'right',
+        legend.position = 'bottom',
         plot.title = element_text(size=20,hjust = 0)) +
-  guides(color = guide_legend(override.aes = list(size=5))) +
+  guides(color = guide_legend(override.aes = list(size=6))) +
   coord_cartesian(xlim = c(32,56),
                   ylim = c(38,22))
 
@@ -1121,6 +1125,6 @@ fig.s2 <- ggarrange(v10, v18, v14,
                      nrow = 1)
 ggsave(sprintf("%sfigure_s2.png",out_path),
        fig.s2,
-       width = 30,height = 7)
+       width = 30,height = 7.2)
 
 
