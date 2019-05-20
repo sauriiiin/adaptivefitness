@@ -470,6 +470,9 @@ lay.384$colony[lay.384$orf_name == 'BF_control'] = 'Reference'
 lay.384$colony[lay.384$orf_name != 'BF_control'] = 'Query'
 lay.384$colony[is.na(lay.384$orf_name)] = 'Gap'
 
+stk.lay.384 <- lay.384
+stk.lay.384$colony[stk.lay.384$colony != 'Gap'] = 'Stock'
+
 p2c_info_1536 = NULL
 p2c_info_1536[1] = '4C3_pos2coor1536'
 p2c_info_1536[2] = '1536plate'
@@ -497,13 +500,14 @@ lay.6144$colony[lay.6144$orf_name != 'BF_control'] = 'Query'
 lay.6144$colony[is.na(lay.6144$orf_name)] = 'Gap'
 
 
-gly1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
+gly1 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
              shape = 15,
              size = 5) +
   scale_color_manual(name = 'Colony Type',
-                       breaks = c('Reference', 'Query', 'Gap'),
-                       values = c("Reference" = "#303F9F",
+                       breaks = c('Stock','Reference', 'Query', 'Gap'),
+                       values = c("Stock" = "#689F38",
+                                  "Reference" = "#303F9F",
                                   "Query" = "#303F9F",
                                   "Gap" = "#FF5252"),
                      guide = F) +
@@ -522,13 +526,14 @@ gly1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
   
-gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
+gly2 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
              shape = 15,
              size = 5) +
   scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#303F9F",
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#303F9F",
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
@@ -547,13 +552,14 @@ gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
-gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
+gly3 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
              shape = 15,
              size = 5) +
   scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#303F9F",
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#303F9F",
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
@@ -572,13 +578,14 @@ gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
   coord_cartesian(xlim = c(1,24),
                   ylim = c(16,1))
 
-gly4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
+gly4 <- ggplot(stk.lay.384[stk.lay.384$`384plate` == 1,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
              shape = 15,
              size = 5) +
   scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#303F9F",
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#303F9F",
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
@@ -929,10 +936,12 @@ fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
              shape = 19,
              size = 0.5) +
   scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
+                     drop = F,
                      guide = F) +
   labs(y = "D. Final Screen Plates") +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
@@ -949,15 +958,21 @@ fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
+lay.6144[6144*2+1,4] = 2
+lay.6144[6144*2+1,7] = 'Stock' # done to add 'Stock' colony type to legend
+
 fs2 <- ggplot(lay.6144[lay.6144$`6144plate` == 2,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, col = colony),
              shape = 19,
              size = 0.5) +
   scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
                                 "Query" = "#303F9F",
-                                "Gap" = "#FF5252")) +
+                                "Gap" = "#FF5252"),
+                     labels = c('Stock','Reference', 'Query', 'Gap'),
+                     drop = FALSE) +
   labs(title = "") +
   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
