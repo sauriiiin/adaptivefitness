@@ -132,8 +132,8 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
               plot.title = element_text(size=20,hjust = 0.5),
               plot.subtitle = element_text(size=13,hjust = 0.5)) +
         coord_cartesian(xlim = c(200,600),
-                        ylim = c(200,600)) 
-      
+                        ylim = c(200,600))
+
       ngh.plt <- ggplot(alldat[alldat$source == sr,]) +
         geom_point(aes(x=`6144col`, y=`6144row`,
                        col = outlier,
@@ -174,22 +174,43 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
         guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
                shape = guide_legend(override.aes = list(size=3)),
                alpha = guide_legend(override.aes = list(size=3, alpha = c(1,0.3))))
-      
+
       fig<- ggarrange(ngh.sca, ngh.plt,
                       widths = c(1,1.5),
                       nrow = 1)
-      
+
       ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d_%s.png",
                      out_path,expt_name,hr,pl,sr),
              fig,
              width = 25,height = 10)
     }
     
+    for (o in alldat$pos[alldat$outlier == 'Bigger']) {
+      c = alldat$`6144col`[alldat$pos == o]
+      r = alldat$`6144row`[alldat$pos == o]
+      num.gaps <- sum(alldat$colony[alldat$`6144row` == r - 1 & alldat$`6144col` == c |
+                                      alldat$`6144row` == r + 1 & alldat$`6144col` == c |
+                                      alldat$`6144row` == r & alldat$`6144col` == c - 1 |
+                                      alldat$`6144row` == r & alldat$`6144col` == c + 1 |
+                                      alldat$`6144row` == r - 1 & alldat$`6144col` == c - 1 |
+                                      alldat$`6144row` == r + 1 & alldat$`6144col` == c + 1|
+                                      alldat$`6144row` == r - 1 & alldat$`6144col` == c + 1 |
+                                      alldat$`6144row` == r + 1 & alldat$`6144col` == c - 1] == 'Gap')
+      if (num.gaps > 0) {
+        alldat$gaps[alldat$pos == o] = num.gaps
+      }
+    }
+    
+    num.out <- sum(alldat$outlier != 'Normal')
+    num.big <- sum(alldat$outlier == 'Bigger')
+    big.gap <- sum(alldat$gaps > 0, na.rm = T)
+    
     ggplot(alldat[alldat$source == sr,]) +
       geom_point(data = alldat,
                  aes(x=`6144col`, y=`6144row`,
                      col = outlier,
-                     shape = colony),
+                     shape = colony,
+                     alpha = outlier),
                  size = 3) +
       scale_color_manual(name="wrt Neigh Ref",
                          breaks=c("Smaller","Normal","Bigger"),
@@ -197,11 +218,15 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
       scale_shape_manual(name = 'Colony Type',
                          breaks=c('Reference','Query','Gap'),
                          values=c('Reference' = 18,'Query' = 15, 'Gap' =1)) +
+      scale_alpha_manual(name="wrt Neigh Ref",
+                         breaks=c("Smaller","Normal","Bigger"),
+                         values=c("Smaller"=1,"Bigger"=1,"Normal"=0.7),
+                         guide = F) +
       scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
       scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
       labs(title = "Comparison With Neighboring References",
-           subtitle = sprintf("%s | %d hours | Plate %d",
-                           expt, hr, pl),
+           subtitle = sprintf("%s | %d hours | Plate %d | Outliers = %d | Bigger = %d | Bigger + Gap = %d",
+                           expt, hr, pl, num.out, num.big, big.gap),
            x = "Column",
            y = "Row") +
       theme_linedraw() +
@@ -215,10 +240,10 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
             plot.title = element_text(size=20,hjust = 0.5),
             plot.subtitle = element_text(size=13,hjust = 0.5)) +
       guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
-             shape = guide_legend(override.aes = list(size=3)),
-             alpha = guide_legend(override.aes = list(size=3, alpha = c(1,0.3))))
+             shape = guide_legend(override.aes = list(size=3)))
     ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
                    out_path,expt_name,hr,pl),
            width = 15,height = 10)
+      
   }
 }
