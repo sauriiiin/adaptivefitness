@@ -219,8 +219,8 @@ ggsave(sprintf("%sfigure5.png",out_path),
 
 
 ##### FIGURE 3 & 4
-# tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
+tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+# tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
 tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
 tablename_p2o = '4C3_pos2orf_name1';
 tablename_bpos = '4C3_borderpos';
@@ -1022,9 +1022,9 @@ sca.dat = dbGetQuery(conn, sprintf('select *
                                   where a.pos = b.pos
                                   and b.%s = %d
                                   order by a.hours, b.%s, b.%s',
-                                 tablename_fit,
-                                 p2c_info[1],p2c_info[2],
-                                 pl,p2c_info[3],p2c_info[4]))
+                                  tablename_fit,
+                                  p2c_info[1],p2c_info[2],
+                                  pl,p2c_info[3],p2c_info[4]))
 
 sca.dat$bg[is.na(sca.dat$average)] = NA
 min = min(sca.dat$average, na.rm=T)
@@ -1041,54 +1041,54 @@ sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
 
 # sca.dat <- sca.dat[sca.dat$hours > 10,]
 
-m <- lm(bg ~ average, sca.dat)
+# m <- lm(bg ~ average, sca.dat)
+# 
+# sca <- ggplot(sca.dat) +
+#   geom_point(aes(x=average, y=bg, col = hours),alpha = 0.7) +
+#   # geom_abline(linetype = 2, col = '#FFC107', lwd = 1.2) +
+#   geom_smooth(data = sca.dat, aes(x=average, y=bg),
+#               method = "lm", se=FALSE, color="#FFC107", linetype = 2,
+#               formula = y ~ x) +
+#   # scale_colour_manual(name="Source",
+#   #                     values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+#   #                     breaks=c("TL","TR","BL","BR"),
+#   #                     labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+#   scale_color_distiller(name = "Hours",
+#                         limits = c(0,18),
+#                         breaks = seq(0,18,3),
+#                         palette = "Dark2") +
+#   labs(title = "S3. Accuracy of background prediction",
+#        x = "Observed Colony Size (Pixel Count)",
+#        y = "Predicted Colony Size (Pixel Count)") +
+#   scale_x_continuous(breaks = seq(0,1000,100),
+#                      minor_breaks = seq(0,1000,25)) +
+#   scale_y_continuous(breaks = seq(0,1000,100),
+#                      minor_breaks = seq(0,1000,25)) +
+#   theme_linedraw() +
+#   theme(axis.text.x = element_text(size=10),
+#         axis.title.x = element_text(size=15),
+#         axis.text.y = element_text(size=10),
+#         axis.title.y = element_text(size=15),
+#         legend.position = c(0.8,0.2),
+#         legend.background = element_rect(fill="gray90",
+#                                          size=.5,
+#                                          linetype="dotted"),
+#         legend.text = element_text(size=10),
+#         legend.title =  element_text(size=15),
+#         plot.title = element_text(size=20,hjust = -0.1)) +
+#   # guides(color = guide_legend(override.aes = list(size=3))) +
+#   coord_cartesian(xlim = c(0,600),
+#                   ylim = c(0,600)) +
+#   geom_text(x = 290, y = 300,
+#             color = "#FFC107",
+#             label = sprintf('R2 = %0.3f',summary(m)$r.squared),
+#             angle = 45)
+# 
+# ggsave(sprintf("%sfigure_s3.png",out_path),
+#        sca,
+#        width = 10,height = 10)
 
-sca <- ggplot(sca.dat) +
-  geom_point(aes(x=average, y=bg, col = hours),alpha = 0.7) +
-  # geom_abline(linetype = 2, col = '#FFC107', lwd = 1.2) +
-  geom_smooth(data = sca.dat, aes(x=average, y=bg),
-              method = "lm", se=FALSE, color="#FFC107", linetype = 2,
-              formula = y ~ x) +
-  # scale_colour_manual(name="Source",
-  #                     values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
-  #                     breaks=c("TL","TR","BL","BR"),
-  #                     labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
-  scale_color_distiller(name = "Hours",
-                        limits = c(0,18),
-                        breaks = seq(0,18,3),
-                        palette = "Dark2") +
-  labs(title = "S3. Accuracy of background prediction",
-       x = "Observed Colony Size (Pixel Count)",
-       y = "Predicted Colony Size (Pixel Count)") +
-  scale_x_continuous(breaks = seq(0,1000,100),
-                     minor_breaks = seq(0,1000,25)) +
-  scale_y_continuous(breaks = seq(0,1000,100),
-                     minor_breaks = seq(0,1000,25)) +
-  theme_linedraw() +
-  theme(axis.text.x = element_text(size=10),
-        axis.title.x = element_text(size=15),
-        axis.text.y = element_text(size=10),
-        axis.title.y = element_text(size=15),
-        legend.position = c(0.8,0.2),
-        legend.background = element_rect(fill="gray90",
-                                         size=.5,
-                                         linetype="dotted"),
-        legend.text = element_text(size=10),
-        legend.title =  element_text(size=15),
-        plot.title = element_text(size=20,hjust = -0.1)) +
-  # guides(color = guide_legend(override.aes = list(size=3))) +
-  coord_cartesian(xlim = c(0,600),
-                  ylim = c(0,600)) +
-  geom_text(x = 290, y = 300,
-            color = "#FFC107",
-            label = sprintf('R2 = %0.3f',summary(m)$r.squared),
-            angle = 45)
-
-ggsave(sprintf("%sfigure_s3.png",out_path),
-       sca,
-       width = 10,height = 10)
-
-sca2 <- ggplot(sca.dat) +
+sca2 <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
   geom_point(aes(x=average, y=bg, col = source, shape = colony),alpha = 0.7) +
   scale_colour_manual(name="Source",
                       values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
@@ -1121,7 +1121,7 @@ sca2 <- ggplot(sca.dat) +
   coord_cartesian(xlim = c(0,600),
                   ylim = c(0,600))
 
-ggsave(sprintf("%sfigure_s3_2.png",out_path),
+ggsave(sprintf("%sfigures3_A.png",out_path),
        sca2,
        width = 10,height = 10)
 
