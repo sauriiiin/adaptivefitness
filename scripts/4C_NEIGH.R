@@ -41,7 +41,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
                                     p2c_info[1],
                                     p2c_info[2]))
 
-for (hr in hours[[1]][8:length(hours[[1]])]) {
+for (hr in hours[[1]][9:length(hours[[1]])]) {
   for (pl in n_plates[[1]]) {
     alldat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
@@ -62,43 +62,163 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
     alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
     alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
     alldat$colony[is.na(alldat$orf_name)] = 'Gap'
-    
-    mn_avg <- NULL
-    dif_avg <- NULL
-    var_avg <- NULL
-    source <- NULL
-    cnt = 1
+
+    # cnt = 1
     for (sr in unique(alldat$source)) {
       temp <- alldat[alldat$source == sr,]
       for (i in seq(2,length(unique(temp$`6144col`)))) {
         col <- unique(temp$`6144col`)[i]
-        lf <- unique(temp$`6144col`)[i-1]
-        rt <- unique(temp$`6144col`)[i+1]
+        lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+        rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
         for (ii in seq(2,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
           row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-          up <- unique(temp$`6144row`[temp$`6144col` == col])[ii-1]
-          dw <- unique(temp$`6144row`[temp$`6144col` == col])[ii+1]
-          if (alldat$orf_name[alldat$`6144col` == col & alldat$`6144row` == row] == 'BF_control') {
-            if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
-              a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
-              u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
-              d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
-              l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
-              r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
-              alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
-              alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  mean(c(u,d,l,r),na.rm = T)
-              alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - mean(c(u,d,l,r),na.rm = T)
-              mn_avg <- c(mn_avg, mean(c(u,d,l,r),na.rm = T))
-              dif_avg <- c(dif_avg, (a - mean(c(u,d,l,r),na.rm = T))/a*100)
-              var_avg <- c(var_avg, sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T))
-              source <- c(source, alldat$source[alldat$`6144col` == col & alldat$`6144row` == row])
-              cnt <- cnt + 1
+          up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+          dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+          if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
+            a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
+            u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
+            d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
+            l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
+            r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
+            alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
+            alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  mean(c(u,d,l,r),na.rm = T)
+            alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - mean(c(u,d,l,r),na.rm = T)
             }
-          }
+          # cnt <- cnt + 1
         }
       }
       diff_std <- sd(alldat$diff[alldat$source == sr],na.rm = T)
       diff_mean <- mean(alldat$diff[alldat$source == sr],na.rm = T)
-      alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff > (diff_mean + 2*diff_std)] = 'Right'
-      alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff < (diff_mean - 2*diff_std)] = 'Left'
+      alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff > (diff_mean + 3*diff_std)] = 'Bigger'
+      alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff < (diff_mean - 3*diff_std)] = 'Smaller'
+      alldat$outlier[is.na(alldat$outlier)] = 'Normal'
+      
+      ngh.sca <- ggplot(alldat[alldat$source == sr,]) +
+        geom_abline(linetype = 2, col = 'red', lwd = 1.2) +
+        geom_abline(linetype = 2, col = 'blue', lwd = 1,
+                    intercept = 3*diff_std) +
+        geom_abline(linetype = 2, col = 'blue', lwd = 1,
+                    intercept = -3*diff_std) +
+        geom_point(aes(x=average, y=neigh,
+                       col = outlier,
+                       shape = colony),
+                   size = 3, alpha = 0.7) +
+        scale_color_manual(name="wrt Neigh Ref",
+                           breaks=c("Smaller","Normal","Bigger"),
+                           values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50"),
+                           guide = F) +
+        scale_shape_manual(name = 'Colony Type',
+                           breaks=c('Reference','Query','Gap'),
+                           values=c('Reference' = 18,'Query' = 15, 'Gap' =1),
+                           guide = F) +
+        labs(title = "Comparison With Neighboring References :",
+             x = "Colony Pixel Count",
+             y = "Neighbor Pixel Count Average") +
+        scale_x_continuous(breaks = seq(0,1000,100),
+                           minor_breaks = seq(0,1000,25)) +
+        scale_y_continuous(breaks = seq(0,1000,100),
+                           minor_breaks = seq(0,1000,25)) +
+        theme_linedraw() +
+        theme(axis.text.x = element_text(size=10),
+              axis.title.x = element_text(size=15),
+              axis.text.y = element_text(size=10),
+              axis.title.y = element_text(size=15),
+              legend.position = c(0.8,0.2),
+              legend.background = element_rect(fill="gray90",
+                                               size=.5,
+                                               linetype="dotted"),
+              legend.text = element_text(size=10),
+              legend.title =  element_text(size=15),
+              plot.title = element_text(size=20,hjust = 0.5),
+              plot.subtitle = element_text(size=13,hjust = 0.5)) +
+        coord_cartesian(xlim = c(200,600),
+                        ylim = c(200,600)) 
+      
+      ngh.plt <- ggplot(alldat[alldat$source == sr,]) +
+        geom_point(aes(x=`6144col`, y=`6144row`,
+                       col = outlier,
+                       shape = colony,
+                       alpha = sr),
+                   size = 3) +
+        geom_point(data = alldat,
+                   aes(x=`6144col`, y=`6144row`,
+                       col = outlier,
+                       shape = colony,
+                       alpha = 'REST'),
+                   size = 3) +
+        scale_color_manual(name="wrt Neigh Ref",
+                           breaks=c("Smaller","Normal","Bigger"),
+                           values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
+        scale_shape_manual(name = 'Colony Type',
+                           breaks=c('Reference','Query','Gap'),
+                           values=c('Reference' = 18,'Query' = 15, 'Gap' =1)) +
+        scale_alpha_manual(name = 'Source',
+                           breaks=c(sr,'REST'),
+                           values=c(sr = 1,'REST'=0.4)) +
+        scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
+        scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
+        labs(title = sprintf("%s | %d hours | Plate %d | %s",
+                             expt, hr, pl, sr),
+             x = "Column",
+             y = "Row") +
+        theme_linedraw() +
+        theme(axis.text.x = element_text(size=10),
+              axis.title.x = element_text(size=15),
+              axis.text.y = element_text(size=10),
+              axis.title.y = element_text(size=15),
+              legend.position = 'right',
+              legend.text = element_text(size=10),
+              legend.title =  element_text(size=15),
+              plot.title = element_text(size=20,hjust = 0.5),
+              plot.subtitle = element_text(size=13,hjust = 0.5)) +
+        guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+               shape = guide_legend(override.aes = list(size=3)),
+               alpha = guide_legend(override.aes = list(size=3, alpha = c(1,0.3))))
+      
+      fig<- ggarrange(ngh.sca, ngh.plt,
+                      widths = c(1,1.5),
+                      nrow = 1)
+      
+      ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d_%s.png",
+                     out_path,expt_name,hr,pl,sr),
+             fig,
+             width = 25,height = 10)
     }
+    
+    ggplot(alldat[alldat$source == sr,]) +
+      geom_point(data = alldat,
+                 aes(x=`6144col`, y=`6144row`,
+                     col = outlier,
+                     shape = colony),
+                 size = 3) +
+      scale_color_manual(name="wrt Neigh Ref",
+                         breaks=c("Smaller","Normal","Bigger"),
+                         values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
+      scale_shape_manual(name = 'Colony Type',
+                         breaks=c('Reference','Query','Gap'),
+                         values=c('Reference' = 18,'Query' = 15, 'Gap' =1)) +
+      scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
+      scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
+      labs(title = "Comparison With Neighboring References",
+           subtitle = sprintf("%s | %d hours | Plate %d",
+                           expt, hr, pl),
+           x = "Column",
+           y = "Row") +
+      theme_linedraw() +
+      theme(axis.text.x = element_text(size=10),
+            axis.title.x = element_text(size=15),
+            axis.text.y = element_text(size=10),
+            axis.title.y = element_text(size=15),
+            legend.position = 'right',
+            legend.text = element_text(size=10),
+            legend.title =  element_text(size=15),
+            plot.title = element_text(size=20,hjust = 0.5),
+            plot.subtitle = element_text(size=13,hjust = 0.5)) +
+      guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+             shape = guide_legend(override.aes = list(size=3)),
+             alpha = guide_legend(override.aes = list(size=3, alpha = c(1,0.3))))
+    ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
+                   out_path,expt_name,hr,pl),
+           width = 15,height = 10)
+  }
+}
