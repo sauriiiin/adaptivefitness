@@ -183,6 +183,43 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
                      out_path,expt_name,hr,pl,sr),
              fig,
              width = 25,height = 10)
+      
+      ggplot(alldat[alldat$source == sr,]) +
+        geom_density(aes(x = average, col = source),lwd = 1.2) +
+        geom_point(aes(x = average, y = 0, fill = outlier),
+                   col = 'transparent',
+                   alpha = 0.7,
+                   shape = 21,
+                   size = 3) +
+        scale_fill_manual(name="wrt Neigh Ref",
+                          breaks=c("Smaller","Normal","Bigger"),
+                          values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
+        scale_color_manual(name="Source",
+                           values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                           breaks=c("TL","TR","BL","BR"),
+                           labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+        labs(title = "Outliers on Density Plot",
+             subtitle = sprintf("%s | %d hours | Plate %d | %s",
+                                expt, hr, pl, sr),
+             x = 'Observed Pixel Count',
+             y = 'Density') +
+        theme_linedraw() +
+        theme(axis.text.x = element_text(size=10),
+              axis.title.x = element_text(size=15),
+              axis.text.y = element_text(size=10),
+              axis.title.y = element_text(size=15),
+              legend.position = 'right',
+              legend.text = element_text(size=10),
+              legend.title =  element_text(size=15),
+              plot.title = element_text(size=20,hjust = 0.5),
+              plot.subtitle = element_text(size=13,hjust = 0.5)) +
+        guides(color = guide_legend(override.aes = list(size=2, alpha = 1))) +
+        coord_cartesian(xlim = c(200,600),
+                        ylim = c(0,0.016))
+      
+      ggsave(sprintf("%s%s_NEIGH_OUT_DEN_%d_%d_%s.png",
+                     out_path,expt_name,hr,pl,sr),
+             width = 10,height = 10)
     }
     
     for (o in alldat$pos[alldat$outlier == 'Bigger']) {
@@ -200,11 +237,11 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
         alldat$gaps[alldat$pos == o] = num.gaps
       }
     }
-    
+
     num.out <- sum(alldat$outlier != 'Normal')
     num.big <- sum(alldat$outlier == 'Bigger')
     big.gap <- sum(alldat$gaps > 0, na.rm = T)
-    
+
     ggplot(alldat[alldat$source == sr,]) +
       geom_point(data = alldat,
                  aes(x=`6144col`, y=`6144row`,
@@ -244,6 +281,6 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
     ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
                    out_path,expt_name,hr,pl),
            width = 15,height = 10)
-      
+    
   }
 }
