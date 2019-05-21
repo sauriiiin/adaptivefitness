@@ -127,6 +127,11 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
                                       p2c_info[1],hr,p2c_info[2],
                                       pl,
                                       p2c_info[3],p2c_info[4]))
+    
+    alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==1] = 'TL'
+    alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==1] = 'BL'
+    alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==0] = 'TR'
+    alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = 'BR'
    
     alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
     alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
@@ -346,6 +351,7 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
                    out_path,expt_name,hr,pl),
            width = 10,height = 10)
     
+    
     # png(sprintf("%s%s_NEIGH_%d_%d.png",
     #             out_path,expt_name,
     #             hr,pl),
@@ -356,8 +362,14 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
     ## Identify positions on the plate where the outliers of the difference analysis are
     
     ggplot(alldat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, col = colony, shape = colony)) +
-      geom_point(data =fitdat, aes(x = `6144col`, y = `6144row`, col = outlier)) +
+      geom_point(aes(x = `6144col`, y = `6144row`,
+                     col = colony,
+                     fill = source,
+                     shape = colony),
+                 size = 4) +
+      geom_point(data = fitdat, aes(x = `6144col`, y = `6144row`,
+                                   col = outlier),
+                 size = 6, shape = 19) +
       labs(title = "Reference Outliers",
            subtitle = sprintf("%s | %d hours | Plate %d",
                               expt, hr, pl),
@@ -366,14 +378,21 @@ for (hr in hours[[1]][8:length(hours[[1]])]) {
       scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
       scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
       scale_color_manual(name="Colony Kind",
-                         values=c("Gap"="blue","Query"="blue","Reference"="blue",
-                                  "Left"="red","Right"="green"),guide=F) +
+                         values=c("Gap"="#FF5252","Query"="#303F9F","Reference"="#FFC107",
+                                  "Left"="#212121","Right"="#512DA8"),guide=F) +
+      scale_fill_manual(name="Source",
+                        values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+                        breaks=c("TL","TR","BL","BR"),
+                        labels=c("Top Left","Top Right","Bottom Left","Bottom Right"),guide=F) +
       scale_shape_manual(name="Colony Kind",
-                         values=c("Gap"=1,"Query"=19,"Reference"=19),
+                         values=c("Gap"=1,"Query"=21,"Reference"=21),
                          breaks=c("Reference","Query","Gap"),guide=F) +
       scale_alpha_manual(values=c("Gap"=0.7,"Query"=0.7,"Reference"=0.7,
                                    "Left"=1,"Right"=1),guide=F) +
       theme_linedraw()
+    ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
+                   out_path,expt_name,hr,pl),
+           width = 24,height = 16)
       
   }
 }
