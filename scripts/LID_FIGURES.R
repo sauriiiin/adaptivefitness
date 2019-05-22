@@ -6,6 +6,8 @@
 library(RMariaDB)
 library(readxl)
 library(ggplot2)
+library(gridExtra)
+library(grid)
 library(tidyverse)
 library(egg)
 source("R/functions/initialize.sql.R")
@@ -219,8 +221,8 @@ ggsave(sprintf("%sfigure5.png",out_path),
 
 
 ##### FIGURE 3 & 4
-tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-# tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
+# tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
 tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
 tablename_p2o = '4C3_pos2orf_name1';
 tablename_bpos = '4C3_borderpos';
@@ -257,9 +259,6 @@ fitdat$bg[is.na(fitdat$average)] = NA
 # min = min(fitdat$average, na.rm=T)
 # max = max(fitdat$average, na.rm=T)
 
-min = 250
-max = 600
-
 fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
 fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
 fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
@@ -270,11 +269,15 @@ fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
 fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 
 ##### 3A
+min = 200
+max = 700
+sz <- 2.8
+
 obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
-                 alpha = colony),size = 6,na.rm = T) +
-  labs(title = "A. Observed Colony Size (Pixel Count)",
+                 alpha = colony),size = sz,na.rm = T) +
+  labs(title = "Observed Colony Size (Pixel Count)",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
@@ -306,12 +309,12 @@ obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
 pre <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
                  shape = colony,
-                 alpha = colony),size = 7,na.rm = T) +
-  labs(title = "B. Predicted Colony Size (Pixel Count)",
+                 alpha = colony),size = sz,na.rm = T) +
+  labs(title = "Predicted Colony Size (Pixel Count)",
        x = "",
        y = "") +
-  scale_x_continuous(breaks = seq(1,96,1),limits = c(5,92)) +
-  scale_y_continuous(breaks = seq(1,64,1),limits = c(60,5),trans = 'reverse') +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
                         limits = c(min,max),
                         palette = "Set1") +
@@ -331,18 +334,20 @@ pre <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
         legend.title = element_text(size=20,face="bold"),
         legend.position = "right",
         plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0))
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
 
 ##### 3C
 fit <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = fitness,
                  shape = colony,
-                 alpha = colony),size = 7,na.rm = T) +
-  labs(title = "C. Fitness Landscape",
+                 alpha = colony),size = sz,na.rm = T) +
+  labs(title = "Fitness Landscape",
        x = "",
        y = "") +
-  scale_x_continuous(breaks = seq(1,96,1),limits = c(5,92)) +
-  scale_y_continuous(breaks = seq(1,64,1),limits = c(60,5),trans = 'reverse') +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "FIT",
                         limits = c(0.7,1.3),
                         breaks = c(0.70,0.85,1.00,1.15,1.30),
@@ -363,8 +368,402 @@ fit <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
         legend.title = element_text(size=20,face="bold"),
         legend.position = "right",
         plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0))
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
 
+##### FINAL FIGURE 3
+fig3 <- ggarrange(obs, pre, fit,
+                  nrow = 1)
+ggsave(sprintf("%sfigure3.png",out_path),
+       fig3,
+       width = 30,height = 6.5)
+
+##### FIGURE 2
+sz1536 <- 4.5
+
+step1 <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
+                 shape = colony,
+                 alpha = colony),
+             size = sz, na.rm = T) +
+  labs(title = "Step 1",
+       subtitle = "Observed Colony Size (Pixel Count)",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step2.tl <- ggplot(data = fitdat[fitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = "Step 2",
+       subtitle = "Top Left",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step2.tr <- ggplot(data = fitdat[fitdat$source == "TR",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = " ",
+       subtitle = "Top Right",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step2.bl <- ggplot(data = fitdat[fitdat$source == "BL",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = " ",
+       subtitle = "Bottom Left",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step2.br <- ggplot(data = fitdat[fitdat$source == "BR",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = " ",
+       subtitle = "Bottom Right",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step3.tl <- ggplot(data = fitdat[fitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = "Step 3",
+       subtitle = "Top Left",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step3.tr <- ggplot(data = fitdat[fitdat$source == "TR",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = " ",
+       subtitle = "Top Right",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step3.bl <- ggplot(data = fitdat[fitdat$source == "BL",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = " ",
+       subtitle = "Bottom Left",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step3.br <- ggplot(data = fitdat[fitdat$source == "BR",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
+                 shape = colony,
+                 alpha = colony),
+             size = sz1536, na.rm = T) +
+  labs(title = " ",
+       subtitle = "Bottom Right",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step4 <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
+                 shape = colony,
+                 alpha = colony),
+             size = sz, na.rm = T) +
+  labs(title = "Step 4",
+       subtitle = "Predicted Colony Size (Pixel Count)",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(min,max),
+                        palette = "Set1",
+                        guide = F) +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_classic() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=1),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20,face="bold"),
+        legend.position = "right",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+
+##### FINAL FIGURE 2
+ggsave(sprintf("%sfigure2_s1.png",out_path),
+       step1,
+       width = 9,height = 6.8,
+       limitsize = F)
+
+fig2.s2 <- ggarrange(step2.tl, step2.tr, step2.bl, step2.br,
+                     nrow = 2)
+ggsave(sprintf("%sfigure2_s2.png",out_path),
+       fig2.s2,
+       width = 18,height = 13.6,
+       limitsize = F)
+
+fig2.s3 <- ggarrange(step3.tl, step3.tr, step3.bl, step3.br,
+                     nrow = 2)
+ggsave(sprintf("%sfigure2_s3.png",out_path),
+       fig2.s3,
+       width = 18,height = 13.6,
+       limitsize = F)
+
+ggsave(sprintf("%sfigure2_s4.png",out_path),
+       step4,
+       width = 9,height = 6.8,
+       limitsize = F)
+
+# legend <- cowplot::get_legend(my_hist)
+# 
+# grid.newpage()
+# grid.draw(legend)
+
+##### FIGURE 4
 ##### 4A
 raw <- ggplot(data = fitdat, aes(x=average, col = source)) +
   geom_density(lwd = 1.2) + 
@@ -451,13 +850,7 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
         plot.title = element_text(size=25,hjust = -0.13)) +
   coord_cartesian(ylim = c(0,11))
 
-##### FINAL FIG 3 & 4
-fig3 <- ggarrange(obs, pre, fit,
-                  nrow = 1)
-ggsave(sprintf("%sfigure3.png",out_path),
-       fig3,
-       width = 30,height = 6.5)
-
+##### FINAL FIGURE 4
 fig4 <- ggarrange(raw, src.nrm, no.src.nrm,
                       nrow = 1)
 ggsave(sprintf("%sfigure4.png",out_path),
@@ -1016,68 +1409,70 @@ ggsave(sprintf("%sfigure_s2.png",out_path),
        width = 30,height = 7.2)
 
 ##### FIGURE S3
-pl = 1
-sca.dat = dbGetQuery(conn, sprintf('select *
-                                  from %s a, %s b
-                                  where a.pos = b.pos
-                                  and b.%s = %d
-                                  order by a.hours, b.%s, b.%s',
-                                  tablename_fit,
-                                  p2c_info[1],p2c_info[2],
-                                  pl,p2c_info[3],p2c_info[4]))
+# pl = 1
+# sca.dat = dbGetQuery(conn, sprintf('select *
+#                                   from %s a, %s b
+#                                   where a.pos = b.pos
+#                                   and b.%s = %d
+#                                   order by a.hours, b.%s, b.%s',
+#                                   tablename_fit,
+#                                   p2c_info[1],p2c_info[2],
+#                                   pl,p2c_info[3],p2c_info[4]))
+# 
+# sca.dat$bg[is.na(sca.dat$average)] = NA
+# min = min(sca.dat$average, na.rm=T)
+# max = max(sca.dat$average, na.rm=T)
+# 
+# sca.dat$se <- sca.dat$average - sca.dat$bg
+# 
+# sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==1] = 'TL'
+# sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==1] = 'BL'
+# sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==0] = 'TR'
+# sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==0] = 'BR'
+# 
+# sca.dat$colony[sca.dat$orf_name == 'BF_control'] = 'Reference'
+# sca.dat$colony[sca.dat$orf_name != 'BF_control'] = 'Query'
+# sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
+# 
+# sca.dat$outlier = NA
+# sca.dat$neigh = NA
+# sca.dat$diff = NA
+# 
+# for (sr in unique(sca.dat$source)) {
+#   temp <- sca.dat[sca.dat$source == sr,]
+#   for (hr in unique(temp$hours)) {
+#     se.m <- mean(temp$se[temp$hours == hr],na.rm=T)
+#     se.s <- sd(temp$se[temp$hours == hr],na.rm=T)
+#     temp$outlier[temp$se > se.m + 3*se.s & temp$hours == hr] = 'Bigger'
+#     temp$outlier[temp$se < se.m - 3*se.s & temp$hours == hr] = 'Smaller'
+#     temp$outlier[is.na(temp$outlier) & temp$hours == hr] = 'Normal'
+#     
+#     for (i in seq(2,length(unique(temp$`6144col`)))) {
+#       col <- unique(temp$`6144col`)[i]
+#       lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+#       rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+#       for (ii in seq(2,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+#         row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+#         up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+#         dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+#         if (!is.na(sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr])) {
+#           a <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr]
+#           u <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == up & sca.dat$hours == hr]
+#           d <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == dw & sca.dat$hours == hr]
+#           l <- sca.dat$average[sca.dat$`6144col` == lf & sca.dat$`6144row` == row & sca.dat$hours == hr]
+#           r <- sca.dat$average[sca.dat$`6144col` == rt & sca.dat$`6144row` == row & sca.dat$hours == hr]
+#           sca.dat$var[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-
+#             sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
+#           sca.dat$neigh[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-  mean(c(u,d,l,r),na.rm = T)
+#           sca.dat$diff[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <- a - mean(c(u,d,l,r),na.rm = T)
+#         }
+#       }
+#     }
+#   }
+#   sca.dat$outlier[sca.dat$pos %in% temp$pos] = temp$outlier
+# }
 
-sca.dat$bg[is.na(sca.dat$average)] = NA
-min = min(sca.dat$average, na.rm=T)
-max = max(sca.dat$average, na.rm=T)
-
-sca.dat$se <- sca.dat$average - sca.dat$bg
-
-sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==1] = 'TL'
-sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==1] = 'BL'
-sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==0] = 'TR'
-sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==0] = 'BR'
-
-sca.dat$colony[sca.dat$orf_name == 'BF_control'] = 'Reference'
-sca.dat$colony[sca.dat$orf_name != 'BF_control'] = 'Query'
-sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
-
-sca.dat$outlier = NA
-sca.dat$neigh = NA
-sca.dat$diff = NA
-
-for (sr in unique(sca.dat$source)) {
-  temp <- sca.dat[sca.dat$source == sr,]
-  for (hr in unique(temp$hours)) {
-    se.m <- mean(temp$se[temp$hours == hr],na.rm=T)
-    se.s <- sd(temp$se[temp$hours == hr],na.rm=T)
-    temp$outlier[temp$se > se.m + 3*se.s & temp$hours == hr] = 'Bigger'
-    temp$outlier[temp$se < se.m - 3*se.s & temp$hours == hr] = 'Smaller'
-    temp$outlier[is.na(temp$outlier) & temp$hours == hr] = 'Normal'
-    
-    for (i in seq(2,length(unique(temp$`6144col`)))) {
-      col <- unique(temp$`6144col`)[i]
-      lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-      rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-      for (ii in seq(2,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
-        row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-        up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-        dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-        if (!is.na(sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr])) {
-          a <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr]
-          u <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == up & sca.dat$hours == hr]
-          d <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == dw & sca.dat$hours == hr]
-          l <- sca.dat$average[sca.dat$`6144col` == lf & sca.dat$`6144row` == row & sca.dat$hours == hr]
-          r <- sca.dat$average[sca.dat$`6144col` == rt & sca.dat$`6144row` == row & sca.dat$hours == hr]
-          sca.dat$var[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-
-            sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
-          sca.dat$neigh[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-  mean(c(u,d,l,r),na.rm = T)
-          sca.dat$diff[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <- a - mean(c(u,d,l,r),na.rm = T)
-        }
-      }
-    }
-  }
-  sca.dat$outlier[sca.dat$pos %in% temp$pos] = temp$outlier
-}
+load('output/sca.dat.RData')
   
 sca.tl <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
   geom_abline(intercept = c(0)) +
@@ -1246,6 +1641,8 @@ ggsave(sprintf("%sfigureS3.png",out_path),
        fig.s3,
        width = 20,height = 20)
 
+# save(sca.dat, file = "output/sca.dat.RData")
+
 #####
 
 ggplot(sca.dat[sca.dat$source == 'TL' & sca.dat$hours == 10,]) +
@@ -1253,7 +1650,6 @@ ggplot(sca.dat[sca.dat$source == 'TL' & sca.dat$hours == 10,]) +
              alpha = 0.5, size = 3) +
   geom_point(aes(x=se, y=var, col = outlier, shape = colony),
              alpha = 0.5, size = 3)
-  
   
   
   
