@@ -1042,6 +1042,8 @@ sca.dat$colony[sca.dat$orf_name != 'BF_control'] = 'Query'
 sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
 
 sca.dat$outlier = NA
+sca.dat$neigh = NA
+sca.dat$diff = NA
 
 for (sr in unique(sca.dat$source)) {
   temp <- sca.dat[sca.dat$source == sr,]
@@ -1051,6 +1053,28 @@ for (sr in unique(sca.dat$source)) {
     temp$outlier[temp$se > se.m + 3*se.s & temp$hours == hr] = 'Bigger'
     temp$outlier[temp$se < se.m - 3*se.s & temp$hours == hr] = 'Smaller'
     temp$outlier[is.na(temp$outlier) & temp$hours == hr] = 'Normal'
+    
+    for (i in seq(2,length(unique(temp$`6144col`)))) {
+      col <- unique(temp$`6144col`)[i]
+      lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+      rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+      for (ii in seq(2,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+        row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+        up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+        dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+        if (!is.na(sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr])) {
+          a <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr]
+          u <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == up & sca.dat$hours == hr]
+          d <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == dw & sca.dat$hours == hr]
+          l <- sca.dat$average[sca.dat$`6144col` == lf & sca.dat$`6144row` == row & sca.dat$hours == hr]
+          r <- sca.dat$average[sca.dat$`6144col` == rt & sca.dat$`6144row` == row & sca.dat$hours == hr]
+          sca.dat$var[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-
+            sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
+          sca.dat$neigh[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-  mean(c(u,d,l,r),na.rm = T)
+          sca.dat$diff[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <- a - mean(c(u,d,l,r),na.rm = T)
+        }
+      }
+    }
   }
   sca.dat$outlier[sca.dat$pos %in% temp$pos] = temp$outlier
 }
@@ -1222,3 +1246,16 @@ ggsave(sprintf("%sfigureS3.png",out_path),
        fig.s3,
        width = 20,height = 20)
 
+#####
+
+ggplot(sca.dat[sca.dat$source == 'TL' & sca.dat$hours == 10,]) +
+  geom_point(aes(x=se, y=var, col = source, shape = colony),
+             alpha = 0.5, size = 3) +
+  geom_point(aes(x=se, y=var, col = outlier, shape = colony),
+             alpha = 0.5, size = 3)
+  
+  
+  
+  
+  
+  
