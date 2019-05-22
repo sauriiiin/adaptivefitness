@@ -1030,6 +1030,8 @@ sca.dat$bg[is.na(sca.dat$average)] = NA
 min = min(sca.dat$average, na.rm=T)
 max = max(sca.dat$average, na.rm=T)
 
+sca.dat$se <- sca.dat$average - sca.dat$bg
+
 sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==1] = 'TL'
 sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==1] = 'BL'
 sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==0] = 'TR'
@@ -1039,65 +1041,118 @@ sca.dat$colony[sca.dat$orf_name == 'BF_control'] = 'Reference'
 sca.dat$colony[sca.dat$orf_name != 'BF_control'] = 'Query'
 sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
 
-# sca.dat <- sca.dat[sca.dat$hours > 10,]
+sca.dat$outlier = NA
 
-# m <- lm(bg ~ average, sca.dat)
-# 
-# sca <- ggplot(sca.dat) +
-#   geom_point(aes(x=average, y=bg, col = hours),alpha = 0.7) +
-#   # geom_abline(linetype = 2, col = '#FFC107', lwd = 1.2) +
-#   geom_smooth(data = sca.dat, aes(x=average, y=bg),
-#               method = "lm", se=FALSE, color="#FFC107", linetype = 2,
-#               formula = y ~ x) +
-#   # scale_colour_manual(name="Source",
-#   #                     values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
-#   #                     breaks=c("TL","TR","BL","BR"),
-#   #                     labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
-#   scale_color_distiller(name = "Hours",
-#                         limits = c(0,18),
-#                         breaks = seq(0,18,3),
-#                         palette = "Dark2") +
-#   labs(title = "S3. Accuracy of background prediction",
-#        x = "Observed Colony Size (Pixel Count)",
-#        y = "Predicted Colony Size (Pixel Count)") +
-#   scale_x_continuous(breaks = seq(0,1000,100),
-#                      minor_breaks = seq(0,1000,25)) +
-#   scale_y_continuous(breaks = seq(0,1000,100),
-#                      minor_breaks = seq(0,1000,25)) +
-#   theme_linedraw() +
-#   theme(axis.text.x = element_text(size=10),
-#         axis.title.x = element_text(size=15),
-#         axis.text.y = element_text(size=10),
-#         axis.title.y = element_text(size=15),
-#         legend.position = c(0.8,0.2),
-#         legend.background = element_rect(fill="gray90",
-#                                          size=.5,
-#                                          linetype="dotted"),
-#         legend.text = element_text(size=10),
-#         legend.title =  element_text(size=15),
-#         plot.title = element_text(size=20,hjust = -0.1)) +
-#   # guides(color = guide_legend(override.aes = list(size=3))) +
-#   coord_cartesian(xlim = c(0,600),
-#                   ylim = c(0,600)) +
-#   geom_text(x = 290, y = 300,
-#             color = "#FFC107",
-#             label = sprintf('R2 = %0.3f',summary(m)$r.squared),
-#             angle = 45)
-# 
-# ggsave(sprintf("%sfigure_s3.png",out_path),
-#        sca,
-#        width = 10,height = 10)
-
-sca2 <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
-  geom_point(aes(x=average, y=bg, col = source, shape = colony),alpha = 0.7) +
-  scale_colour_manual(name="Source",
-                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
-                      breaks=c("TL","TR","BL","BR"),
-                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
-  scale_shape_manual(name="Colony Kind",
+for (sr in unique(sca.dat$source)) {
+  temp <- sca.dat[sca.dat$source == sr,]
+  for (hr in unique(temp$hours)) {
+    se.m <- mean(temp$se[temp$hours == hr],na.rm=T)
+    se.s <- sd(temp$se[temp$hours == hr],na.rm=T)
+    temp$outlier[temp$se > se.m + 3*se.s & temp$hours == hr] = 'Bigger'
+    temp$outlier[temp$se < se.m - 3*se.s & temp$hours == hr] = 'Smaller'
+    temp$outlier[is.na(temp$outlier) & temp$hours == hr] = 'Normal'
+  }
+  sca.dat$outlier[sca.dat$pos %in% temp$pos] = temp$outlier
+}
+  
+sca.tl <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
+  geom_abline(intercept = c(0)) +
+  geom_point(aes(x=average, y=bg, col = source, shape = colony),
+             alpha = 0.5, size = 3) +
+  geom_point(aes(x=average, y=bg, col = outlier, shape = colony,alpha = outlier),
+             size = 3) +
+  scale_colour_manual(name="Outlier Type",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548",
+                               "Bigger"="#FFC107","Smaller"="#7B1FA2","Normal"="transparent"),
+                      breaks=c("Bigger","Smaller"),
+                      labels=c("Underpredicted","Overpredicted")) +
+  scale_shape_manual(name="Colony Type",
                      values=c("Reference"=18,"Query"=15,"Gap"=1),
-                     breaks=c("Reference","Query","Gap")) +
-  labs(title = "S3. Accuracy of background prediction",
+                     breaks=c("Reference","Query")) +
+  scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
+                     guide = F) +
+  labs(title = "S3. Accuracy of background prediction using LI Detector",
+       subtitle = "Top Left",
+       x = "",
+       y = "Predicted Colony Size (Pixel Count)") +
+  scale_x_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  scale_y_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.position = c(0.8,0.2),
+        legend.background = element_blank(),
+        legend.text = element_text(size=15),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=25,hjust = -1),
+        plot.subtitle = element_text(size=20,hjust = 0.5)) +
+  guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+         shape = guide_legend(override.aes = list(size=3))) +
+  coord_cartesian(xlim = c(0,600),
+                  ylim = c(0,600))
+
+sca.tr <- ggplot(sca.dat[sca.dat$source == 'TR',]) +
+  geom_abline(intercept = c(0)) +
+  geom_point(aes(x=average, y=bg, col = source, shape = colony),
+             alpha = 0.5, size = 3) +
+  geom_point(aes(x=average, y=bg, col = outlier, shape = colony,alpha = outlier),
+             size = 3) +
+  scale_colour_manual(name="Outlier Type",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548",
+                               "Bigger"="#FFC107","Smaller"="#7B1FA2","Normal"="transparent"),
+                      breaks=c("Bigger","Smaller"),
+                      labels=c("Underpredicted","Overpredicted")) +
+  scale_shape_manual(name="Colony Type",
+                     values=c("Reference"=18,"Query"=15,"Gap"=1),
+                     breaks=c("Reference","Query")) +
+  scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
+                     guide = F) +
+  labs(title = "",
+       subtitle = "Top Right",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  scale_y_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.position = c(0.8,0.2),
+        legend.background = element_blank(),
+        legend.text = element_text(size=15),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=25,hjust = -1),
+        plot.subtitle = element_text(size=20,hjust = 0.5)) +
+  guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+         shape = guide_legend(override.aes = list(size=3))) +
+  coord_cartesian(xlim = c(0,600),
+                  ylim = c(0,600))
+
+sca.bl <- ggplot(sca.dat[sca.dat$source == 'BL',]) +
+  geom_abline(intercept = c(0)) +
+  geom_point(aes(x=average, y=bg, col = source, shape = colony),
+             alpha = 0.5, size = 3) +
+  geom_point(aes(x=average, y=bg, col = outlier, shape = colony,alpha = outlier),
+             size = 3) +
+  scale_colour_manual(name="Outlier Type",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548",
+                               "Bigger"="#FFC107","Smaller"="#7B1FA2","Normal"="transparent"),
+                      breaks=c("Bigger","Smaller"),
+                      labels=c("Underpredicted","Overpredicted")) +
+  scale_shape_manual(name="Colony Type",
+                     values=c("Reference"=18,"Query"=15,"Gap"=1),
+                     breaks=c("Reference","Query")) +
+  scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
+                     guide = F) +
+  labs(title = "",
+       subtitle = "Bottom Left",
        x = "Observed Colony Size (Pixel Count)",
        y = "Predicted Colony Size (Pixel Count)") +
   scale_x_continuous(breaks = seq(0,1000,100),
@@ -1105,23 +1160,65 @@ sca2 <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
   scale_y_continuous(breaks = seq(0,1000,100),
                      minor_breaks = seq(0,1000,25)) +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=10),
-        axis.title.x = element_text(size=15),
-        axis.text.y = element_text(size=10),
-        axis.title.y = element_text(size=15),
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
         legend.position = c(0.8,0.2),
-        legend.background = element_rect(fill="gray90",
-                                         size=.5,
-                                         linetype="dotted"),
-        legend.text = element_text(size=10),
+        legend.background = element_blank(),
+        legend.text = element_text(size=15),
         legend.title =  element_text(size=15),
-        plot.title = element_text(size=20,hjust = -0.1)) +
+        plot.title = element_text(size=25,hjust = -1),
+        plot.subtitle = element_text(size=20,hjust = 0.5)) +
   guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
          shape = guide_legend(override.aes = list(size=3))) +
   coord_cartesian(xlim = c(0,600),
                   ylim = c(0,600))
 
-ggsave(sprintf("%sfigures3_A.png",out_path),
-       sca2,
-       width = 10,height = 10)
+sca.br <- ggplot(sca.dat[sca.dat$source == 'BR',]) +
+  geom_abline(intercept = c(0)) +
+  geom_point(aes(x=average, y=bg, col = source, shape = colony),
+             alpha = 0.5, size = 3) +
+  geom_point(aes(x=average, y=bg, col = outlier, shape = colony,alpha = outlier),
+             size = 3) +
+  scale_colour_manual(name="Outlier Type",
+                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548",
+                               "Bigger"="#FFC107","Smaller"="#7B1FA2","Normal"="transparent"),
+                      breaks=c("Bigger","Smaller"),
+                      labels=c("Underpredicted","Overpredicted")) +
+  scale_shape_manual(name="Colony Type",
+                     values=c("Reference"=18,"Query"=15,"Gap"=1),
+                     breaks=c("Reference","Query")) +
+  scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
+                     guide = F) +
+  labs(title = "",
+       subtitle = "Bottom Right",
+       x = "Observed Colony Size (Pixel Count)",
+       y = "") +
+  scale_x_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  scale_y_continuous(breaks = seq(0,1000,100),
+                     minor_breaks = seq(0,1000,25)) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        legend.position = c(0.8,0.2),
+        legend.background = element_blank(),
+        legend.text = element_text(size=15),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=25,hjust = -1),
+        plot.subtitle = element_text(size=20,hjust = 0.5)) +
+  guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+         shape = guide_legend(override.aes = list(size=3))) +
+  coord_cartesian(xlim = c(0,600),
+                  ylim = c(0,600))
+
+fig.s3 <- ggarrange(sca.tl, sca.tr,
+                    sca.bl, sca.br,
+                    nrow = 2)
+ggsave(sprintf("%sfigureS3.png",out_path),
+       fig.s3,
+       width = 20,height = 20)
 
