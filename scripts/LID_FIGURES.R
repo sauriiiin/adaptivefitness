@@ -221,8 +221,8 @@ ggsave(sprintf("%sfigure5.png",out_path),
 
 
 ##### FIGURE 3 & 4
-# tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
+tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+# tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
 tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
 tablename_p2o = '4C3_pos2orf_name1';
 tablename_bpos = '4C3_borderpos';
@@ -343,7 +343,7 @@ fit <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = fitness,
                  shape = colony,
                  alpha = colony),size = sz,na.rm = T) +
-  labs(title = "Fitness Landscape",
+  labs(title = "Fitness Distribution",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
@@ -1412,70 +1412,74 @@ ggsave(sprintf("%sfigure_s2.png",out_path),
        width = 30,height = 7.2)
 
 ##### FIGURE S3
-# pl = 1
-# sca.dat = dbGetQuery(conn, sprintf('select *
-#                                   from %s a, %s b
-#                                   where a.pos = b.pos
-#                                   and b.%s = %d
-#                                   order by a.hours, b.%s, b.%s',
-#                                   tablename_fit,
-#                                   p2c_info[1],p2c_info[2],
-#                                   pl,p2c_info[3],p2c_info[4]))
-# 
-# sca.dat$bg[is.na(sca.dat$average)] = NA
-# min = min(sca.dat$average, na.rm=T)
-# max = max(sca.dat$average, na.rm=T)
-# 
-# sca.dat$se <- sca.dat$average - sca.dat$bg
-# 
-# sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==1] = 'TL'
-# sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==1] = 'BL'
-# sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==0] = 'TR'
-# sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==0] = 'BR'
-# 
-# sca.dat$colony[sca.dat$orf_name == 'BF_control'] = 'Reference'
-# sca.dat$colony[sca.dat$orf_name != 'BF_control'] = 'Query'
-# sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
-# 
-# sca.dat$outlier = NA
-# sca.dat$neigh = NA
-# sca.dat$diff = NA
-# 
-# for (sr in unique(sca.dat$source)) {
-#   temp <- sca.dat[sca.dat$source == sr,]
-#   for (hr in unique(temp$hours)) {
-#     se.m <- mean(temp$se[temp$hours == hr],na.rm=T)
-#     se.s <- sd(temp$se[temp$hours == hr],na.rm=T)
-#     temp$outlier[temp$se > se.m + 3*se.s & temp$hours == hr] = 'Bigger'
-#     temp$outlier[temp$se < se.m - 3*se.s & temp$hours == hr] = 'Smaller'
-#     temp$outlier[is.na(temp$outlier) & temp$hours == hr] = 'Normal'
-#     
-#     for (i in seq(2,length(unique(temp$`6144col`)))) {
-#       col <- unique(temp$`6144col`)[i]
-#       lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-#       rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-#       for (ii in seq(2,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
-#         row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-#         up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-#         dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-#         if (!is.na(sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr])) {
-#           a <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr]
-#           u <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == up & sca.dat$hours == hr]
-#           d <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == dw & sca.dat$hours == hr]
-#           l <- sca.dat$average[sca.dat$`6144col` == lf & sca.dat$`6144row` == row & sca.dat$hours == hr]
-#           r <- sca.dat$average[sca.dat$`6144col` == rt & sca.dat$`6144row` == row & sca.dat$hours == hr]
-#           sca.dat$var[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-
-#             sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
-#           sca.dat$neigh[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-  mean(c(u,d,l,r),na.rm = T)
-#           sca.dat$diff[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <- a - mean(c(u,d,l,r),na.rm = T)
-#         }
-#       }
-#     }
-#   }
-#   sca.dat$outlier[sca.dat$pos %in% temp$pos] = temp$outlier
-# }
+pl = 2
+sca.dat = dbGetQuery(conn, sprintf('select *
+                                  from %s a, %s b
+                                  where a.pos = b.pos
+                                  and b.%s = %d
+                                  order by a.hours, b.%s, b.%s',
+                                  tablename_fit,
+                                  p2c_info[1],p2c_info[2],
+                                  pl,p2c_info[3],p2c_info[4]))
 
-load('output/sca.dat.RData')
+sca.dat$bg[is.na(sca.dat$average)] = NA
+min = min(sca.dat$average, na.rm=T)
+max = max(sca.dat$average, na.rm=T)
+
+sca.dat$se <- sca.dat$average - sca.dat$bg
+
+sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==1] = 'TL'
+sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==1] = 'BL'
+sca.dat$source[sca.dat$`6144row`%%2==1 & sca.dat$`6144col`%%2==0] = 'TR'
+sca.dat$source[sca.dat$`6144row`%%2==0 & sca.dat$`6144col`%%2==0] = 'BR'
+
+sca.dat$colony[sca.dat$orf_name == 'BF_control'] = 'Reference'
+sca.dat$colony[sca.dat$orf_name != 'BF_control'] = 'Query'
+sca.dat$colony[is.na(sca.dat$orf_name)] = 'Gap'
+
+sca.dat$outlier = NA
+sca.dat$neigh = NA
+sca.dat$diff = NA
+
+for (sr in unique(sca.dat$source)) {
+  temp <- sca.dat[sca.dat$source == sr,]
+  for (hr in unique(temp$hours)) {
+    se.m <- mean(temp$se[temp$hours == hr],na.rm=T)
+    se.s <- sd(temp$se[temp$hours == hr],na.rm=T)
+    temp$outlier[temp$se > se.m + 3*se.s & temp$hours == hr] = 'Bigger'
+    temp$outlier[temp$se < se.m - 3*se.s & temp$hours == hr] = 'Smaller'
+    temp$outlier[is.na(temp$outlier) & temp$hours == hr] = 'Normal'
+
+    for (i in seq(2,length(unique(temp$`6144col`)))) {
+      col <- unique(temp$`6144col`)[i]
+      lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+      rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+      for (ii in seq(2,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+        row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+        up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+        dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+        if (!is.na(sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr])) {
+          a <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr]
+          u <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == up & sca.dat$hours == hr]
+          d <- sca.dat$average[sca.dat$`6144col` == col & sca.dat$`6144row` == dw & sca.dat$hours == hr]
+          l <- sca.dat$average[sca.dat$`6144col` == lf & sca.dat$`6144row` == row & sca.dat$hours == hr]
+          r <- sca.dat$average[sca.dat$`6144col` == rt & sca.dat$`6144row` == row & sca.dat$hours == hr]
+          sca.dat$var[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-
+            sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
+          sca.dat$neigh[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <-  mean(c(u,d,l,r),na.rm = T)
+          sca.dat$diff[sca.dat$`6144col` == col & sca.dat$`6144row` == row & sca.dat$hours == hr] <- a - mean(c(u,d,l,r),na.rm = T)
+        }
+      }
+    }
+  }
+  sca.dat$outlier[sca.dat$pos %in% temp$pos] = temp$outlier
+}
+
+save(sca.dat, file = "output/sca.dat2.RData")
+
+# load('output/sca.dat.RData')
+
+# sca.dat <- sca.dat[sca.dat$hours > 0,]
   
 sca.tl <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
   geom_abline(intercept = c(0)) +
@@ -1494,7 +1498,9 @@ sca.tl <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
   scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
                      guide = F) +
   labs(title = "S3. Accuracy of background prediction using LI Detector",
-       subtitle = "Top Left",
+       subtitle = sprintf("Top Left | RMSE = %0.3f",
+                          sqrt(sum(abs(sca.dat$bg[sca.dat$source == 'TL'] - sca.dat$average[sca.dat$source == 'TL'])^2,na.rm = T)/
+                                 length(sca.dat$bg[!is.na(sca.dat$average) & sca.dat$source == 'TL']))),
        x = "",
        y = "Predicted Colony Size (Pixel Count)") +
   scale_x_continuous(breaks = seq(0,1000,100),
@@ -1534,7 +1540,9 @@ sca.tr <- ggplot(sca.dat[sca.dat$source == 'TR',]) +
   scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
                      guide = F) +
   labs(title = "",
-       subtitle = "Top Right",
+       subtitle = sprintf("Top Right | RMSE = %0.3f",
+                          sqrt(sum(abs(sca.dat$bg[sca.dat$source == 'TR'] - sca.dat$average[sca.dat$source == 'TR'])^2,na.rm = T)/
+                                 length(sca.dat$bg[!is.na(sca.dat$average) & sca.dat$source == 'TR']))),
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(0,1000,100),
@@ -1574,7 +1582,9 @@ sca.bl <- ggplot(sca.dat[sca.dat$source == 'BL',]) +
   scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
                      guide = F) +
   labs(title = "",
-       subtitle = "Bottom Left",
+       subtitle = sprintf("Bottom Left | RMSE = %0.3f",
+                          sqrt(sum(abs(sca.dat$bg[sca.dat$source == 'BL'] - sca.dat$average[sca.dat$source == 'BL'])^2,na.rm = T)/
+                                 length(sca.dat$bg[!is.na(sca.dat$average) & sca.dat$source == 'BL']))),
        x = "Observed Colony Size (Pixel Count)",
        y = "Predicted Colony Size (Pixel Count)") +
   scale_x_continuous(breaks = seq(0,1000,100),
@@ -1614,7 +1624,9 @@ sca.br <- ggplot(sca.dat[sca.dat$source == 'BR',]) +
   scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
                      guide = F) +
   labs(title = "",
-       subtitle = "Bottom Right",
+       subtitle = sprintf("Bottom Right | RMSE = %0.3f",
+                          sqrt(sum(abs(sca.dat$bg[sca.dat$source == 'BR'] - sca.dat$average[sca.dat$source == 'BR'])^2,na.rm = T)/
+                                 length(sca.dat$bg[!is.na(sca.dat$average) & sca.dat$source == 'BR']))),
        x = "Observed Colony Size (Pixel Count)",
        y = "") +
   scale_x_continuous(breaks = seq(0,1000,100),
@@ -1640,11 +1652,12 @@ sca.br <- ggplot(sca.dat[sca.dat$source == 'BR',]) +
 fig.s3 <- ggarrange(sca.tl, sca.tr,
                     sca.bl, sca.br,
                     nrow = 2)
-ggsave(sprintf("%sfigureS3.png",out_path),
+ggsave(sprintf("%sfigureS32.png",out_path),
        fig.s3,
        width = 20,height = 20)
 
-# save(sca.dat, file = "output/sca.dat.RData")
+
+rmse.182 <- sqrt(sum(abs(sca.dat$se[sca.dat$hours == 18])^2, na.rm = T)/length(sca.dat$se[!is.na(sca.dat$se) & sca.dat$hours == 18]))
 
 #####
 
@@ -1654,7 +1667,6 @@ ggplot(sca.dat[sca.dat$source == 'TL' & sca.dat$hours == 10,]) +
   geom_point(aes(x=se, y=var, col = outlier, shape = colony),
              alpha = 0.5, size = 3)
   
-  
-  
-  
+
+
   
