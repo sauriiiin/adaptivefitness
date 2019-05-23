@@ -740,17 +740,17 @@ ggsave(sprintf("%sfigure2_s1.png",out_path),
        limitsize = F)
 
 fig2.s2 <- ggarrange(step2.tl, step2.tr, step2.bl, step2.br,
-                     nrow = 2)
+                     nrow = 1)
 ggsave(sprintf("%sfigure2_s2.png",out_path),
        fig2.s2,
-       width = 18,height = 13.6,
+       width = 36,height = 6.8,
        limitsize = F)
 
 fig2.s3 <- ggarrange(step3.tl, step3.tr, step3.bl, step3.br,
-                     nrow = 2)
+                     nrow = 1)
 ggsave(sprintf("%sfigure2_s3.png",out_path),
        fig2.s3,
-       width = 18,height = 13.6,
+       width = 36,height = 6.8,
        limitsize = F)
 
 ggsave(sprintf("%sfigure2_s4.png",out_path),
@@ -758,10 +758,13 @@ ggsave(sprintf("%sfigure2_s4.png",out_path),
        width = 9,height = 6.8,
        limitsize = F)
 
-# legend <- cowplot::get_legend(my_hist)
-# 
-# grid.newpage()
-# grid.draw(legend)
+legend <- cowplot::get_legend(step4)
+grid.newpage()
+grid.draw(legend)
+ggsave(sprintf("%sfigure2_lgnd.png",out_path),
+       legend,
+       width = 2,height = 4,
+       limitsize = F)
 
 ##### FIGURE 4
 ##### 4A
