@@ -7,6 +7,11 @@ library(ggplot2)
 out_path = 'figs/lid_paper/';
 dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
 
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
 ##### GET DATA
 stats.files <- list.files(path = dat.dir,
                          pattern = "P.csv", recursive = TRUE)
@@ -22,13 +27,20 @@ for (i in 1:length(hours)) {
   dat.stats$cont_hrs <- hours[i]
   dat.fit <- read.csv(paste0(dat.dir,fit.files[i]),na.strings = "NaN")
   cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
-  dat.stats$es <- dat.stats$cs_mean/cont.mean
+  dat.stats$es <-round(dat.stats$cs_mean/cont.mean,4)
   dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
+  for (ii in unique(dat.stats$hours)) {
+    dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
+  }
+  dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+  dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+  dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
   dat.all <- rbind(dat.all,dat.stats)
 }
 
 # save(dat.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_CS/4C3_GA1_CS_DAT_ALL.RData")
 effect_size <- sort(unique(round(dat.all$es,2)))
+dat.all$es <- round(dat.all$es,4)
 dat.pow <- NULL
 
 ##### POWER CALCULATIONS
@@ -107,4 +119,21 @@ ggplot(hello) +
                   ylim = c(0,100))
 ggsave(sprintf("%spower_cslid.png",out_path),
        width = 10,height = 10)
+
+
+##### BOX PLOTS
+
+srt <- sort(unique(dat.all$cen))
+dat.srt <- NULL
+t <- 1
+for (cen in srt) {
+  dat.all$pos <- as.character(t)
+  dat.srt <- rbind(dat.srt, dat.all[dat.all$cen == cen,])
+  t <- t + 1
+}
+
+
+ggplot(dat.srt) +
+  geom_bar(aes(pos, fill = effect))
+
 
