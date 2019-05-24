@@ -35,17 +35,24 @@ dat.pow <- NULL
 for (es in effect_size) {
   N <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03)
   if (N > 0) {
-    TP <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p <= dat.all$pthresh)
+    TP <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p <= dat.all$pthresh & dat.all$hours != dat.all$cont_hrs)
+    FP <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p <= dat.all$pthresh & dat.all$hours == dat.all$cont_hrs)
+    FPR <- FP/sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$hours == dat.all$cont_hrs) * 100
+    TN <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p > dat.all$pthresh & dat.all$hours == dat.all$cont_hrs)
+    FN <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p > dat.all$pthresh & dat.all$hours != dat.all$cont_hrs)
     POW <- TP/N * 100
-    dat.pow <- rbind(dat.pow, c(es,POW))
+    SEN <- TP/sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$hours != dat.all$cont_hrs) * 100
+    SPE <- TN/sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$hours == dat.all$cont_hrs) * 100
+    ACC <- (TP + TN)/N * 100
+    dat.pow <- rbind(dat.pow, c(es,N,TP,FP,FPR,TN,FN,POW,SEN,SPE,ACC))
     }
 }
 
 dat.pow <- data.frame(dat.pow)
-colnames(dat.pow) <- c("es","power")
+colnames(dat.pow) <- c("es","N","TP","FP","FPR","TN","FN","pow","sen","spe","acc")
 
 pd.lid <- ggplot(dat.pow) +
-  geom_line(aes(x = es, y = power),col = '#D32F2F', linetype = 'twodash', lwd = 2) +
+  geom_line(aes(x = es, y = pow),col = '#D32F2F', linetype = 'twodash', lwd = 2) +
   scale_x_continuous(breaks = seq(-2,2,0.02),
                      minor_breaks = seq(-2,2,0.01)) +
   scale_y_continuous(breaks = seq(0,100,10),
@@ -70,7 +77,6 @@ pd.lid <- ggplot(dat.pow) +
 ggsave(sprintf("%spower_lid.png",out_path),
        pd.lid,
        width = 10,height = 10)
-
 
 
 
