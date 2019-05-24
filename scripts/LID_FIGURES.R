@@ -14,8 +14,8 @@ source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
 ##### INITIALIZE
-expt_name = '4C3_GA1'
-expt = 'FS1-1'
+expt_name = '4C3_GA12'
+expt = 'FS1-12'
 out_path = 'figs/lid_paper/';
 density = 6144;
 
@@ -1412,7 +1412,7 @@ ggsave(sprintf("%sfigure_s2.png",out_path),
        width = 30,height = 7.2)
 
 ##### FIGURE S3
-pl = 2
+pl = 1
 sca.dat = dbGetQuery(conn, sprintf('select *
                                   from %s a, %s b
                                   where a.pos = b.pos
@@ -1475,8 +1475,7 @@ for (sr in unique(sca.dat$source)) {
   sca.dat$outlier[sca.dat$pos %in% temp$pos] = temp$outlier
 }
 
-save(sca.dat, file = "output/sca.dat2.RData")
-
+# save(sca.dat, file = "output/sca.dat.CS.RData")
 # load('output/sca.dat.RData')
 
 # sca.dat <- sca.dat[sca.dat$hours > 0,]
@@ -1497,7 +1496,7 @@ sca.tl <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
                      breaks=c("Reference","Query")) +
   scale_alpha_manual(values=c("Smaller"=0.9,"Bigger"=0.9,"Normal"=0),
                      guide = F) +
-  labs(title = "S3. Accuracy of background prediction using LI Detector",
+  labs(title = "S3. Accuracy of background prediction using LID",
        subtitle = sprintf("Top Left | RMSE = %0.3f",
                           sqrt(sum(abs(sca.dat$bg[sca.dat$source == 'TL'] - sca.dat$average[sca.dat$source == 'TL'])^2,na.rm = T)/
                                  length(sca.dat$bg[!is.na(sca.dat$average) & sca.dat$source == 'TL']))),
@@ -1516,7 +1515,7 @@ sca.tl <- ggplot(sca.dat[sca.dat$source == 'TL',]) +
         legend.background = element_blank(),
         legend.text = element_text(size=15),
         legend.title =  element_text(size=15),
-        plot.title = element_text(size=25,hjust = -1),
+        plot.title = element_text(size=25,hjust = 0),
         plot.subtitle = element_text(size=20,hjust = 0.5)) +
   guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
          shape = guide_legend(override.aes = list(size=3))) +
@@ -1652,12 +1651,9 @@ sca.br <- ggplot(sca.dat[sca.dat$source == 'BR',]) +
 fig.s3 <- ggarrange(sca.tl, sca.tr,
                     sca.bl, sca.br,
                     nrow = 2)
-ggsave(sprintf("%sfigureS32.png",out_path),
+ggsave(sprintf("%sfigureS3.png",out_path),
        fig.s3,
        width = 20,height = 20)
-
-
-rmse.182 <- sqrt(sum(abs(sca.dat$se[sca.dat$hours == 18])^2, na.rm = T)/length(sca.dat$se[!is.na(sca.dat$se) & sca.dat$hours == 18]))
 
 #####
 
