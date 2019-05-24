@@ -5,18 +5,18 @@
 ##### INITIALIZE
 library(ggplot2)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_CS/"
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
 
 ##### GET DATA
 stats.files <- list.files(path = dat.dir,
                          pattern = "P.csv", recursive = TRUE)
 fit.files <- list.files(path = dat.dir,
                         pattern = "S.csv", recursive = TRUE)
-hours <- as.numeric(substr(stats.files,10,11))
+hours <- as.numeric(substr(stats.files,9,10))
 dat.all <- NULL
 
 ##### PUTTING IT TOGETHER
-for (i in length(hours)) {
+for (i in 1:length(hours)) {
   hr <- hours[i]
   dat.stats <- read.csv(paste0(dat.dir,stats.files[i]),na.strings = "NaN")
   dat.stats$cont_hrs <- hours[i]
@@ -24,11 +24,11 @@ for (i in length(hours)) {
   cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
   dat.stats$es <- dat.stats$cs_mean/cont.mean
   dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
-  dat.all = rbind(dat.all,dat.stats)
+  dat.all <- rbind(dat.all,dat.stats)
 }
 
-# save(dat.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_CS/4C3_GA1_CS_DAT_ALL.RData")
-effect_size <- sort(unique(round(dat.all$es,3)))
+# save(dat.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/4C3_GA1_LID_DAT_ALL.RData")
+effect_size <- sort(unique(round(dat.all$es,2)))
 dat.pow <- NULL
 
 ##### POWER CALCULATIONS
@@ -44,14 +44,14 @@ for (es in effect_size) {
 dat.pow <- data.frame(dat.pow)
 colnames(dat.pow) <- c("es","power")
 
-pd.cs <- ggplot(dat.pow) +
+pd.lid <- ggplot(dat.pow) +
   geom_line(aes(x = es, y = power),col = '#D32F2F', linetype = 'twodash', lwd = 2) +
   scale_x_continuous(breaks = seq(-2,2,0.02),
                      minor_breaks = seq(-2,2,0.01)) +
   scale_y_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,100,5)) +
   labs(title = "Power Dynamics",
-       subtitle = "Using Cubic Spline",
+       subtitle = "Using LI Detector @ 5% FPR",
        x = "Effect Size",
        y = "Power") +
   theme_linedraw() +
@@ -67,11 +67,9 @@ pd.cs <- ggplot(dat.pow) +
         plot.subtitle = element_text(size=20,hjust = 0)) +
   coord_cartesian(xlim = c(0.9,1.1),
                   ylim = c(0,100))
-ggsave(sprintf("%spower_cs.png",out_path),
-       pd.cs,
+ggsave(sprintf("%spower_lid.png",out_path),
+       pd.lid,
        width = 10,height = 10)
-
-
 
 
 
