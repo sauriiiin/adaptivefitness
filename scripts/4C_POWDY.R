@@ -5,7 +5,7 @@
 ##### INITIALIZE
 library(ggplot2)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID_ALL/"
 
 getmode <- function(v) {
   uniqv <- unique(v)
@@ -17,13 +17,18 @@ stats.files <- list.files(path = dat.dir,
                          pattern = "P.csv", recursive = TRUE)
 fit.files <- list.files(path = dat.dir,
                         pattern = "S.csv", recursive = TRUE)
-hours <- as.numeric(substr(stats.files,9,10))
+hours <- NULL
+for (s in strsplit(stats.files,'_')) {
+  hours <- c(hours, as.numeric(s[3]))
+}
+# hours <- as.numeric(substr(stats.files,9,10))
 dat.all <- NULL
 
 ##### PUTTING IT TOGETHER
 for (i in 1:length(hours)) {
   hr <- hours[i]
   dat.stats <- read.csv(paste0(dat.dir,stats.files[i]),na.strings = "NaN")
+  dat.stats <- dat.stats[dat.stats$hours != 0,]
   dat.stats$cont_hrs <- hours[i]
   dat.fit <- read.csv(paste0(dat.dir,fit.files[i]),na.strings = "NaN")
   cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
@@ -132,8 +137,6 @@ for (cen in srt) {
   t <- t + 1
 }
 
-
 ggplot(dat.srt) +
   geom_bar(aes(pos, fill = effect))
-
 
