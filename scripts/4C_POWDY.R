@@ -23,7 +23,6 @@ for (s in strsplit(stats.files,'_')) {
 }
 # hours <- as.numeric(substr(stats.files,9,10))
 dat.all <- NULL
-
 ##### PUTTING IT TOGETHER
 for (i in 1:length(hours)) {
   hr <- hours[i]
@@ -35,7 +34,8 @@ for (i in 1:length(hours)) {
   dat.stats$es <-round(dat.stats$cs_mean/cont.mean,4)
   dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
   for (ii in unique(dat.stats$hours)) {
-    dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
+    # dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
+    dat.stats$cen[dat.stats$hours == ii] <- mean(dat.stats$es[dat.stats$hours == ii])
   }
   dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
   dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
@@ -127,16 +127,43 @@ ggsave(sprintf("%spower_cslid.png",out_path),
 
 
 ##### BOX PLOTS
-
 srt <- sort(unique(dat.all$cen))
 dat.srt <- NULL
 t <- 1
 for (cen in srt) {
-  dat.all$pos <- as.character(t)
+  dat.all$pos <- t
   dat.srt <- rbind(dat.srt, dat.all[dat.all$cen == cen,])
   t <- t + 1
 }
 
 ggplot(dat.srt) +
-  geom_bar(aes(pos, fill = effect))
+  geom_bar(aes(pos, fill = effect),alpha = 0.9) +
+  scale_fill_manual(name = 'Effect',
+                    breaks = c('Beneficial','Neutral','Deleterious'),
+                    values = c('Deleterious'='#D32F2F',
+                               'Neutral'='#303F9F',
+                               'Beneficial'='#4CAF50')) +
+  labs(title = "Effect Distribution") +
+  scale_y_continuous(name = "",
+                     breaks = c(913 * seq(0,1,0.25)),
+                     labels = c('0%','25%','50%','75%','100%')) +
+  scale_x_continuous(name = "Mean Relative Fitness [not to scale]",
+                     breaks = seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
+                                  (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10),
+                     labels = as.character(round(srt[seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
+                                                   (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10)],2))) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_blank(),
+        legend.position = "right",
+        legend.background = element_rect(color = 'grey60'),
+        legend.text = element_text(size=15),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0))
+ggsave(sprintf("%seffect_dis.png",out_path),
+       width = 12,height = 8)
+
 
