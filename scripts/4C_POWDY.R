@@ -91,42 +91,43 @@ pd.lid <- ggplot(dat.pow) +
         plot.subtitle = element_text(size=20,hjust = 0)) +
   coord_cartesian(xlim = c(0.8,1.2),
                   ylim = c(0,100))
-ggsave(sprintf("%spower_cs.png",out_path),
-       pd.lid,
-       width = 10,height = 10)
+# ggsave(sprintf("%spower_cs.png",out_path),
+#        pd.lid,
+#        width = 10,height = 10)
 
-ggplot(hello) +
-  geom_line(aes(x = es, y = pow, col = norm), linetype = 'twodash', lwd = 1.3) +
-  scale_x_continuous(breaks = seq(-2,2,0.05),
-                     minor_breaks = seq(-2,2,0.01)) +
-  scale_y_continuous(breaks = seq(0,100,10),
-                     minor_breaks = seq(0,100,5)) +
-  labs(title = "Power Dynamics",
-       subtitle = "@ 5% FPR",
-       x = "Effect Size",
-       y = "Power") +
-  scale_color_manual(name = "Normalization",
-                     breaks = c("CS","LID"),
-                     values = c("CS"="#512DA8","LID"="#C2185B"),
-                     labels = c("Cubic Spline","LI Detector")) +
-  theme_linedraw() +
-  theme(axis.text.x = element_text(size=15),
-        axis.title.x = element_text(size=20),
-        axis.text.y = element_text(size=15),
-        axis.title.y = element_text(size=20),
-        legend.position = c(0.85,0.2),
-        legend.background = element_rect(color = 'grey60'),
-        legend.text = element_text(size=15),
-        legend.title =  element_text(size=15),
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
-  coord_cartesian(xlim = c(0.8,1.2),
-                  ylim = c(0,100))
-ggsave(sprintf("%spower_cslid.png",out_path),
-       width = 10,height = 10)
+# ggplot(hello) +
+#   geom_line(aes(x = es, y = pow, col = norm), linetype = 'twodash', lwd = 1.3) +
+#   scale_x_continuous(breaks = seq(-2,2,0.05),
+#                      minor_breaks = seq(-2,2,0.01)) +
+#   scale_y_continuous(breaks = seq(0,100,10),
+#                      minor_breaks = seq(0,100,5)) +
+#   labs(title = "Power Dynamics",
+#        subtitle = "@ 5% FPR",
+#        x = "Effect Size",
+#        y = "Power") +
+#   scale_color_manual(name = "Normalization",
+#                      breaks = c("CS","LID"),
+#                      values = c("CS"="#512DA8","LID"="#C2185B"),
+#                      labels = c("Cubic Spline","LI Detector")) +
+#   theme_linedraw() +
+#   theme(axis.text.x = element_text(size=15),
+#         axis.title.x = element_text(size=20),
+#         axis.text.y = element_text(size=15),
+#         axis.title.y = element_text(size=20),
+#         legend.position = c(0.85,0.2),
+#         legend.background = element_rect(color = 'grey60'),
+#         legend.text = element_text(size=15),
+#         legend.title =  element_text(size=15),
+#         plot.title = element_text(size=25,hjust = 0),
+#         plot.subtitle = element_text(size=20,hjust = 0)) +
+#   coord_cartesian(xlim = c(0.8,1.2),
+#                   ylim = c(0,100))
+# ggsave(sprintf("%spower_cslid.png",out_path),
+#        width = 10,height = 10)
 
 
 ##### BOX PLOTS
+dat.all <- dat.all[dat.all$cont_hrs > 10,]
 srt <- sort(unique(dat.all$cen))
 dat.srt <- NULL
 t <- 1
@@ -162,8 +163,13 @@ ggplot(dat.srt) +
         legend.text = element_text(size=15),
         legend.title =  element_text(size=15),
         plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0))
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(20,54))
 ggsave(sprintf("%seffect_dis.png",out_path),
        width = 12,height = 8)
+
+ggplot(dat.srt) +
+  geom_line(aes(x = pos, y = cen)) +
+  coord_cartesian(xlim = c(20,54))
 
 
