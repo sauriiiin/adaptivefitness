@@ -144,7 +144,7 @@ for (cen in srt) {
 
 ef <- ggplot(dat.srt) +
   geom_bar(aes(pos, fill = effect),alpha = 0.9) +
-  geom_vline(xintercept = c(11,25), linetype = 'dashed', col = 'red') +
+  geom_vline(xintercept = c(11,24), linetype = 'dashed', col = 'red') +
   scale_fill_manual(name = 'Effects :',
                     breaks = c('Beneficial','Neutral','Deleterious'),
                     values = c('Deleterious'='#D32F2F',
@@ -185,7 +185,7 @@ rf <- ggplot(dat.srt) +
   geom_text(aes(18, 0.8, label = "10% LOSS", hjust = 0.5), size = 4) +
   geom_hline(yintercept = 1.1, linetype = 'dashed', col = 'red') +
   geom_text(aes(18, 1.2, label = "10% GAIN", hjust = 0.5), size = 4) +
-  geom_vline(xintercept = c(11,25), linetype = 'dashed', col = 'red') +
+  geom_vline(xintercept = c(11,24), linetype = 'dashed', col = 'red') +
   labs(y = str_wrap("Mean Relative Fitness",10),
        x = "Virtual Plates") +
   # scale_x_continuous(breaks = seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
@@ -218,4 +218,3 @@ e.dis <- ggarrange(ef, rf,
 ggsave(sprintf("%seffect_dis.png",out_path),
        e.dis,
        width = 10,height = 10)
-
