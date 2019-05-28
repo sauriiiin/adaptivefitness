@@ -4,6 +4,11 @@
 
 ##### INITIALIZE
 library(ggplot2)
+library(gridExtra)
+library(grid)
+library(tidyverse)
+library(egg)
+library(stringr)
 out_path = 'figs/lid_paper/';
 dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID_ALL/"
 
@@ -127,7 +132,7 @@ pd.lid <- ggplot(dat.pow) +
 
 
 ##### BOX PLOTS
-dat.all <- dat.all[dat.all$cont_hrs > 10,]
+dat.all <- dat.all[dat.all$cont_hrs > 10 & dat.all$hours > 10,]
 srt <- sort(unique(dat.all$cen))
 dat.srt <- NULL
 t <- 1
@@ -137,39 +142,80 @@ for (cen in srt) {
   t <- t + 1
 }
 
-ggplot(dat.srt) +
+ef <- ggplot(dat.srt) +
   geom_bar(aes(pos, fill = effect),alpha = 0.9) +
-  scale_fill_manual(name = 'Effect',
+  geom_vline(xintercept = c(11,25), linetype = 'dashed', col = 'red') +
+  scale_fill_manual(name = 'Effects :',
                     breaks = c('Beneficial','Neutral','Deleterious'),
                     values = c('Deleterious'='#D32F2F',
                                'Neutral'='#303F9F',
                                'Beneficial'='#4CAF50')) +
-  labs(title = "Effect Distribution") +
-  scale_y_continuous(name = "",
-                     breaks = c(913 * seq(0,1,0.25)),
-                     labels = c('0%','25%','50%','75%','100%')) +
-  scale_x_continuous(name = "Mean Relative Fitness [not to scale]",
-                     breaks = seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
-                                  (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10),
-                     labels = as.character(round(srt[seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
-                                                   (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10)],2))) +
+  labs(x = "",
+       y = str_wrap("Effect Distribution",10)) +
+  scale_y_continuous(breaks = c(913 * seq(0,1,0.20)),
+                     minor_breaks = c(913 * seq(0,1,0.05)),
+                     labels = c('0%','20%','40%','60%','80%','100%')) +
+  # scale_x_continuous(breaks = seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
+  #                                 (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10),
+  #                    labels = as.character(round(srt[seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
+  #                                                  (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10)],2))) +
+  scale_x_continuous(breaks = seq(0,50,4),
+                     minor_breaks = seq(0,50,1)) +
+  theme_linedraw() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_text(size=20),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20,
+                                    angle = 90,
+                                    vjust = 0.5),
+        legend.position = "top",
+        legend.background = element_rect(color = 'grey60'),
+        legend.text = element_text(size=15),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=25,hjust = 0.5),
+        plot.subtitle = element_text(size=20,hjust = 0.5)) +
+  coord_cartesian(xlim = c(1,36))
+# ggsave(sprintf("%seffect_dis.png",out_path),
+#        width = 12,height = 8)
+
+rf <- ggplot(dat.srt) +
+  geom_line(aes(x = pos, y = cen, col = cen), lwd = 1.2) +
+  geom_hline(yintercept = 0.9, linetype = 'dashed', col = 'red') +
+  geom_text(aes(18, 0.8, label = "10% LOSS", hjust = 0.5), size = 4) +
+  geom_hline(yintercept = 1.1, linetype = 'dashed', col = 'red') +
+  geom_text(aes(18, 1.2, label = "10% GAIN", hjust = 0.5), size = 4) +
+  geom_vline(xintercept = c(11,25), linetype = 'dashed', col = 'red') +
+  labs(y = str_wrap("Mean Relative Fitness",10),
+       x = "Virtual Plates") +
+  # scale_x_continuous(breaks = seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
+  #                                 (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10),
+  #                    labels = as.character(round(srt[seq(unique(dat.srt$pos)[1],unique(dat.srt$pos)[length(unique(dat.srt$pos))],
+  #                                                        (unique(dat.srt$pos)[length(unique(dat.srt$pos))]- unique(dat.srt$pos)[1])/10)],2))) +
+  scale_x_continuous(breaks = seq(0,50,4),
+                     minor_breaks = seq(0,50,1)) +
+  scale_color_continuous(low = "#FFC107", high = "black",
+                         guide = F) +
   theme_linedraw() +
   theme(axis.text.x = element_text(size=15),
         axis.title.x = element_text(size=20),
         axis.text.y = element_text(size=15),
-        axis.title.y = element_blank(),
-        legend.position = "right",
+        axis.title.y = element_text(size=20,
+                                    angle = 90,
+                                    vjust = 0.5),
+        legend.position = "top",
         legend.background = element_rect(color = 'grey60'),
         legend.text = element_text(size=15),
         legend.title =  element_text(size=15),
         plot.title = element_text(size=25,hjust = 0),
         plot.subtitle = element_text(size=20,hjust = 0)) +
-  coord_cartesian(xlim = c(20,54))
+  coord_cartesian(xlim = c(1,36))
+
+  
+e.dis <- ggarrange(ef, rf,
+                  nrow = 2,
+                  heights = c(4,1))
 ggsave(sprintf("%seffect_dis.png",out_path),
-       width = 12,height = 8)
-
-ggplot(dat.srt) +
-  geom_line(aes(x = pos, y = cen)) +
-  coord_cartesian(xlim = c(20,54))
-
+       e.dis,
+       width = 10,height = 10)
 
