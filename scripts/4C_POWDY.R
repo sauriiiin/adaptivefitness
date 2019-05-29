@@ -10,7 +10,7 @@ library(tidyverse)
 library(egg)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID_ALL/"
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_NONORM/"
 
 getmode <- function(v) {
   uniqv <- unique(v)
@@ -77,6 +77,7 @@ for (es in effect_size) {
     }
 }
 
+##### POWER PLOT
 dat.pow <- data.frame(dat.pow)
 colnames(dat.pow) <- c("es","N","TP","FP","FPR","TN","FN","pow","sen","spe","acc")
 
@@ -107,34 +108,56 @@ pd.lid <- ggplot(dat.pow) +
 #        pd.lid,
 #        width = 10,height = 10)
 
-# ggplot(hello) +
-#   geom_line(aes(x = es, y = pow, col = norm), linetype = 'twodash', lwd = 1.3) +
-#   scale_x_continuous(breaks = seq(-2,2,0.05),
-#                      minor_breaks = seq(-2,2,0.01)) +
-#   scale_y_continuous(breaks = seq(0,100,10),
-#                      minor_breaks = seq(0,100,5)) +
-#   labs(title = "Power Dynamics",
-#        subtitle = "@ 5% FPR",
-#        x = "Effect Size",
-#        y = "Power") +
-#   scale_color_manual(name = "Normalization",
-#                      breaks = c("CS","LID"),
-#                      values = c("CS"="#512DA8","LID"="#C2185B"),
-#                      labels = c("Cubic Spline","LI Detector")) +
-#   theme_linedraw() +
-#   theme(axis.text.x = element_text(size=15),
-#         axis.title.x = element_text(size=20),
-#         axis.text.y = element_text(size=15),
-#         axis.title.y = element_text(size=20),
-#         legend.position = c(0.85,0.2),
-#         legend.background = element_rect(color = 'grey60'),
-#         legend.text = element_text(size=15),
-#         legend.title =  element_text(size=15),
-#         plot.title = element_text(size=25,hjust = 0),
-#         plot.subtitle = element_text(size=20,hjust = 0)) +
-#   coord_cartesian(xlim = c(0.8,1.2),
-#                   ylim = c(0,100))
-# ggsave(sprintf("%spower_cslid.png",out_path),
+##### FPR PLOT
+pvals = seq(0,1,0.01)
+pdata = data.frame()
+i = 1
+
+for (hr in unique(stats.all$cont_hrs)) {
+  temp = stats.all[stats.all$cont_hrs == hr & stats.all$hours == hr,]
+  n = dim(temp)[1]
+  for (p in pvals) {
+    pdata = rbind(pdata, c(hr, p, sum(temp$p <= p)/n))
+  }
+  if (i == 1) {
+    colnames(pdata) = c('hours','p','fpr')
+    g = ggplot() + 
+      geom_line(data = pdata[pdata$hours == hr,], aes(x = p, y = fpr, col = as.character(hours)), lwd = 1.5)
+  } else {
+    g = g + geom_line(data = pdata[pdata$hours == hr,], aes(x = p, y = fpr, col = as.character(hours)), lwd = 1.5)
+  }
+  i = i + 1
+}
+
+g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
+                     linetype = 'dashed', lwd = 1.1, alpha = 0.7) +
+  labs(title = "False positive rate",
+       x = "p-value cut-off",
+       y = "False Positive Rate") +
+  scale_x_continuous(breaks = seq(0,1,0.1),
+                     minor_breaks = seq(0,1,0.05),
+                     limits = c(0,1)) +
+  scale_y_continuous(breaks = seq(0,1,0.1),
+                     minor_breaks = seq(0,1,0.05),
+                     limits = c(0,1)) +
+  scale_color_manual(name = "Hours",
+                     breaks=c("8","10","14","16","18"),
+                     values=c("8"="#D32F2F","10"="#536DFE","14"="#388E3C","16"="#795548","18"="#00BCD4","red"="red",
+                              "0"="transparent","9"="transparent","11"="transparent","13"="transparent","17"="transparent")) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20),
+        # axis.title = element_blank(),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=20),
+        legend.position = "bottom",
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1))
+
+# ggsave(sprintf("%sfpr_statsall.png",out_path),
 #        width = 10,height = 10)
 
 
