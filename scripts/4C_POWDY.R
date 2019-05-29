@@ -245,7 +245,7 @@ rf <- ggplot(dat.srt) +
 e.dis <- ggarrange(ef, rf,
                   nrow = 2,
                   heights = c(4,1))
-ggsave(sprintf("%seffect_dis.png",out_path),
+ggsave(sprintf("%seffect_dis_nn.png",out_path),
        e.dis,
        width = 10,height = 10)
 
@@ -253,19 +253,16 @@ ggsave(sprintf("%seffect_dis.png",out_path),
 temp.fit <- fit.all[fit.all$cont_hrs == 18 & fit.all$hours ==18,]
 rmse <- sqrt(mean((abs(temp.fit$se))^2, na.rm = T))
 mean.cs <- mean(temp.fit$average, na.rm = T)
-
-ss.tot <- sum((temp.fit$average - mean.cs)^2,na.rm = T)
-ss.res <- sum(temp.fit$se^2,na.rm = T)
-
-R2.lid <- 1 - ss.res/ss.tot
-
 rmse/mean.cs * 100
+# ss.tot <- sum((temp.fit$average - mean.cs)^2,na.rm = T)
+# ss.res <- sum(temp.fit$se^2,na.rm = T)
+# 
+# R2.lid <- 1 - ss.res/ss.tot
 
 temp.fit$rand_se <- temp.fit$average - temp.fit$average[sample(1:length(temp.fit$average))]
 rand_rmse <- sqrt(mean((abs(temp.fit$rand_se))^2, na.rm = T))
-
 rand_rmse/mean.cs * 100
-R2.rnd <- 1 - sum(temp.fit$rand_se^2,na.rm = T)/ss.tot
+# R2.rnd <- 1 - sum(temp.fit$rand_se^2,na.rm = T)/ss.tot
 
 
 
