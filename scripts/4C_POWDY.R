@@ -26,15 +26,19 @@ hours <- NULL
 for (s in strsplit(stats.files,'_')) {
   hours <- c(hours, as.numeric(s[3]))
 }
-# hours <- as.numeric(substr(stats.files,9,10))
-dat.all <- NULL
+stats.all <- NULL
+fit.all <- NULL
 ##### PUTTING IT TOGETHER
 for (i in 1:length(hours)) {
   hr <- hours[i]
+  
   dat.stats <- read.csv(paste0(dat.dir,stats.files[i]),na.strings = "NaN")
   dat.stats <- dat.stats[dat.stats$hours != 0,]
   dat.stats$cont_hrs <- hours[i]
   dat.fit <- read.csv(paste0(dat.dir,fit.files[i]),na.strings = "NaN")
+  dat.fit$cont_hrs <- hours[i]
+  dat.fit$se <- dat.fit$average - dat.fit$bg
+  
   cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
   dat.stats$es <-round(dat.stats$cs_mean/cont.mean,4)
   dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
@@ -45,26 +49,29 @@ for (i in 1:length(hours)) {
   dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
   dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
   dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
-  dat.all <- rbind(dat.all,dat.stats)
+  stats.all <- rbind(stats.all,dat.stats)
+  fit.all <- rbind(fit.all,dat.fit)
 }
 
-# save(dat.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_CS/4C3_GA1_CS_DAT_ALL.RData")
-effect_size <- sort(unique(round(dat.all$es,2)))
-dat.all$es <- round(dat.all$es,4)
+
+##### THE STATS DATA ANALYSIS
+# save(stats.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_CS/4C3_GA1_CS_DAT_ALL.RData")
+effect_size <- sort(unique(round(stats.all$es,2)))
+stats.all$es <- round(stats.all$es,4)
 dat.pow <- NULL
 
 ##### POWER CALCULATIONS
 for (es in effect_size) {
-  N <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03)
+  N <- sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03)
   if (N > 0) {
-    TP <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p <= dat.all$pthresh & dat.all$hours != dat.all$cont_hrs)
-    FP <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p <= dat.all$pthresh & dat.all$hours == dat.all$cont_hrs)
-    FPR <- FP/sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$hours == dat.all$cont_hrs) * 100
-    TN <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p > dat.all$pthresh & dat.all$hours == dat.all$cont_hrs)
-    FN <- sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$p > dat.all$pthresh & dat.all$hours != dat.all$cont_hrs)
+    TP <- sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03 & stats.all$p <= stats.all$pthresh & stats.all$hours != stats.all$cont_hrs)
+    FP <- sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03 & stats.all$p <= stats.all$pthresh & stats.all$hours == stats.all$cont_hrs)
+    FPR <- FP/sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03 & stats.all$hours == stats.all$cont_hrs) * 100
+    TN <- sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03 & stats.all$p > stats.all$pthresh & stats.all$hours == stats.all$cont_hrs)
+    FN <- sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03 & stats.all$p > stats.all$pthresh & stats.all$hours != stats.all$cont_hrs)
     POW <- TP/N * 100
-    SEN <- TP/sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$hours != dat.all$cont_hrs) * 100
-    SPE <- TN/sum(dat.all$es > es-5e-03 & dat.all$es < es+5e-03 & dat.all$hours == dat.all$cont_hrs) * 100
+    SEN <- TP/sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03 & stats.all$hours != stats.all$cont_hrs) * 100
+    SPE <- TN/sum(stats.all$es > es-5e-03 & stats.all$es < es+5e-03 & stats.all$hours == stats.all$cont_hrs) * 100
     ACC <- (TP + TN)/N * 100
     dat.pow <- rbind(dat.pow, c(es,N,TP,FP,FPR,TN,FN,POW,SEN,SPE,ACC))
     }
@@ -132,13 +139,13 @@ pd.lid <- ggplot(dat.pow) +
 
 
 ##### BOX PLOTS
-dat.all <- dat.all[dat.all$cont_hrs > 10 & dat.all$hours > 10,]
-srt <- sort(unique(dat.all$cen))
+stats.all <- stats.all[stats.all$cont_hrs > 10 & stats.all$hours > 10,]
+srt <- sort(unique(stats.all$cen))
 dat.srt <- NULL
 t <- 1
 for (cen in srt) {
-  dat.all$pos <- t
-  dat.srt <- rbind(dat.srt, dat.all[dat.all$cen == cen,])
+  stats.all$pos <- t
+  dat.srt <- rbind(dat.srt, stats.all[stats.all$cen == cen,])
   t <- t + 1
 }
 
@@ -218,3 +225,25 @@ e.dis <- ggarrange(ef, rf,
 ggsave(sprintf("%seffect_dis.png",out_path),
        e.dis,
        width = 10,height = 10)
+
+###### THE FITNESS DATA ANALYSIS
+temp.fit <- fit.all[fit.all$cont_hrs == 18 & fit.all$hours ==18,]
+rmse <- sqrt(mean((abs(temp.fit$se))^2, na.rm = T))
+mean.cs <- mean(temp.fit$average, na.rm = T)
+
+ss.tot <- sum((temp.fit$average - mean.cs)^2,na.rm = T)
+ss.res <- sum(temp.fit$se^2,na.rm = T)
+
+R2.lid <- 1 - ss.res/ss.tot
+
+rmse/mean.cs * 100
+
+temp.fit$rand_se <- temp.fit$average - temp.fit$average[sample(1:length(temp.fit$average))]
+rand_rmse <- sqrt(mean((abs(temp.fit$rand_se))^2, na.rm = T))
+
+rand_rmse/mean.cs * 100
+R2.rnd <- 1 - sum(temp.fit$rand_se^2,na.rm = T)/ss.tot
+
+
+
+
