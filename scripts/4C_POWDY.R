@@ -10,7 +10,7 @@ library(tidyverse)
 library(egg)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_NONORM/"
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID_ALL/"
 
 getmode <- function(v) {
   uniqv <- unique(v)
@@ -248,6 +248,31 @@ e.dis <- ggarrange(ef, rf,
 ggsave(sprintf("%seffect_dis_nn.png",out_path),
        e.dis,
        width = 10,height = 10)
+
+
+temp <- NULL
+dat.cnt <- data.frame()
+for (pos in unique(dat.srt$pos)) {
+  temp$cen <- mean(dat.srt$cen[dat.srt$pos == pos])
+  temp$Deleterious <- sum(dat.srt$pos == pos & dat.srt$effect == 'Deleterious')
+  temp$Neutral <- sum(dat.srt$pos == pos & dat.srt$effect == 'Neutral')
+  temp$Beneficial <- sum(dat.srt$pos == pos & dat.srt$effect == 'Beneficial')
+  dat.cnt <- rbind(dat.cnt,temp)
+}
+
+ggplot(dat.cnt) +
+  geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 0.7) +
+  geom_point(aes(x = cen, y = Deleterious, col = 'Deleterious')) +
+  geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.7) +
+  geom_point(aes(x = cen, y = Neutral, col = 'Neutral')) +
+  geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.7) +
+  geom_point(aes(x = cen, y = Beneficial, col = 'Beneficial')) +
+  scale_y_continuous(breaks = c(913 * seq(0,1,0.1)),
+                     minor_breaks = c(913 * seq(0,1,0.05)),
+                     labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
+  scale_x_continuous(breaks = seq(0,2,0.1),
+                     minor_breaks = seq(0,2,0.05)) +
+  coord_cartesian(xlim = c(0.8,1.2))
 
 ###### THE FITNESS DATA ANALYSIS
 temp.fit <- fit.all[fit.all$cont_hrs == 18 & fit.all$hours ==18,]
