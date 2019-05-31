@@ -10,7 +10,7 @@ library(tidyverse)
 library(egg)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID_ALL/"
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
 
 getmode <- function(v) {
   uniqv <- unique(v)
@@ -161,8 +161,8 @@ g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
 #        width = 10,height = 10)
 
 
-##### BOX PLOTS
-stats.all <- stats.all[stats.all$cont_hrs > 10 & stats.all$hours > 10,]
+##### BOX PLOTS OF EFFECT DISTRIBUTION
+stats.all <- stats.all[stats.all$cont_hrs > 11 & stats.all$hours > 11,]
 srt <- sort(unique(stats.all$cen))
 dat.srt <- NULL
 t <- 1
@@ -245,11 +245,12 @@ rf <- ggplot(dat.srt) +
 e.dis <- ggarrange(ef, rf,
                   nrow = 2,
                   heights = c(4,1))
-ggsave(sprintf("%seffect_dis_nn.png",out_path),
-       e.dis,
-       width = 10,height = 10)
+# ggsave(sprintf("%seffect_dis_nn.png",out_path),
+#        e.dis,
+#        width = 10,height = 10)
 
 
+##### LINE PLOT OF EFFECTS
 temp <- NULL
 dat.cnt <- data.frame()
 for (pos in unique(dat.srt$pos)) {
@@ -260,19 +261,65 @@ for (pos in unique(dat.srt$pos)) {
   dat.cnt <- rbind(dat.cnt,temp)
 }
 
-ggplot(dat.cnt) +
-  geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 0.7) +
-  geom_point(aes(x = cen, y = Deleterious, col = 'Deleterious')) +
-  geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.7) +
-  geom_point(aes(x = cen, y = Neutral, col = 'Neutral')) +
-  geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.7) +
-  geom_point(aes(x = cen, y = Beneficial, col = 'Beneficial')) +
+dat.cnt2 <- NULL
+dat.cnt2$cen <- dat.cnt$cen
+dat.cnt2$Neutral <- dat.cnt$Neutral
+dat.cnt2$Deleterious <- dat.cnt2$Neutral + dat.cnt$Deleterious
+dat.cnt2$Beneficial <- dat.cnt2$Deleterious + dat.cnt$Beneficial
+dat.cnt2 <- data.frame(dat.cnt2)
+
+ggplot(dat.cnt2) +
+  geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.8) +
+  geom_point(aes(x = cen, y = Beneficial, fill = 'Beneficial'), shape = 21, col = 'black') +
+  # geom_smooth(aes(x = cen, y = Beneficial, col = 'Beneficial'),
+  # method='loess',span=0.4,level=0.95) +
+  # geom_line(aes(x=cen,y=rollmean(Beneficial, 5, na.pad=TRUE),col = 'Beneficial'),lwd=1.2) +
+  geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 0.8) +
+  geom_point(aes(x = cen, y = Deleterious, fill = 'Deleterious'), shape = 21, col = 'black') +
+  # geom_smooth(aes(x = cen, y = Deleterious, col = 'Deleterious'),
+              # method='loess',span=0.4,level=0.95) +
+  # geom_line(aes(x=cen,y=rollmean(Deleterious, 5, na.pad=TRUE),col = 'Deleterious'),lwd=1.2) +
+  geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.8) +
+  geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
+  # geom_smooth(aes(x = cen, y = Neutral, col = 'Neutral'),
+  # method='loess',span=0.4,level=0.95) +
+  # geom_line(aes(x=cen,y=rollmean(Neutral, 5, na.pad=TRUE),col = 'Neutral'),lwd=1.2) +
+  labs(title = 'LID with 8 Technical Replicate',
+       x = 'Mean Relative Fitness',
+       y = 'Effect Percentage') +
   scale_y_continuous(breaks = c(913 * seq(0,1,0.1)),
                      minor_breaks = c(913 * seq(0,1,0.05)),
                      labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
   scale_x_continuous(breaks = seq(0,2,0.1),
                      minor_breaks = seq(0,2,0.05)) +
-  coord_cartesian(xlim = c(0.8,1.2))
+  scale_color_manual(name = 'Effects',
+                    breaks = c('Beneficial','Neutral','Deleterious'),
+                    values = c('Deleterious'='#D32F2F',
+                               'Neutral'='#303F9F',
+                               'Beneficial'='#4CAF50')) +
+  scale_fill_manual(name = 'Effects',
+                     breaks = c('Beneficial','Neutral','Deleterious'),
+                     values = c('Deleterious'='#D32F2F',
+                                'Neutral'='#303F9F',
+                                'Beneficial'='#4CAF50')) +
+  theme_linedraw() +
+  theme(axis.text.x = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.text.y = element_text(size=15),
+        axis.title.y = element_text(size=20,
+                                    angle = 90,
+                                    vjust = 0.5),
+        legend.position = "bottom",
+        legend.text = element_text(size=15),
+        legend.title =  element_text(size=15),
+        plot.title = element_text(size=25,hjust = 0),
+        plot.subtitle = element_text(size=20,hjust = 0)) +
+  guides(color = guide_legend(override.aes = list(size=6)),
+         shape = guide_legend(override.aes = list(size=6))) +
+  coord_cartesian(xlim = c(0.8,1.2),
+                  ylim = c(0,913))
+ggsave(sprintf("%seffect_dis.png",out_path),
+       width = 10,height = 10)
 
 ###### THE FITNESS DATA ANALYSIS
 temp.fit <- fit.all[fit.all$cont_hrs == 18 & fit.all$hours ==18,]
