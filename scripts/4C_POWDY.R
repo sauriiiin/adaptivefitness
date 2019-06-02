@@ -70,8 +70,8 @@ for (ii in 1:length(reps)) {
 }
 
 ##### THE STATS DATA ANALYSIS
-# save(stats.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_STATS.RData")
-# save(fit.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FITNESS.RData")
+save(stats.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_STATS.RData")
+save(fit.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FITNESS.RData")
 stats.all$es <- round(stats.all$es,4)
 for (rep in unique(reps)) {
   effect_size <- sort(unique(round(stats.all$es[stats.all$rep == rep],2)))
