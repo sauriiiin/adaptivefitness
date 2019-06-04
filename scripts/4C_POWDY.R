@@ -66,7 +66,7 @@ for (ii in 1:length(reps)) {
     dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
     stats.all <- rbind(stats.all,dat.stats)
     fit.all <- rbind(fit.all,dat.fit)
-  } 
+  }
 }
 
 ##### THE STATS DATA ANALYSIS
