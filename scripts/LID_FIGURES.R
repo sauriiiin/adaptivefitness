@@ -23,6 +23,517 @@ tablename_pval = sprintf('%s_%d_PVALUE',expt_name,density)
 hours = dbGetQuery(conn, sprintf('select distinct hours from %s order by hours asc', tablename_pval))
 pvals = seq(0,1,0.01)
 
+tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
+# tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
+tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
+tablename_p2o = '4C3_pos2orf_name1';
+tablename_bpos = '4C3_borderpos';
+
+p2c_info = NULL
+p2c_info[1] = '4C3_pos2coor6144'
+p2c_info[2] = '6144plate'
+p2c_info[3] = '6144col'
+p2c_info[4] = '6144row'
+
+p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
+                               p2c_info[1],
+                               p2c_info[2],
+                               p2c_info[3],
+                               p2c_info[4]))
+
+n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
+                                    p2c_info[2],
+                                    p2c_info[1],
+                                    p2c_info[2]))
+hr = hours[[1]][9]
+pl = n_plates[[1]][1]
+
+fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.average, a.fitness,
+                                  b.bg nbg, b.average naverage, b.fitness nfitness
+                                  from %s a, %s b, %s c
+                                  where a.hours = %d and a.hours = b.hours
+                                  and a.pos = b.pos and b.pos = c.pos
+                                  and c.%s = %d order by c.%s, c.%s',
+                                  tablename_fit,tablename_nfit,
+                                  p2c_info[1],hr,p2c_info[2],
+                                  pl,p2c_info[3],p2c_info[4]))
+fitdat$bg[is.na(fitdat$average)] = NA
+# min = min(fitdat$average, na.rm=T)
+# max = max(fitdat$average, na.rm=T)
+
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
+
+fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
+fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
+fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
+
+p2c_info_384 = NULL
+p2c_info_384[1] = '4C3_pos2coor384'
+p2c_info_384[2] = '384plate'
+p2c_info_384[3] = '384col'
+p2c_info_384[4] = '384row'
+
+lay.384 <- dbGetQuery(conn, sprintf('select * from %s a, %s b
+                                    where a.pos = b.pos
+                                    order by b.%s, b.%s, b.%s',
+                                    tablename_p2o, p2c_info_384[1],
+                                    p2c_info_384[2], p2c_info_384[3], p2c_info_384[4]))
+
+lay.384$colony[lay.384$orf_name == 'BF_control'] = 'Reference'
+lay.384$colony[lay.384$orf_name != 'BF_control'] = 'Query'
+lay.384$colony[is.na(lay.384$orf_name)] = 'Gap'
+
+stk.lay.384 <- lay.384
+stk.lay.384$colony[stk.lay.384$colony != 'Gap'] = 'Stock'
+
+p2c_info_1536 = NULL
+p2c_info_1536[1] = '4C3_pos2coor1536'
+p2c_info_1536[2] = '1536plate'
+p2c_info_1536[3] = '1536col'
+p2c_info_1536[4] = '1536row'
+
+lay.1536 <- dbGetQuery(conn, sprintf('select * from %s a, %s b
+                                    where a.pos = b.pos
+                                    order by b.%s, b.%s, b.%s',
+                                     tablename_p2o, p2c_info_1536[1],
+                                     p2c_info_1536[2], p2c_info_1536[3], p2c_info_1536[4]))
+
+lay.1536$colony[lay.1536$orf_name == 'BF_control'] = 'Reference'
+lay.1536$colony[lay.1536$orf_name != 'BF_control'] = 'Query'
+lay.1536$colony[is.na(lay.1536$orf_name)] = 'Gap'
+
+lay.6144 <- dbGetQuery(conn, sprintf('select * from %s a, %s b
+                                    where a.pos = b.pos
+                                    order by b.%s, b.%s, b.%s',
+                                     tablename_p2o, p2c_info[1],
+                                     p2c_info[2], p2c_info[3], p2c_info[4]))
+
+lay.6144$colony[lay.6144$orf_name == 'BF_control'] = 'Reference'
+lay.6144$colony[lay.6144$orf_name != 'BF_control'] = 'Query'
+lay.6144$colony[is.na(lay.6144$orf_name)] = 'Gap'
+
+##### FIGURE SIZE
+max.w <- 20
+max.h <- 25
+ttle <- 1
+stle <- 10/12
+
+##### TEXT SIZES
+plt.ttle <- 12
+plt.stlt <- 10
+lax.ttle <- 10
+lax.txt <- 9
+
+##### SHAPE SIZE
+sz.384 <- 8
+sz.1536 <- 5
+sz.6144 <- 2.5
+
+##### FIGURE 1
+col.lim <- 12
+row.lim <- 8
+
+gly1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 15,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 15,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 15,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+gly4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 15,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+fig1.s1 <- ggarrange(gly1, gly2, gly3, gly4,
+                     nrow = 1)
+ggsave(sprintf("%sfigure1_s1.jpg",out_path),
+       fig1.s1,
+       width = max.w, height = max.w/4 * 3/4,
+       dpi = 300)
+
+wc1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 19,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "Working Copy & Starter Plate Layout") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+wc2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 19,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+wc3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 19,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+wc4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
+  geom_point(aes(x = `384col`, y = `384row`, col = colony),
+             shape = 19,
+             size = sz.384) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
+  scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim),
+                  ylim = c(row.lim,1))
+
+fig1.s2 <- ggarrange(wc1, wc2, wc3, wc4,
+                     nrow = 1)
+ggsave(sprintf("%sfigure1_s2.jpg",out_path),
+       fig1.s2,
+       width = max.w, height = max.w/4 * 3/4,
+       dpi = 300)
+
+
+ps1 <- ggplot(lay.1536[lay.1536$`1536plate` == 1,]) +
+  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
+             shape = 19,
+             size = sz.1536) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "Upscale #1 and Pre-screen Plate Layout") +
+  scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
+  scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim*2),
+                  ylim = c(row.lim*2,1))
+
+ps2 <- ggplot(lay.1536[lay.1536$`1536plate` == 2,]) +
+  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
+             shape = 19,
+             size = sz.1536) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
+  scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim*2),
+                  ylim = c(row.lim*2,1))
+
+ps3 <- ggplot(lay.1536[lay.1536$`1536plate` == 3,]) +
+  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
+             shape = 19,
+             size = sz.1536) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
+  scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim*2),
+                  ylim = c(row.lim*2,1))
+
+ps4 <- ggplot(lay.1536[lay.1536$`1536plate` == 4,]) +
+  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
+             shape = 19,
+             size = sz.1536) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
+  scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim*2),
+                  ylim = c(row.lim*2,1))
+
+fig1.s3 <- ggarrange(ps1, ps2, ps3, ps4,
+                     nrow = 1)
+ggsave(sprintf("%sfigure1_s3.jpg",out_path),
+       fig1.s3,
+       width = max.w, height = max.w/4 * 3/4,
+       dpi = 300)
+
+
+fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
+  geom_point(aes(x = `6144col`, y = `6144row`, col = colony),
+             shape = 19,
+             size = sz.6144) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     drop = F,
+                     guide = F) +
+  labs(title = "Final Screen Plates Layout") +
+  scale_x_continuous(breaks = seq(0,col.lim*4,2),limits = c(1,col.lim*4)) +
+  scale_y_continuous(breaks = seq(0,row.lim*4,2),limits = c(row.lim*4,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim*4),
+                  ylim = c(row.lim*4,1))
+
+lay.6144[6144*2+1,4] = 2
+lay.6144[6144*2+1,7] = 'Stock' # done to add 'Stock' colony type to legend
+
+fs2 <- ggplot(lay.6144[lay.6144$`6144plate` == 2,]) +
+  geom_point(aes(x = `6144col`, y = `6144row`, col = colony,
+                 shape = colony),
+             size = sz.6144) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     labels = c('Reference', 'Query', 'Gap'),
+                     drop = FALSE,
+                     guide = F) +
+  scale_shape_manual(name = 'Plate Type',
+                     breaks = c('Stock','Reference'),
+                     values = c("Stock" = 15,
+                                "Reference" = 19,
+                                "Query" = 19,
+                                "Gap" = 19),
+                     labels = c('Deep Well','Agar'),
+                     drop = FALSE,
+                     guide = F) +
+  labs(title = "") +
+  scale_x_continuous(breaks = seq(0,col.lim*4,2),limits = c(1,col.lim*4)) +
+  scale_y_continuous(breaks = seq(0,row.lim*4,2),limits = c(row.lim*4,1),trans = 'reverse') +
+  theme_linedraw() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_blank(),
+        legend.title = element_blank(),
+        plot.title = element_blank()) +
+  coord_cartesian(xlim = c(1,col.lim*4),
+                  ylim = c(row.lim*4,1))
+
+fig1.s4 <- ggarrange(fs1, fs2,
+                     nrow = 1)
+ggsave(sprintf("%sfigure1_s4.jpg",out_path),
+       fig1.s4,
+       width = max.w/2, height = max.w/4 * 3/4,
+       dpi = 300)
+
+fig1 <- ggarrange(gly1,gly2,gly3,gly4,
+                  wc1,wc2,wc3,wc4,
+                  ps1,ps2,ps3,ps4,
+                  fs1,fs2,
+                  nrow = 4,
+                  ncol = 4)
+ggsave(sprintf("%sfigure1.jpg",out_path),
+       fig1,
+       width = max.w, height = max.w * 3/4,
+       dpi = 300)
+
 ##### FIGURE 5
 data = dbGetQuery(conn, sprintf('select * from %s',tablename_pval))
 data = data[data$orf_name != 'BFC100',]
@@ -215,59 +726,12 @@ roc <- ggplot() +
 ##### FINAL FIG5
 fig5 <- ggarrange(fpr, fpr.zoom, pow, roc,
                   nrow = 2)
-ggsave(sprintf("%sfigure5.png",out_path),
+ggsave(sprintf("%sfigure5.jpg",out_path),
        fig5,
        width = 20,height = 20)
 
 
-##### FIGURE 3 & 4
-tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-# tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
-tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
-tablename_p2o = '4C3_pos2orf_name1';
-tablename_bpos = '4C3_borderpos';
-
-p2c_info = NULL
-p2c_info[1] = '4C3_pos2coor6144'
-p2c_info[2] = '6144plate'
-p2c_info[3] = '6144col'
-p2c_info[4] = '6144row'
-
-p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
-                               p2c_info[1],
-                               p2c_info[2],
-                               p2c_info[3],
-                               p2c_info[4]))
-
-n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
-                                    p2c_info[2],
-                                    p2c_info[1],
-                                    p2c_info[2]))
-hr = hours[[1]][9]
-pl = n_plates[[1]][1]
-
-fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.average, a.fitness,
-                                  b.bg nbg, b.average naverage, b.fitness nfitness
-                                  from %s a, %s b, %s c
-                                  where a.hours = %d and a.hours = b.hours
-                                  and a.pos = b.pos and b.pos = c.pos
-                                  and c.%s = %d order by c.%s, c.%s',
-                                  tablename_fit,tablename_nfit,
-                                  p2c_info[1],hr,p2c_info[2],
-                                  pl,p2c_info[3],p2c_info[4]))
-fitdat$bg[is.na(fitdat$average)] = NA
-# min = min(fitdat$average, na.rm=T)
-# max = max(fitdat$average, na.rm=T)
-
-fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
-fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
-fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
-fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
-
-fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
-fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
-fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
-
+##### FIGURE 3
 ##### 3A
 min = 200
 max = 700
@@ -375,7 +839,7 @@ fit <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
 ##### FINAL FIGURE 3
 fig3 <- ggarrange(obs, pre, fit,
                   nrow = 1)
-ggsave(sprintf("%sfigure3.png",out_path),
+ggsave(sprintf("%sfigure3.jpg",out_path),
        fig3,
        width = 30,height = 6.5)
 
@@ -734,26 +1198,26 @@ step4 <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
 
 
 ##### FINAL FIGURE 2
-ggsave(sprintf("%sfigure2_s1.png",out_path),
+ggsave(sprintf("%sfigure2_s1.jpg",out_path),
        step1,
        width = 9,height = 6.8,
        limitsize = F)
 
 fig2.s2 <- ggarrange(step2.tl, step2.tr, step2.bl, step2.br,
                      nrow = 1)
-ggsave(sprintf("%sfigure2_s2.png",out_path),
+ggsave(sprintf("%sfigure2_s2.jpg",out_path),
        fig2.s2,
        width = 36,height = 6.8,
        limitsize = F)
 
 fig2.s3 <- ggarrange(step3.tl, step3.tr, step3.bl, step3.br,
                      nrow = 1)
-ggsave(sprintf("%sfigure2_s3.png",out_path),
+ggsave(sprintf("%sfigure2_s3.jpg",out_path),
        fig2.s3,
        width = 36,height = 6.8,
        limitsize = F)
 
-ggsave(sprintf("%sfigure2_s4.png",out_path),
+ggsave(sprintf("%sfigure2_s4.jpg",out_path),
        step4,
        width = 9,height = 6.8,
        limitsize = F)
@@ -761,7 +1225,7 @@ ggsave(sprintf("%sfigure2_s4.png",out_path),
 legend <- cowplot::get_legend(step4)
 grid.newpage()
 grid.draw(legend)
-ggsave(sprintf("%sfigure2_lgnd.png",out_path),
+ggsave(sprintf("%sfigure2_lgnd.jpg",out_path),
        legend,
        width = 2,height = 4,
        limitsize = F)
@@ -856,434 +1320,9 @@ no.src.nrm <- ggplot(data = fitdat, aes(x=nfitness, col = source)) +
 ##### FINAL FIGURE 4
 fig4 <- ggarrange(raw, src.nrm, no.src.nrm,
                       nrow = 1)
-ggsave(sprintf("%sfigure4.png",out_path),
+ggsave(sprintf("%sfigure4.jpg",out_path),
        fig4,
        width = 30,height = 11)
-
-
-##### FIGURE 1
-p2c_info_384 = NULL
-p2c_info_384[1] = '4C3_pos2coor384'
-p2c_info_384[2] = '384plate'
-p2c_info_384[3] = '384col'
-p2c_info_384[4] = '384row'
-
-lay.384 <- dbGetQuery(conn, sprintf('select * from %s a, %s b
-                                    where a.pos = b.pos
-                                    order by b.%s, b.%s, b.%s',
-                                    tablename_p2o, p2c_info_384[1],
-                                    p2c_info_384[2], p2c_info_384[3], p2c_info_384[4]))
-
-lay.384$colony[lay.384$orf_name == 'BF_control'] = 'Reference'
-lay.384$colony[lay.384$orf_name != 'BF_control'] = 'Query'
-lay.384$colony[is.na(lay.384$orf_name)] = 'Gap'
-
-stk.lay.384 <- lay.384
-stk.lay.384$colony[stk.lay.384$colony != 'Gap'] = 'Stock'
-
-p2c_info_1536 = NULL
-p2c_info_1536[1] = '4C3_pos2coor1536'
-p2c_info_1536[2] = '1536plate'
-p2c_info_1536[3] = '1536col'
-p2c_info_1536[4] = '1536row'
-
-lay.1536 <- dbGetQuery(conn, sprintf('select * from %s a, %s b
-                                    where a.pos = b.pos
-                                    order by b.%s, b.%s, b.%s',
-                                    tablename_p2o, p2c_info_1536[1],
-                                    p2c_info_1536[2], p2c_info_1536[3], p2c_info_1536[4]))
-
-lay.1536$colony[lay.1536$orf_name == 'BF_control'] = 'Reference'
-lay.1536$colony[lay.1536$orf_name != 'BF_control'] = 'Query'
-lay.1536$colony[is.na(lay.1536$orf_name)] = 'Gap'
-
-lay.6144 <- dbGetQuery(conn, sprintf('select * from %s a, %s b
-                                    where a.pos = b.pos
-                                    order by b.%s, b.%s, b.%s',
-                                     tablename_p2o, p2c_info[1],
-                                     p2c_info[2], p2c_info[3], p2c_info[4]))
-
-lay.6144$colony[lay.6144$orf_name == 'BF_control'] = 'Reference'
-lay.6144$colony[lay.6144$orf_name != 'BF_control'] = 'Query'
-lay.6144$colony[is.na(lay.6144$orf_name)] = 'Gap'
-
-plt.ttle <- 20
-col.lim <- 24
-row.lim <- 16
-
-sz.384 <- 5
-sz.1536 <- 2
-sz.6144 <- 0.5
-
-gly1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 15,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                       breaks = c('Stock','Reference', 'Query', 'Gap'),
-                       values = c("Stock" = "#689F38",
-                                  "Reference" = "#FFC107",
-                                  "Query" = "#303F9F",
-                                  "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "Glycerol Stock Layout") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_text(size=plt.ttle)) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-  
-gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 15,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Stock','Reference', 'Query', 'Gap'),
-                     values = c("Stock" = "#689F38",
-                                "Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-
-gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 15,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Stock','Reference', 'Query', 'Gap'),
-                     values = c("Stock" = "#689F38",
-                                "Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-
-gly4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 15,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Stock','Reference', 'Query', 'Gap'),
-                     values = c("Stock" = "#689F38",
-                                "Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-
-fig1.s1 <- ggarrange(gly1, gly2, gly3, gly4,
-                      nrow = 1)
-ggsave(sprintf("%sfigure1_s1.png",out_path),
-       fig1.s1,
-       width = 20,height = 3.5)
-
-wc1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 19,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "Working Copy Plate Layout") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_text(size=plt.ttle)) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-
-wc2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 19,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-
-wc3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 19,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-
-wc4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
-  geom_point(aes(x = `384col`, y = `384row`, col = colony),
-             shape = 19,
-             size = sz.384) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,24,1),limits = c(1,24)) +
-  scale_y_continuous(breaks = seq(1,16,1),limits = c(16,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim),
-                  ylim = c(row.lim,1))
-
-fig1.s2 <- ggarrange(wc1, wc2, wc3, wc4,
-                     nrow = 1)
-ggsave(sprintf("%sfigure1_s2.png",out_path),
-       fig1.s2,
-       width = 20,height = 3.5)
-
-
-ps1 <- ggplot(lay.1536[lay.1536$`1536plate` == 1,]) +
-  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
-             shape = 19,
-             size = sz.1536) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "Pre-screen Plate Layout") +
-  scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
-  scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_text(size=plt.ttle)) +
-  coord_cartesian(xlim = c(1,col.lim*2),
-                  ylim = c(row.lim*2,1))
-
-ps2 <- ggplot(lay.1536[lay.1536$`1536plate` == 2,]) +
-  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
-             shape = 19,
-             size = sz.1536) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
-  scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim*2),
-                  ylim = c(row.lim*2,1))
-
-ps3 <- ggplot(lay.1536[lay.1536$`1536plate` == 3,]) +
-  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
-             shape = 19,
-             size = sz.1536) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
-  scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim*2),
-                  ylim = c(row.lim*2,1))
-
-ps4 <- ggplot(lay.1536[lay.1536$`1536plate` == 4,]) +
-  geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
-             shape = 19,
-             size = sz.1536) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     guide = F) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(1,48,1),limits = c(1,48)) +
-  scale_y_continuous(breaks = seq(1,32,1),limits = c(32,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
-  coord_cartesian(xlim = c(1,col.lim*2),
-                  ylim = c(row.lim*2,1))
-
-fig1.s3 <- ggarrange(ps1, ps2, ps3, ps4,
-                     nrow = 1)
-ggsave(sprintf("%sfigure1_s3.png",out_path),
-       fig1.s3,
-       width = 20,height = 3.5)
-
-
-fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
-  geom_point(aes(x = `6144col`, y = `6144row`, col = colony),
-             shape = 19,
-             size = sz.6144) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Stock','Reference', 'Query', 'Gap'),
-                     values = c("Stock" = "#689F38",
-                                "Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     drop = F,
-                     guide = F) +
-  labs(title = "Final Screen Plates Layout") +
-  scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
-  scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_text(size=plt.ttle)) +
-  coord_cartesian(xlim = c(1,col.lim*4),
-                  ylim = c(row.lim*4,1))
-
-lay.6144[6144*2+1,4] = 2
-lay.6144[6144*2+1,7] = 'Stock' # done to add 'Stock' colony type to legend
-
-fs2 <- ggplot(lay.6144[lay.6144$`6144plate` == 2,]) +
-  geom_point(aes(x = `6144col`, y = `6144row`, col = colony,
-                 shape = colony),
-             size = sz.6144) +
-  scale_color_manual(name = 'Colony Type',
-                     breaks = c('Reference', 'Query', 'Gap'),
-                     values = c("Stock" = "#689F38",
-                                "Reference" = "#FFC107",
-                                "Query" = "#303F9F",
-                                "Gap" = "#FF5252"),
-                     labels = c('Reference', 'Query', 'Gap'),
-                     drop = FALSE) +
-  scale_shape_manual(name = 'Plate Type',
-                     breaks = c('Stock','Reference'),
-                     values = c("Stock" = 15,
-                                "Reference" = 19,
-                                "Query" = 19,
-                                "Gap" = 19),
-                     labels = c('Deep Well','Agar'),
-                     drop = FALSE) +
-  labs(title = "") +
-  scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
-  scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
-  theme_linedraw() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        legend.text = element_text(size=plt.ttle),
-        legend.title = element_text(size=plt.ttle),
-        legend.position = 'right',
-        plot.title = element_blank()) +
-  guides(color = guide_legend(override.aes = list(size=6)),
-         shape = guide_legend(override.aes = list(size=6))) +
-  coord_cartesian(xlim = c(1,col.lim*4),
-                  ylim = c(row.lim*4,1))
-
-fig1.s4 <- ggarrange(fs1, fs2,
-                     nrow = 1)
-ggsave(sprintf("%sfigure1_s4.png",out_path),
-       fig1.s4,
-       width = 12,height = 3.5)
 
 
 ##### FIGURE S2
@@ -1407,7 +1446,7 @@ v18 <- ggplot(vp18) +
 
 fig.s2 <- ggarrange(v10, v18, v14,
                      nrow = 1)
-ggsave(sprintf("%sfigure_s2.png",out_path),
+ggsave(sprintf("%sfigure_s2.jpg",out_path),
        fig.s2,
        width = 30,height = 7.2)
 
@@ -1651,7 +1690,7 @@ sca.br <- ggplot(sca.dat[sca.dat$source == 'BR',]) +
 fig.s3 <- ggarrange(sca.tl, sca.tr,
                     sca.bl, sca.br,
                     nrow = 2)
-ggsave(sprintf("%sfigureS3.png",out_path),
+ggsave(sprintf("%sfigureS3.jpg",out_path),
        fig.s3,
        width = 20,height = 20)
 
