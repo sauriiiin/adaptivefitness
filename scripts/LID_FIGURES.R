@@ -147,9 +147,9 @@ lax.ttle <- 10
 lax.txt <- 9
 
 ##### SHAPE SIZE
-sz.384 <- 8
-sz.1536 <- 5
-sz.6144 <- 2.5
+sz.384 <- 5
+sz.1536 <- 3
+sz.6144 <- 1.5
 
 ##### FIGURE 1
 col.lim <- 12
@@ -166,7 +166,8 @@ gly1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -175,8 +176,7 @@ gly1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
@@ -191,7 +191,8 @@ gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -200,8 +201,7 @@ gly2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
@@ -216,7 +216,8 @@ gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -225,8 +226,7 @@ gly3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
@@ -241,7 +241,8 @@ gly4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -250,17 +251,16 @@ gly4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
-fig1.s1 <- ggarrange(gly1, gly2, gly3, gly4,
-                     nrow = 1)
-ggsave(sprintf("%sfigure1_s1.jpg",out_path),
-       fig1.s1,
-       width = max.w, height = max.w/4 * 3/4,
-       dpi = 300)
+# fig1.s1 <- ggarrange(gly1, gly2, gly3, gly4,
+#                      nrow = 1)
+# ggsave(sprintf("%sfigure1_s1.jpg",out_path),
+#        fig1.s1,
+#        width = max.w, height = max.w/4 * 3/4,
+#        dpi = 300)
 
 wc1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
   geom_point(aes(x = `384col`, y = `384row`, col = colony),
@@ -272,7 +272,8 @@ wc1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Working Copy & Starter Plate Layout") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -281,8 +282,7 @@ wc1 <- ggplot(lay.384[lay.384$`384plate` == 1,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
@@ -296,7 +296,8 @@ wc2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -305,8 +306,7 @@ wc2 <- ggplot(lay.384[lay.384$`384plate` == 2,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
@@ -320,7 +320,8 @@ wc3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -329,8 +330,7 @@ wc3 <- ggplot(lay.384[lay.384$`384plate` == 3,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
@@ -344,7 +344,8 @@ wc4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim,1),limits = c(1,col.lim)) +
   scale_y_continuous(breaks = seq(1,row.lim,1),limits = c(row.lim,1),trans = 'reverse') +
   theme_linedraw() +
@@ -353,18 +354,16 @@ wc4 <- ggplot(lay.384[lay.384$`384plate` == 4,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim),
                   ylim = c(row.lim,1))
 
-fig1.s2 <- ggarrange(wc1, wc2, wc3, wc4,
-                     nrow = 1)
-ggsave(sprintf("%sfigure1_s2.jpg",out_path),
-       fig1.s2,
-       width = max.w, height = max.w/4 * 3/4,
-       dpi = 300)
-
+# fig1.s2 <- ggarrange(wc1, wc2, wc3, wc4,
+#                      nrow = 1)
+# ggsave(sprintf("%sfigure1_s2.jpg",out_path),
+#        fig1.s2,
+#        width = max.w, height = max.w/4 * 3/4,
+#        dpi = 300)
 
 ps1 <- ggplot(lay.1536[lay.1536$`1536plate` == 1,]) +
   geom_point(aes(x = `1536col`, y = `1536row`, col = colony),
@@ -376,7 +375,8 @@ ps1 <- ggplot(lay.1536[lay.1536$`1536plate` == 1,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "Upscale #1 and Pre-screen Plate Layout") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
   scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
   theme_linedraw() +
@@ -385,8 +385,7 @@ ps1 <- ggplot(lay.1536[lay.1536$`1536plate` == 1,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim*2),
                   ylim = c(row.lim*2,1))
 
@@ -400,7 +399,8 @@ ps2 <- ggplot(lay.1536[lay.1536$`1536plate` == 2,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
   scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
   theme_linedraw() +
@@ -409,8 +409,7 @@ ps2 <- ggplot(lay.1536[lay.1536$`1536plate` == 2,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim*2),
                   ylim = c(row.lim*2,1))
 
@@ -424,7 +423,8 @@ ps3 <- ggplot(lay.1536[lay.1536$`1536plate` == 3,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
   scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
   theme_linedraw() +
@@ -433,8 +433,7 @@ ps3 <- ggplot(lay.1536[lay.1536$`1536plate` == 3,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim*2),
                   ylim = c(row.lim*2,1))
 
@@ -448,7 +447,8 @@ ps4 <- ggplot(lay.1536[lay.1536$`1536plate` == 4,]) +
                                 "Query" = "#303F9F",
                                 "Gap" = "#FF5252"),
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(1,col.lim*2,1),limits = c(1,col.lim*2)) +
   scale_y_continuous(breaks = seq(1,row.lim*2,1),limits = c(row.lim*2,1),trans = 'reverse') +
   theme_linedraw() +
@@ -457,18 +457,16 @@ ps4 <- ggplot(lay.1536[lay.1536$`1536plate` == 4,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim*2),
                   ylim = c(row.lim*2,1))
 
-fig1.s3 <- ggarrange(ps1, ps2, ps3, ps4,
-                     nrow = 1)
-ggsave(sprintf("%sfigure1_s3.jpg",out_path),
-       fig1.s3,
-       width = max.w, height = max.w/4 * 3/4,
-       dpi = 300)
-
+# fig1.s3 <- ggarrange(ps1, ps2, ps3, ps4,
+#                      nrow = 1)
+# ggsave(sprintf("%sfigure1_s3.jpg",out_path),
+#        fig1.s3,
+#        width = max.w, height = max.w/4 * 3/4,
+#        dpi = 300)
 
 fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, col = colony),
@@ -482,7 +480,8 @@ fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
                                 "Gap" = "#FF5252"),
                      drop = F,
                      guide = F) +
-  labs(title = "Final Screen Plates Layout") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(0,col.lim*4,2),limits = c(1,col.lim*4)) +
   scale_y_continuous(breaks = seq(0,row.lim*4,2),limits = c(row.lim*4,1),trans = 'reverse') +
   theme_linedraw() +
@@ -491,8 +490,7 @@ fs1 <- ggplot(lay.6144[lay.6144$`6144plate` == 1,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim*4),
                   ylim = c(row.lim*4,1))
 
@@ -521,7 +519,8 @@ fs2 <- ggplot(lay.6144[lay.6144$`6144plate` == 2,]) +
                      labels = c('Deep Well','Agar'),
                      drop = FALSE,
                      guide = F) +
-  labs(title = "") +
+  labs(title = "",
+       subtitle = "") +
   scale_x_continuous(breaks = seq(0,col.lim*4,2),limits = c(1,col.lim*4)) +
   scale_y_continuous(breaks = seq(0,row.lim*4,2),limits = c(row.lim*4,1),trans = 'reverse') +
   theme_linedraw() +
@@ -530,17 +529,16 @@ fs2 <- ggplot(lay.6144[lay.6144$`6144plate` == 2,]) +
         axis.ticks = element_blank(),
         panel.grid = element_blank(),
         legend.text = element_blank(),
-        legend.title = element_blank(),
-        plot.title = element_blank()) +
+        legend.title = element_blank()) +
   coord_cartesian(xlim = c(1,col.lim*4),
                   ylim = c(row.lim*4,1))
 
-fig1.s4 <- ggarrange(fs1, fs2,
-                     nrow = 1)
-ggsave(sprintf("%sfigure1_s4.jpg",out_path),
-       fig1.s4,
-       width = max.w/2, height = max.w/4 * 3/4,
-       dpi = 300)
+# fig1.s4 <- ggarrange(fs1, fs2,
+#                      nrow = 1)
+# ggsave(sprintf("%sfigure1_s4.jpg",out_path),
+#        fig1.s4,
+#        width = max.w/2, height = max.w/4 * 3/4,
+#        dpi = 300)
 
 fig1 <- ggarrange(gly1,gly2,gly3,gly4,
                   wc1,wc2,wc3,wc4,
@@ -550,19 +548,19 @@ fig1 <- ggarrange(gly1,gly2,gly3,gly4,
                   ncol = 4)
 ggsave(sprintf("%sfigure1.jpg",out_path),
        fig1,
-       width = max.w, height = max.w * 3/4,
+       width = max.w * 4/6, height = max.w * .80 * 4/6,
        dpi = 300)
 
 ##### FIGURE 2
 f2.min = 200
 f2.max = 700
 
-step1 <- ggplot(data = rfitdat, aes(x = `6144col`, y = `6144row`)) +
+fig2.s1 <- ggplot(data = rfitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz.6144, na.rm = T) +
-  labs(title = "Step 1: Observed Colony Size",
+             size = sz.6144/3, na.rm = T) +
+  labs(title = "",
        subtitle = "",
        x = "",
        y = "") +
@@ -570,7 +568,8 @@ step1 <- ggplot(data = rfitdat, aes(x = `6144col`, y = `6144row`)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
                         limits = c(f2.min,f2.max),
-                        palette = "Set1") +
+                        palette = "Set1",
+                        guide = F) +
   scale_shape_manual(name="Colony Kind",
                      values=c("Gap"=15,"Query"=15,"Reference"=15),
                      breaks=c("Reference","Query","Gap"),guide=F) +
@@ -585,19 +584,22 @@ step1 <- ggplot(data = rfitdat, aes(x = `6144col`, y = `6144row`)) +
         panel.grid = element_blank(),
         legend.text = element_text(size=lax.txt),
         legend.title = element_text(size=lax.ttle),
-        legend.position = "right",
-        plot.title = element_text(size=plt.ttle,hjust = 0),
-        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
+
+ggsave(sprintf("%sfigure2_s1.jpg",out_path),
+       fig2.s1,
+       width = max.w * 4/6 * 1/4, height = max.w * .80 * 4/6 * 1/4,
+       dpi = 300)
 
 step2.tl <- ggplot(data = rfitdat[rfitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz.1536, na.rm = T) +
-  labs(title = "Step 2: Source-based Deconstruction",
-       subtitle = "Top Left Source",
+             size = sz.1536/2, na.rm = T) +
+  labs(title = "",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
@@ -620,9 +622,7 @@ step2.tl <- ggplot(data = rfitdat[rfitdat$source == "TL",], aes(x = `6144col`, y
         panel.grid = element_blank(),
         legend.text = element_text(size=lax.txt),
         legend.title = element_text(size=lax.ttle),
-        legend.position = "right",
-        plot.title = element_text(size=plt.ttle,hjust = 0),
-        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
@@ -630,9 +630,9 @@ step2.tr <- ggplot(data = rfitdat[rfitdat$source == "TR",], aes(x = `6144col`, y
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz.1536, na.rm = T) +
+             size = sz.1536/2, na.rm = T) +
   labs(title = "",
-       subtitle = "Top Right Source",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
@@ -654,9 +654,7 @@ step2.tr <- ggplot(data = rfitdat[rfitdat$source == "TR",], aes(x = `6144col`, y
         panel.grid = element_blank(),
         legend.text = element_text(size=lax.txt),
         legend.title = element_text(size=lax.ttle),
-        legend.position = "right",
-        plot.title = element_text(size=plt.ttle,hjust = 0),
-        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
@@ -664,9 +662,9 @@ step2.bl <- ggplot(data = rfitdat[rfitdat$source == "BL",], aes(x = `6144col`, y
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz.1536, na.rm = T) +
-  labs(title = " ",
-       subtitle = "Bottom Left Source",
+             size = sz.1536/2, na.rm = T) +
+  labs(title = "",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
@@ -688,9 +686,7 @@ step2.bl <- ggplot(data = rfitdat[rfitdat$source == "BL",], aes(x = `6144col`, y
         panel.grid = element_blank(),
         legend.text = element_text(size=lax.txt),
         legend.title = element_text(size=lax.ttle),
-        legend.position = "right",
-        plot.title = element_text(size=plt.ttle,hjust = 0),
-        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
@@ -698,9 +694,9 @@ step2.br <- ggplot(data = rfitdat[rfitdat$source == "BR",], aes(x = `6144col`, y
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz.1536, na.rm = T) +
+             size = sz.1536/2, na.rm = T) +
   labs(title = "",
-       subtitle = "Bottom Right Source",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
@@ -722,29 +718,32 @@ step2.br <- ggplot(data = rfitdat[rfitdat$source == "BR",], aes(x = `6144col`, y
         panel.grid = element_blank(),
         legend.text = element_text(size=lax.txt),
         legend.title = element_text(size=lax.ttle),
-        legend.position = "right",
-        plot.title = element_text(size=plt.ttle,hjust = 0),
-        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-ggarrange(step2.tl,step2.tr,step2.bl,step2.br,
+fig2.s2 <- ggarrange(step2.tl,step2.tr,step2.bl,step2.br,
           nrow = 2, ncol = 2,
-          common.legend = T, legend = 'right')
+          common.legend = T, legend = F)
 
-step3.tl <- ggplot(data = fitdat[fitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
+ggsave(sprintf("%sfigure2_s2.jpg",out_path),
+       fig2.s2,
+       width = max.w * 4/6 * 1/2, height = max.w * .80 * 4/6 * 1/2,
+       dpi = 300)
+
+step3.tl <- ggplot(data = rfitdat[rfitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
                  shape = colony,
                  alpha = colony),
-             size = sz1536, na.rm = T) +
-  labs(title = "Step 3",
-       subtitle = "Top Left",
+             size = sz.1536/2, na.rm = T) +
+  labs(title = "",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
+                        limits = c(f2.min,f2.max),
                         palette = "Set1",
                         guide = F) +
   scale_shape_manual(name="Colony Kind",
@@ -752,34 +751,32 @@ step3.tl <- ggplot(data = fitdat[fitdat$source == "TL",], aes(x = `6144col`, y =
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
-        legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step3.tr <- ggplot(data = fitdat[fitdat$source == "TR",], aes(x = `6144col`, y = `6144row`)) +
+step3.tr <- ggplot(data = rfitdat[rfitdat$source == "TR",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
                  shape = colony,
                  alpha = colony),
-             size = sz1536, na.rm = T) +
-  labs(title = " ",
-       subtitle = "Top Right",
+             size = sz.1536/2, na.rm = T) +
+  labs(title = "",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
+                        limits = c(f2.min,f2.max),
                         palette = "Set1",
                         guide = F) +
   scale_shape_manual(name="Colony Kind",
@@ -787,34 +784,32 @@ step3.tr <- ggplot(data = fitdat[fitdat$source == "TR",], aes(x = `6144col`, y =
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
-        legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step3.bl <- ggplot(data = fitdat[fitdat$source == "BL",], aes(x = `6144col`, y = `6144row`)) +
+step3.bl <- ggplot(data = rfitdat[rfitdat$source == "BL",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
                  shape = colony,
                  alpha = colony),
-             size = sz1536, na.rm = T) +
-  labs(title = " ",
-       subtitle = "Bottom Left",
+             size = sz.1536/2, na.rm = T) +
+  labs(title = "",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
+                        limits = c(f2.min,f2.max),
                         palette = "Set1",
                         guide = F) +
   scale_shape_manual(name="Colony Kind",
@@ -822,34 +817,32 @@ step3.bl <- ggplot(data = fitdat[fitdat$source == "BL",], aes(x = `6144col`, y =
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
-        legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step3.br <- ggplot(data = fitdat[fitdat$source == "BR",], aes(x = `6144col`, y = `6144row`)) +
+step3.br <- ggplot(data = rfitdat[rfitdat$source == "BR",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
                  shape = colony,
                  alpha = colony),
-             size = sz1536, na.rm = T) +
-  labs(title = " ",
-       subtitle = "Bottom Right",
+             size = sz.1536/2, na.rm = T) +
+  labs(title = "",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
+                        limits = c(f2.min,f2.max),
                         palette = "Set1",
                         guide = F) +
   scale_shape_manual(name="Colony Kind",
@@ -857,34 +850,41 @@ step3.br <- ggplot(data = fitdat[fitdat$source == "BR",], aes(x = `6144col`, y =
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
-        legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step4 <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+fig2.s3 <- ggarrange(step3.tl,step3.tr,step3.bl,step3.br,
+                     nrow = 2, ncol = 2,
+                     common.legend = T, legend = F)
+
+ggsave(sprintf("%sfigure2_s3.jpg",out_path),
+       fig2.s3,
+       width = max.w * 4/6 * 1/2, height = max.w * .80 * 4/6 * 1/2,
+       dpi = 300)
+
+fig2.s4 <- ggplot(data = rfitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
                  shape = colony,
                  alpha = colony),
-             size = sz, na.rm = T) +
-  labs(title = "Step 4",
-       subtitle = "Predicted Colony Size (Pixel Count)",
+             size = sz.6144/3, na.rm = T) +
+  labs(title = "",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
+                        limits = c(f2.min,f2.max),
                         palette = "Set1",
                         guide = F) +
   scale_shape_manual(name="Colony Kind",
@@ -892,21 +892,27 @@ step4 <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
-        legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
+        legend.position = "right") +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
+ggsave(sprintf("%sfigure2_s4.jpg",out_path),
+       fig2.s4,
+       width = max.w * 4/6 * 1/4, height = max.w * .80 * 4/6 * 1/4,
+       dpi = 300)
+
+# 
+# fig2 <- ggarrange(fig2.s1, fig2.s2, fig2.s3, fig2.s4,
+#                   ncol = 1)
 
 ##### FINAL FIGURE 2
 ggsave(sprintf("%sfigure2_s1.jpg",out_path),
