@@ -910,53 +910,21 @@ ggsave(sprintf("%sfigure2_s4.jpg",out_path),
        width = max.w * 4/6 * 1/4, height = max.w * .80 * 4/6 * 1/4,
        dpi = 300)
 
-# 
-# fig2 <- ggarrange(fig2.s1, fig2.s2, fig2.s3, fig2.s4,
-#                   ncol = 1)
 
-##### FINAL FIGURE 2
-ggsave(sprintf("%sfigure2_s1.jpg",out_path),
-       step1,
-       width = 9,height = 6.8,
-       limitsize = F)
-
-fig2.s2 <- ggarrange(step2.tl, step2.tr, step2.bl, step2.br,
-                     nrow = 1)
-ggsave(sprintf("%sfigure2_s2.jpg",out_path),
-       fig2.s2,
-       width = 36,height = 6.8,
-       limitsize = F)
-
-fig2.s3 <- ggarrange(step3.tl, step3.tr, step3.bl, step3.br,
-                     nrow = 1)
-ggsave(sprintf("%sfigure2_s3.jpg",out_path),
-       fig2.s3,
-       width = 36,height = 6.8,
-       limitsize = F)
-
-ggsave(sprintf("%sfigure2_s4.jpg",out_path),
-       step4,
-       width = 9,height = 6.8,
-       limitsize = F)
-
-legend <- cowplot::get_legend(step4)
-grid.newpage()
-grid.draw(legend)
-ggsave(sprintf("%sfigure2_lgnd.jpg",out_path),
-       legend,
-       width = 2,height = 4,
-       limitsize = F)
+# legend <- cowplot::get_legend(fig2.s4)
+# grid.newpage()
+# grid.draw(legend)
+# ggsave(sprintf("%sfigure2_lgnd.jpg",out_path),
+#        legend,
+#        width = 2,height = 4,
+#        limitsize = F)
 
 ##### FIGURE 3
-##### 3A
-min = 200
-max = 700
-sz <- 2.8
-
 obs <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
-                 alpha = colony),size = sz,na.rm = T) +
+                 alpha = colony),
+             size = sz.6144/3, na.rm = T) +
   labs(title = "Observed Colony Size (Pixel Count)",
        x = "",
        y = "") +
