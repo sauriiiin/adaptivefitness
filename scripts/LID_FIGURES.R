@@ -7,6 +7,7 @@ library(RMariaDB)
 library(readxl)
 library(ggplot2)
 library(gridExtra)
+library(ggpubr)
 library(grid)
 library(tidyverse)
 library(egg)
@@ -14,8 +15,8 @@ source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
 ##### INITIALIZE
-expt_name = '4C3_GA12'
-expt = 'FS1-12'
+expt_name = '4C3_GA1'
+expt = 'FS1-1'
 out_path = 'figs/lid_paper/';
 density = 6144;
 
@@ -24,7 +25,7 @@ hours = dbGetQuery(conn, sprintf('select distinct hours from %s order by hours a
 pvals = seq(0,1,0.01)
 
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-# tablename_fit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
+tablename_rfit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
 tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
 tablename_p2o = '4C3_pos2orf_name1';
 tablename_bpos = '4C3_borderpos';
@@ -58,8 +59,6 @@ fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.aver
                                   p2c_info[1],hr,p2c_info[2],
                                   pl,p2c_info[3],p2c_info[4]))
 fitdat$bg[is.na(fitdat$average)] = NA
-# min = min(fitdat$average, na.rm=T)
-# max = max(fitdat$average, na.rm=T)
 
 fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
 fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
@@ -69,6 +68,26 @@ fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
 fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
 fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
 fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
+
+rfitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.average, a.fitness,
+                                  b.bg nbg, b.average naverage, b.fitness nfitness
+                                  from %s a, %s b, %s c
+                                  where a.hours = %d and a.hours = b.hours
+                                  and a.pos = b.pos and b.pos = c.pos
+                                  and c.%s = %d order by c.%s, c.%s',
+                                  tablename_rfit,tablename_nfit,
+                                  p2c_info[1],hr,p2c_info[2],
+                                  pl,p2c_info[3],p2c_info[4]))
+rfitdat$bg[is.na(rfitdat$average)] = NA
+
+rfitdat$source[rfitdat$`6144row`%%2==1 & rfitdat$`6144col`%%2==1] = 'TL'
+rfitdat$source[rfitdat$`6144row`%%2==0 & rfitdat$`6144col`%%2==1] = 'BL'
+rfitdat$source[rfitdat$`6144row`%%2==1 & rfitdat$`6144col`%%2==0] = 'TR'
+rfitdat$source[rfitdat$`6144row`%%2==0 & rfitdat$`6144col`%%2==0] = 'BR'
+
+rfitdat$colony[rfitdat$orf_name == 'BF_control'] = 'Reference'
+rfitdat$colony[rfitdat$orf_name != 'BF_control'] = 'Query'
+rfitdat$colony[is.na(rfitdat$orf_name)] = 'Gap'
 
 p2c_info_384 = NULL
 p2c_info_384[1] = '4C3_pos2coor384'
@@ -123,7 +142,7 @@ stle <- 10/12
 
 ##### TEXT SIZES
 plt.ttle <- 12
-plt.stlt <- 10
+plt.stle <- 10
 lax.ttle <- 10
 lax.txt <- 9
 
@@ -535,182 +554,183 @@ ggsave(sprintf("%sfigure1.jpg",out_path),
        dpi = 300)
 
 ##### FIGURE 2
-sz1536 <- 4.5
+f2.min = 200
+f2.max = 700
 
-step1 <- ggplot(data = fitdat, aes(x = `6144col`, y = `6144row`)) +
+step1 <- ggplot(data = rfitdat, aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz, na.rm = T) +
-  labs(title = "Step 1",
-       subtitle = "Observed Colony Size (Pixel Count)",
+             size = sz.6144, na.rm = T) +
+  labs(title = "Step 1: Observed Colony Size",
+       subtitle = "",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
-                        palette = "Set1",
-                        guide = F) +
+                        limits = c(f2.min,f2.max),
+                        palette = "Set1") +
   scale_shape_manual(name="Colony Kind",
                      values=c("Gap"=15,"Query"=15,"Reference"=15),
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
         legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        plot.title = element_text(size=plt.ttle,hjust = 0),
+        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step2.tl <- ggplot(data = fitdat[fitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
+step2.tl <- ggplot(data = rfitdat[rfitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz1536, na.rm = T) +
-  labs(title = "Step 2",
-       subtitle = "Top Left",
+             size = sz.1536, na.rm = T) +
+  labs(title = "Step 2: Source-based Deconstruction",
+       subtitle = "Top Left Source",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
-                        palette = "Set1",
-                        guide = F) +
+                        limits = c(f2.min,f2.max),
+                        palette = "Set1") +
   scale_shape_manual(name="Colony Kind",
                      values=c("Gap"=15,"Query"=15,"Reference"=15),
-                     breaks=c("Reference","Query","Gap"),guide=F) +
+                     breaks=c("Reference","Query","Gap"),
+                     guide = F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
         legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        plot.title = element_text(size=plt.ttle,hjust = 0),
+        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step2.tr <- ggplot(data = fitdat[fitdat$source == "TR",], aes(x = `6144col`, y = `6144row`)) +
+step2.tr <- ggplot(data = rfitdat[rfitdat$source == "TR",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz1536, na.rm = T) +
+             size = sz.1536, na.rm = T) +
+  labs(title = "",
+       subtitle = "Top Right Source",
+       x = "",
+       y = "") +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(f2.min,f2.max),
+                        palette = "Set1") +
+  scale_shape_manual(name="Colony Kind",
+                     values=c("Gap"=15,"Query"=15,"Reference"=15),
+                     breaks=c("Reference","Query","Gap"),guide=F) +
+  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
+                     guide=F) +
+  theme_linedraw() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
+        legend.position = "right",
+        plot.title = element_text(size=plt.ttle,hjust = 0),
+        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
+  coord_cartesian(xlim = c(1,96),
+                  ylim = c(64,1))
+
+step2.bl <- ggplot(data = rfitdat[rfitdat$source == "BL",], aes(x = `6144col`, y = `6144row`)) +
+  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
+                 shape = colony,
+                 alpha = colony),
+             size = sz.1536, na.rm = T) +
   labs(title = " ",
-       subtitle = "Top Right",
+       subtitle = "Bottom Left Source",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
-                        palette = "Set1",
-                        guide = F) +
+                        limits = c(f2.min,f2.max),
+                        palette = "Set1") +
   scale_shape_manual(name="Colony Kind",
                      values=c("Gap"=15,"Query"=15,"Reference"=15),
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
         legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        plot.title = element_text(size=plt.ttle,hjust = 0),
+        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step2.bl <- ggplot(data = fitdat[fitdat$source == "BL",], aes(x = `6144col`, y = `6144row`)) +
+step2.br <- ggplot(data = rfitdat[rfitdat$source == "BR",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = average,
                  shape = colony,
                  alpha = colony),
-             size = sz1536, na.rm = T) +
-  labs(title = " ",
-       subtitle = "Bottom Left",
+             size = sz.1536, na.rm = T) +
+  labs(title = "",
+       subtitle = "Bottom Right Source",
        x = "",
        y = "") +
   scale_x_continuous(breaks = seq(1,96,1)) +
   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
   scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
-                        palette = "Set1",
-                        guide = F) +
+                        limits = c(f2.min,f2.max),
+                        palette = "Set1") +
   scale_shape_manual(name="Colony Kind",
                      values=c("Gap"=15,"Query"=15,"Reference"=15),
                      breaks=c("Reference","Query","Gap"),guide=F) +
   scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
                      guide=F) +
-  theme_classic() +
+  theme_linedraw() +
   theme(axis.text.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
+        panel.grid = element_blank(),
+        legend.text = element_text(size=lax.txt),
+        legend.title = element_text(size=lax.ttle),
         legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
+        plot.title = element_text(size=plt.ttle,hjust = 0),
+        plot.subtitle = element_text(size=plt.stle,hjust = 0)) +
   coord_cartesian(xlim = c(1,96),
                   ylim = c(64,1))
 
-step2.br <- ggplot(data = fitdat[fitdat$source == "BR",], aes(x = `6144col`, y = `6144row`)) +
-  geom_point(aes(x = `6144col`, y = `6144row`,col = average,
-                 shape = colony,
-                 alpha = colony),
-             size = sz1536, na.rm = T) +
-  labs(title = " ",
-       subtitle = "Bottom Right",
-       x = "",
-       y = "") +
-  scale_x_continuous(breaks = seq(1,96,1)) +
-  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
-  scale_color_distiller(name = "PIX",
-                        limits = c(min,max),
-                        palette = "Set1",
-                        guide = F) +
-  scale_shape_manual(name="Colony Kind",
-                     values=c("Gap"=15,"Query"=15,"Reference"=15),
-                     breaks=c("Reference","Query","Gap"),guide=F) +
-  scale_alpha_manual(values=c("Gap"=1,"Query"=1,"Reference"=1),
-                     guide=F) +
-  theme_classic() +
-  theme(axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.title.y = element_blank(),
-        axis.ticks = element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=1),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20,face="bold"),
-        legend.position = "right",
-        plot.title = element_text(size=25,hjust = 0),
-        plot.subtitle = element_text(size=20,hjust = 0)) +
-  coord_cartesian(xlim = c(1,96),
-                  ylim = c(64,1))
+ggarrange(step2.tl,step2.tr,step2.bl,step2.br,
+          nrow = 2, ncol = 2,
+          common.legend = T, legend = 'right')
 
 step3.tl <- ggplot(data = fitdat[fitdat$source == "TL",], aes(x = `6144col`, y = `6144row`)) +
   geom_point(aes(x = `6144col`, y = `6144row`,col = bg,
