@@ -870,6 +870,7 @@ fig2.s3 <- ggarrange(step3.tl,step3.tr,step3.bl,step3.br,
 ggsave(sprintf("%sfigure2_s3.jpg",out_path),
        fig2.s3,
        width = max.w * 4/6 * 1/2, height = max.w * .80 * 4/6 * 1/2,
+       units = "cm",
        dpi = 300)
 
 fig2.s4 <- ggplot(data = rfitdat, aes(x = `6144col`, y = `6144row`)) +
