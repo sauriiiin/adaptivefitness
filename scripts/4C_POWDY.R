@@ -10,7 +10,7 @@ library(tidyverse)
 library(egg)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LIDR/"
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
 expt_name <- '4C3_GA1'
 pvals = seq(0,1,0.005)
 
@@ -27,28 +27,36 @@ fit.files <- list.files(path = dat.dir,
 hours <- NULL
 reps <- NULL
 for (s in strsplit(stats.files,'_')) {
-  reps <- c(reps, as.numeric(s[3]))
-  hours <- c(hours, as.numeric(s[4]))
+  # reps <- c(reps, as.numeric(s[4]))
+  reps <- 8
+  hours <- c(hours, as.numeric(s[3]))
 }
 reps <- unique(reps)
 hours <- unique(hours)
 
 stats.all <- NULL
 fit.all <- NULL
+fpr.all <- NULL
 ##### PUTTING IT TOGETHER
 for (ii in 1:length(reps)) {
   rep <- reps[ii]
   for (i in 1:length(hours)) {
     hr <- hours[i]
     
+    # dat.stats <- read.csv(paste0(dat.dir,
+    #                              sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
+    #                       na.strings = "NaN")
     dat.stats <- read.csv(paste0(dat.dir,
-                                 sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
+                                 sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
                           na.strings = "NaN")
     dat.stats <- dat.stats[dat.stats$hours != 0,]
     dat.stats$cont_hrs <- hr
     dat.stats$rep <- rep
+    # dat.fit <- read.csv(paste0(dat.dir,
+    #                            sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
+    #                     na.strings = "NaN")
     dat.fit <- read.csv(paste0(dat.dir,
-                               sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
+                               sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
                         na.strings = "NaN")
     dat.fit$cont_hrs <- hr
     dat.fit$rep <- rep
@@ -61,6 +69,7 @@ for (ii in 1:length(reps)) {
       # dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
       dat.stats$cen[dat.stats$hours == ii] <- mean(dat.stats$es[dat.stats$hours == ii])
     }
+
     dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
     dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
     dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
@@ -70,9 +79,19 @@ for (ii in 1:length(reps)) {
 }
 
 ##### THE STATS DATA ANALYSIS
-save(stats.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_STATS.RData")
-save(fit.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FITNESS.RData")
+# save(stats.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_STATS.RData")
+# save(fit.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FITNESS.RData")
 stats.all$es <- round(stats.all$es,4)
+
+for (ii in unique(stats.all$cont_hrs)) {
+  for (pp in sort(unique(stats.all$p[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours]))) {
+    stats.all$fpr[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours & stats.all$p <= pp] <-
+      dim(stats.all[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours & stats.all$p <= pp,])[1]/
+      dim(stats.all[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours,])[1]
+  }
+}
+
+
 for (rep in unique(reps)) {
   effect_size <- sort(unique(round(stats.all$es[stats.all$rep == rep],2)))
   dat.pow <- NULL
@@ -298,6 +317,7 @@ for (rep in unique(reps)) {
   dat.cnt2$Deleterious <- dat.cnt2$Neutral + dat.cnt$Deleterious
   dat.cnt2$Beneficial <- dat.cnt2$Deleterious + dat.cnt$Beneficial
   dat.cnt2 <- data.frame(dat.cnt2)
+  t <- dat.cnt2$Beneficial[1]
   
   ggplot(dat.cnt2) +
     geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.8) +
@@ -316,10 +336,11 @@ for (rep in unique(reps)) {
     # method='loess',span=0.4,level=0.95) +
     # geom_line(aes(x=cen,y=rollmean(Neutral, 5, na.pad=TRUE),col = 'Neutral'),lwd=1.2) +
     labs(title = sprintf('LID with %d Technical Replicate',rep),
+         subtitle = expt_name,
          x = 'Mean Relative Fitness',
          y = 'Effect Percentage') +
-    scale_y_continuous(breaks = c(913 * seq(0,1,0.1)),
-                       minor_breaks = c(913 * seq(0,1,0.05)),
+    scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
+                       minor_breaks = c(t * seq(0,1,0.05)),
                        labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
     scale_x_continuous(breaks = seq(0,2,0.1),
                        minor_breaks = seq(0,2,0.05)) +
@@ -348,8 +369,8 @@ for (rep in unique(reps)) {
     guides(color = guide_legend(override.aes = list(size=6)),
            shape = guide_legend(override.aes = list(size=6))) +
     coord_cartesian(xlim = c(0.8,1.2),
-                    ylim = c(0,913))
-  ggsave(sprintf("%seffect_dis%d.png",out_path,rep),
+                    ylim = c(0,t))
+  ggsave(sprintf("%s%s_EffectDis%d.png",out_path,expt_name,rep),
          width = 10,height = 10) 
 }
 
