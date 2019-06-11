@@ -404,6 +404,8 @@ for (rep in unique(reps)) {
          dpi = 300)
 }
 
+# save(stats.tmp, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FDR.RData")
+
 ###### THE FITNESS DATA ANALYSIS
 temp.fit <- fit.all[fit.all$cont_hrs == 18 & fit.all$hours ==18,]
 rmse <- sqrt(mean((abs(temp.fit$se))^2, na.rm = T))
