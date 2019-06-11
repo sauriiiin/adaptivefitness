@@ -83,15 +83,6 @@ for (ii in 1:length(reps)) {
 # save(fit.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FITNESS.RData")
 stats.all$es <- round(stats.all$es,4)
 
-for (ii in unique(stats.all$cont_hrs)) {
-  for (pp in sort(unique(stats.all$p[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours]))) {
-    stats.all$fpr[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours & stats.all$p <= pp] <-
-      dim(stats.all[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours & stats.all$p <= pp,])[1]/
-      dim(stats.all[stats.all$hours == ii & stats.all$cont_hrs == stats.all$hours,])[1]
-  }
-}
-
-
 for (rep in unique(reps)) {
   effect_size <- sort(unique(round(stats.all$es[stats.all$rep == rep],2)))
   dat.pow <- NULL
@@ -213,6 +204,15 @@ for (rep in unique(reps)) {
   ##### BOX PLOTS OF EFFECT DISTRIBUTION
   stats.tmp <- stats.all[stats.all$rep == rep &
                            stats.all$cont_hrs > 11 & stats.all$hours > 11,]
+  
+  for (ii in unique(stats.tmp$cont_hrs)) {
+    for (pp in sort(unique(stats.tmp$p[stats.tmp$hours == ii & stats.tmp$cont_hrs == stats.tmp$hours]))) {
+      stats.tmp$fpr[stats.tmp$hours == ii & stats.tmp$cont_hrs == stats.tmp$hours & stats.tmp$p == pp] <-
+        dim(stats.tmp[stats.tmp$hours == ii & stats.tmp$cont_hrs == stats.tmp$hours & stats.tmp$p <= pp,])[1]/
+        dim(stats.tmp[stats.tmp$hours == ii & stats.tmp$cont_hrs == stats.tmp$hours,])[1]
+    }
+  }
+  
   srt <- sort(unique(stats.tmp$cen))
   dat.srt <- NULL
   t <- 1
@@ -319,31 +319,22 @@ for (rep in unique(reps)) {
   dat.cnt2 <- data.frame(dat.cnt2)
   t <- dat.cnt2$Beneficial[1]
   
-  ggplot(dat.cnt2) +
-    geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.8) +
-    geom_point(aes(x = cen, y = Beneficial, fill = 'Beneficial'), shape = 21, col = 'black') +
-    # geom_smooth(aes(x = cen, y = Beneficial, col = 'Beneficial'),
-    # method='loess',span=0.4,level=0.95) +
-    # geom_line(aes(x=cen,y=rollmean(Beneficial, 5, na.pad=TRUE),col = 'Beneficial'),lwd=1.2) +
-    geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 0.8) +
-    geom_point(aes(x = cen, y = Deleterious, fill = 'Deleterious'), shape = 21, col = 'black') +
-    # geom_smooth(aes(x = cen, y = Deleterious, col = 'Deleterious'),
-    # method='loess',span=0.4,level=0.95) +
-    # geom_line(aes(x=cen,y=rollmean(Deleterious, 5, na.pad=TRUE),col = 'Deleterious'),lwd=1.2) +
-    geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.8) +
-    geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
-    # geom_smooth(aes(x = cen, y = Neutral, col = 'Neutral'),
-    # method='loess',span=0.4,level=0.95) +
-    # geom_line(aes(x=cen,y=rollmean(Neutral, 5, na.pad=TRUE),col = 'Neutral'),lwd=1.2) +
-    labs(title = sprintf('LID with %d Technical Replicate',rep),
-         subtitle = expt_name,
+  plt.pow <- ggplot(dat.cnt2) +
+    geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.6) +
+    # geom_point(aes(x = cen, y = Beneficial, fill = 'Beneficial'), shape = 21, col = 'black') +
+    geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 0.6) +
+    # geom_point(aes(x = cen, y = Deleterious, fill = 'Deleterious'), shape = 21, col = 'black') +
+    geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.6) +
+    # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
+    labs(title = "",
+         subtitle = sprintf('With %d Technical Replicate',rep),
          x = 'Mean Relative Fitness',
-         y = 'Effect Percentage') +
+         y = 'Effect Distribution') +
     scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
                        minor_breaks = c(t * seq(0,1,0.05)),
                        labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
-    scale_x_continuous(breaks = seq(0,2,0.1),
-                       minor_breaks = seq(0,2,0.05)) +
+    scale_x_continuous(breaks = seq(0,2,0.05),
+                       minor_breaks = seq(0,2,0.025)) +
     scale_color_manual(name = 'Effects',
                        breaks = c('Beneficial','Neutral','Deleterious'),
                        values = c('Deleterious'='#D32F2F',
@@ -355,23 +346,62 @@ for (rep in unique(reps)) {
                                  'Neutral'='#303F9F',
                                  'Beneficial'='#4CAF50')) +
     theme_linedraw() +
-    theme(axis.text.x = element_text(size=15),
-          axis.title.x = element_text(size=20),
-          axis.text.y = element_text(size=15),
-          axis.title.y = element_text(size=20,
-                                      angle = 90,
-                                      vjust = 0.5),
+    theme(axis.text.x = element_text(size=8),
+          axis.title.x = element_text(size=10),
+          axis.text.y = element_text(size=8),
+          axis.title.y = element_text(size=10),
+          # axis.title = element_blank(),
+          legend.text = element_text(size=8),
+          legend.title = element_text(size=10),
           legend.position = "bottom",
-          legend.text = element_text(size=15),
-          legend.title =  element_text(size=15),
-          plot.title = element_text(size=25,hjust = 0),
-          plot.subtitle = element_text(size=20,hjust = 0)) +
-    guides(color = guide_legend(override.aes = list(size=6)),
-           shape = guide_legend(override.aes = list(size=6))) +
+          plot.title = element_text(size=12),
+          plot.subtitle = element_text(size=10)) +
+    guides(color = guide_legend(override.aes = list(size=2)),
+           shape = guide_legend(override.aes = list(size=2))) +
     coord_cartesian(xlim = c(0.8,1.2),
                     ylim = c(0,t))
-  ggsave(sprintf("%s%s_EffectDis%d.png",out_path,expt_name,rep),
-         width = 10,height = 10) 
+  # ggsave(sprintf("%s%s_EffectDis%d.png",out_path,expt_name,rep),
+  #        width = 10,height = 10) 
+  
+  stats.tmp$hours <- as.character(stats.tmp$hours)
+  stats.tmp$cont_hrs <- as.character(stats.tmp$cont_hrs)
+  
+  plt.fpr <- ggplot(stats.tmp[stats.tmp$hours == stats.tmp$cont_hrs,]) +
+    geom_abline(col = 'red', linetype = 'dashed', lwd = 1) +
+    geom_line(aes(x = p, y = fpr, col = hours), lwd = 1.2) +
+    labs(title = expt_name,
+         subtitle = "False positive rate",
+         x = "p-value cut-off",
+         y = "False Positive Rate") +
+    scale_x_continuous(breaks = seq(0,1,0.05),
+                       minor_breaks = seq(0,1,0.01),
+                       limits = c(0,1)) +
+    scale_y_continuous(breaks = seq(0,1,0.05),
+                       minor_breaks = seq(0,1,0.01),
+                       limits = c(0,1)) +
+    scale_color_manual(name = "Hours",
+                       breaks=c("13","14","16","17","18"),
+                       values=c("13"="#D32F2F","14"="#536DFE","16"="#388E3C","17"="#795548","18"="#00BCD4",
+                                "0"="transparent","8"="transparent","9"="transparent","10"="transparent","11"="transparent")) +
+    theme_linedraw() +
+    theme(axis.text.x = element_text(size=8),
+          axis.title.x = element_text(size=10),
+          axis.text.y = element_text(size=8),
+          axis.title.y = element_text(size=10),
+          # axis.title = element_blank(),
+          legend.text = element_text(size=8),
+          legend.title = element_text(size=10),
+          legend.position = "bottom",
+          plot.title = element_text(size=12),
+          plot.subtitle = element_text(size=10)) +
+    guides(color = guide_legend(override.aes = list(size=6)),
+           shape = guide_legend(override.aes = list(size=6))) +
+    coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
+  
+  ggarrange(plt.fpr, plt.pow)
+  ggsave(sprintf("%s%s_EDIS_%d.jpg",out_path,expt_name,rep),
+         height = 12, width = 20, units = "cm",
+         dpi = 300)
 }
 
 ###### THE FITNESS DATA ANALYSIS
