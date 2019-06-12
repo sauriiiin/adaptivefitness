@@ -73,6 +73,11 @@ for (ii in 1:length(reps)) {
     dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
     dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
     dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
+    
+    dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+    dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+    dat.stats$effect_p[is.na(dat.stats$effect_p)] <- 'Neutral'
+    
     stats.all <- rbind(stats.all,dat.stats)
     fit.all <- rbind(fit.all,dat.fit)
   }
@@ -308,6 +313,9 @@ for (rep in unique(reps)) {
     temp$Deleterious <- sum(dat.srt$pos == pos & dat.srt$effect == 'Deleterious')
     temp$Neutral <- sum(dat.srt$pos == pos & dat.srt$effect == 'Neutral')
     temp$Beneficial <- sum(dat.srt$pos == pos & dat.srt$effect == 'Beneficial')
+    temp$Deleterious_p <- sum(dat.srt$pos == pos & dat.srt$effect_p == 'Deleterious')
+    temp$Neutral_p <- sum(dat.srt$pos == pos & dat.srt$effect_p == 'Neutral')
+    temp$Beneficial_p <- sum(dat.srt$pos == pos & dat.srt$effect_p == 'Beneficial')
     dat.cnt <- rbind(dat.cnt,temp)
   }
   
@@ -316,10 +324,13 @@ for (rep in unique(reps)) {
   dat.cnt2$Neutral <- dat.cnt$Neutral
   dat.cnt2$Deleterious <- dat.cnt2$Neutral + dat.cnt$Deleterious
   dat.cnt2$Beneficial <- dat.cnt2$Deleterious + dat.cnt$Beneficial
+  dat.cnt2$Neutral_p <- dat.cnt$Neutral_p
+  dat.cnt2$Deleterious_p <- dat.cnt2$Neutral_p + dat.cnt$Deleterious_p
+  dat.cnt2$Beneficial_p <- dat.cnt2$Deleterious_p + dat.cnt$Beneficial_p
   dat.cnt2 <- data.frame(dat.cnt2)
   t <- dat.cnt2$Beneficial[1]
   
-  plt.pow <- ggplot(dat.cnt2) +
+  plt.pow.fdr <- ggplot(dat.cnt2) +
     geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.6) +
     # geom_point(aes(x = cen, y = Beneficial, fill = 'Beneficial'), shape = 21, col = 'black') +
     geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 0.6) +
@@ -327,7 +338,7 @@ for (rep in unique(reps)) {
     geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.6) +
     # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
     labs(title = "",
-         subtitle = sprintf('With %d Technical Replicate',rep),
+         subtitle = sprintf('With %d Technical Replicate (FDR = 0.05)',rep),
          x = 'Mean Relative Fitness',
          y = 'Effect Distribution') +
     scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
@@ -351,9 +362,9 @@ for (rep in unique(reps)) {
           axis.text.y = element_text(size=8),
           axis.title.y = element_text(size=10),
           # axis.title = element_blank(),
-          legend.text = element_text(size=8),
-          legend.title = element_text(size=10),
-          legend.position = "bottom",
+          legend.text = element_text(size=5),
+          legend.title = element_text(size=6),
+          legend.position = "right",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
     guides(color = guide_legend(override.aes = list(size=2)),
@@ -362,6 +373,48 @@ for (rep in unique(reps)) {
                     ylim = c(0,t))
   # ggsave(sprintf("%s%s_EffectDis%d.png",out_path,expt_name,rep),
   #        width = 10,height = 10) 
+  
+  plt.pow.p <- ggplot(dat.cnt2) +
+    geom_area(aes(x = cen, y = Beneficial_p, fill = 'Beneficial'), alpha = 0.6) +
+    # geom_point(aes(x = cen, y = Beneficial, fill = 'Beneficial'), shape = 21, col = 'black') +
+    geom_area(aes(x = cen, y = Deleterious_p, fill = 'Deleterious'), alpha = 0.6) +
+    # geom_point(aes(x = cen, y = Deleterious, fill = 'Deleterious'), shape = 21, col = 'black') +
+    geom_area(aes(x = cen, y = Neutral_p, fill = 'Neutral'), alpha = 0.6) +
+    # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
+    labs(title = "",
+         subtitle = sprintf('With %d Technical Replicate (p = 0.05)',rep),
+         x = 'Mean Relative Fitness',
+         y = 'Effect Distribution') +
+    scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
+                       minor_breaks = c(t * seq(0,1,0.05)),
+                       labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
+    scale_x_continuous(breaks = seq(0,2,0.05),
+                       minor_breaks = seq(0,2,0.025)) +
+    scale_color_manual(name = 'Effects',
+                       breaks = c('Beneficial','Neutral','Deleterious'),
+                       values = c('Deleterious'='#D32F2F',
+                                  'Neutral'='#303F9F',
+                                  'Beneficial'='#4CAF50')) +
+    scale_fill_manual(name = 'Effects',
+                      breaks = c('Beneficial','Neutral','Deleterious'),
+                      values = c('Deleterious'='#D32F2F',
+                                 'Neutral'='#303F9F',
+                                 'Beneficial'='#4CAF50')) +
+    theme_linedraw() +
+    theme(axis.text.x = element_text(size=8),
+          axis.title.x = element_text(size=10),
+          axis.text.y = element_text(size=8),
+          axis.title.y = element_text(size=10),
+          # axis.title = element_blank(),
+          legend.text = element_text(size=5),
+          legend.title = element_text(size=6),
+          legend.position = "right",
+          plot.title = element_text(size=12),
+          plot.subtitle = element_text(size=10)) +
+    guides(color = guide_legend(override.aes = list(size=2)),
+           shape = guide_legend(override.aes = list(size=2))) +
+    coord_cartesian(xlim = c(0.8,1.2),
+                    ylim = c(0,t))
   
   stats.tmp$hours <- as.character(stats.tmp$hours)
   stats.tmp$cont_hrs <- as.character(stats.tmp$cont_hrs)
@@ -389,18 +442,19 @@ for (rep in unique(reps)) {
           axis.text.y = element_text(size=8),
           axis.title.y = element_text(size=10),
           # axis.title = element_blank(),
-          legend.text = element_text(size=8),
-          legend.title = element_text(size=10),
-          legend.position = "bottom",
+          legend.text = element_text(size=5),
+          legend.title = element_text(size=6),
+          legend.position = "right",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
-    guides(color = guide_legend(override.aes = list(size=6)),
-           shape = guide_legend(override.aes = list(size=6))) +
+    guides(color = guide_legend(override.aes = list(size=4)),
+           shape = guide_legend(override.aes = list(size=4))) +
     coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
   
-  ggarrange(plt.fpr, plt.pow)
+  ggarrange(plt.fpr, plt.pow.fdr, plt.pow.p,
+            nrow = 1, ncol = 3)
   ggsave(sprintf("%s%s_EDIS_%d.jpg",out_path,expt_name,rep),
-         height = 12, width = 20, units = "cm",
+         height = 8, width = 20, units = "cm",
          dpi = 300)
 }
 
