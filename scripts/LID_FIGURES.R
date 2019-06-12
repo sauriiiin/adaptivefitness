@@ -1493,6 +1493,7 @@ ggsave(sprintf("%sfigureS3.jpg",out_path),
        width = 20,height = 20)
 
 ##### FIGURE 5
+load("/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FDR.RData")
 data = dbGetQuery(conn, sprintf('select * from %s',tablename_pval))
 data = data[data$orf_name != 'BFC100',]
 pdata = data.frame()
@@ -1515,9 +1516,11 @@ for (hr in unique(data$hours)) {
 }
 
 ##### A
-fpr <- g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
-                     linetype = 'dashed', lwd = 1.1, alpha = 0.7) +
-  labs(title = "A. False positive rate",
+fpr <- ggplot(stats.tmp[stats.tmp$hours == stats.tmp$cont_hrs,]) +
+  geom_abline(col = 'red', linetype = 'dashed', lwd = 1) +
+  geom_line(aes(x = p, y = fpr, col = hours), lwd = 1.2) +
+  labs(title = "False positive rate",
+       subtitle = "",
        x = "p-value cut-off",
        y = "False Positive Rate") +
   scale_x_continuous(breaks = seq(0,1,0.1),
@@ -1527,50 +1530,56 @@ fpr <- g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
                      minor_breaks = seq(0,1,0.05),
                      limits = c(0,1)) +
   scale_color_manual(name = "Hours",
-                     breaks=c("8","10","14","16","18"),
-                     values=c("8"="#D32F2F","10"="#536DFE","14"="#388E3C","16"="#795548","18"="#00BCD4","red"="red",
-                              "0"="transparent","9"="transparent","11"="transparent","13"="transparent","17"="transparent")) +
+                     breaks=c("13","14","16","17","18"),
+                     values=c("13"="#D32F2F","14"="#536DFE","16"="#388E3C","17"="#795548","18"="#00BCD4",
+                              "0"="transparent","8"="transparent","9"="transparent","10"="transparent","11"="transparent")) +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=15),
-        axis.title.x = element_text(size=20),
-        axis.text.y = element_text(size=15),
-        axis.title.y = element_text(size=20),
+  theme(axis.text.x = element_text(size=8),
+        axis.title.x = element_text(size=10),
+        axis.text.y = element_text(size=8),
+        axis.title.y = element_text(size=10),
         # axis.title = element_blank(),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20),
+        legend.text = element_text(size=8),
+        legend.title = element_text(size=10),
         legend.position = "bottom",
-        plot.title = element_text(size=25,hjust = -0.1),
-        plot.subtitle = element_text(size=20,hjust = -0.1)) +
+        plot.title = element_text(size=12),
+        plot.subtitle = element_text(size=10)) +
+  guides(color = guide_legend(override.aes = list(size=6)),
+         shape = guide_legend(override.aes = list(size=6))) +
   coord_cartesian(xlim = c(0, 1), ylim = c(0, 1))
 
 ##### B
-fpr.zoom <- g + geom_line(data = pdata, aes(x = p, y = p, col = 'red'),
-                          linetype = 'dashed', lwd = 1.1, alpha = 0.7) +
-  labs(title = "B. False positive rate for p < 0.1",
+fpr.zoom <- ggplot(stats.tmp[stats.tmp$hours == stats.tmp$cont_hrs,]) +
+  geom_abline(col = 'red', linetype = 'dashed', lwd = 1) +
+  geom_line(aes(x = p, y = fpr, col = hours), lwd = 1.2) +
+  labs(title = "False positive rate",
+       subtitle = "for p < 0.02",
        x = "p-value cut-off",
        y = "False Positive Rate") +
-  scale_x_continuous(breaks = seq(0,1,0.01),
-                     minor_breaks = seq(0,1,0.005),
+  scale_x_continuous(breaks = seq(0,1,0.05),
+                     minor_breaks = seq(0,1,0.01),
                      limits = c(0,1)) +
-  scale_y_continuous(breaks = seq(0,1,0.01),
-                     minor_breaks = seq(0,1,0.005),
+  scale_y_continuous(breaks = seq(0,1,0.05),
+                     minor_breaks = seq(0,1,0.01),
                      limits = c(0,1)) +
   scale_color_manual(name = "Hours",
-                     breaks=c("8","10","14","16","18"),
-                     values=c("8"="#D32F2F","10"="#536DFE","14"="#388E3C","16"="#795548","18"="#00BCD4","red"="red",
-                              "0"="transparent","9"="transparent","11"="transparent","13"="transparent","17"="transparent")) +
+                     breaks=c("13","14","16","17","18"),
+                     values=c("13"="#D32F2F","14"="#536DFE","16"="#388E3C","17"="#795548","18"="#00BCD4",
+                              "0"="transparent","8"="transparent","9"="transparent","10"="transparent","11"="transparent")) +
   theme_linedraw() +
-  theme(axis.text.x = element_text(size=15),
-        axis.title.x = element_text(size=20),
-        axis.text.y = element_text(size=15),
-        axis.title.y = element_text(size=20),
+  theme(axis.text.x = element_text(size=8),
+        axis.title.x = element_text(size=10),
+        axis.text.y = element_text(size=8),
+        axis.title.y = element_text(size=10),
         # axis.title = element_blank(),
-        legend.text = element_text(size=15),
-        legend.title = element_text(size=20),
+        legend.text = element_text(size=8),
+        legend.title = element_text(size=10),
         legend.position = "bottom",
-        plot.title = element_text(size=25,hjust = -0.16),
-        plot.subtitle = element_text(size=20,hjust = -0.1)) +
-  coord_cartesian(xlim = c(0, 0.1), ylim = c(0, 0.1))
+        plot.title = element_text(size=12),
+        plot.subtitle = element_text(size=10)) +
+  guides(color = guide_legend(override.aes = list(size=6)),
+         shape = guide_legend(override.aes = list(size=6))) +
+  coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
 
 ##### C
 d <- read_excel("rawdata/cdata_ga1_clean.xlsx",col_types = "numeric")
