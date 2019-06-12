@@ -338,7 +338,7 @@ for (rep in unique(reps)) {
     geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.6) +
     # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
     labs(title = "Which effects are detected?",
-         subtitle = sprintf('With %d Technical Replicate (FDR = 0.05)',rep),
+         subtitle = sprintf('with %d technical replicate (FDR = 0.05)',rep),
          x = 'Mean Relative Fitness',
          y = 'Effect Distribution') +
     scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
@@ -362,8 +362,8 @@ for (rep in unique(reps)) {
           axis.text.y = element_text(size=8),
           axis.title.y = element_text(size=10),
           # axis.title = element_blank(),
-          legend.text = element_text(size=5),
-          legend.title = element_text(size=6),
+          legend.text = element_text(size=8),
+          legend.title = element_text(size=10),
           legend.position = "bottom",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
@@ -382,7 +382,7 @@ for (rep in unique(reps)) {
     geom_area(aes(x = cen, y = Neutral_p, fill = 'Neutral'), alpha = 0.6) +
     # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
     labs(title = "",
-         subtitle = sprintf('With %d Technical Replicate (p = 0.05)',rep),
+         subtitle = sprintf('with %d technical replicate (p = 0.05)',rep),
          x = 'Mean Relative Fitness',
          y = 'Effect Distribution') +
     scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
@@ -406,8 +406,8 @@ for (rep in unique(reps)) {
           axis.text.y = element_text(size=8),
           axis.title.y = element_blank(),
           # axis.title = element_blank(),
-          legend.text = element_text(size=5),
-          legend.title = element_text(size=6),
+          legend.text = element_text(size=8),
+          legend.title = element_text(size=10),
           legend.position = "bottom",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
@@ -446,8 +446,8 @@ for (rep in unique(reps)) {
           axis.text.y = element_text(size=8),
           axis.title.y = element_text(size=10),
           # axis.title = element_blank(),
-          legend.text = element_text(size=5),
-          legend.title = element_text(size=6),
+          legend.text = element_text(size=8),
+          legend.title = element_text(size=10),
           legend.position = "bottom",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
@@ -478,8 +478,8 @@ for (rep in unique(reps)) {
           axis.text.y = element_text(size=8),
           axis.title.y = element_blank(),
           # axis.title = element_blank(),
-          legend.text = element_text(size=5),
-          legend.title = element_text(size=6),
+          legend.text = element_text(size=8),
+          legend.title = element_text(size=10),
           legend.position = "bottom",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
@@ -488,13 +488,16 @@ for (rep in unique(reps)) {
     coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
   
   c.fpr <- ggarrange(plt.fpr, plt.fpr.z,
-                 common.legend = T, legend = 'right')
+                 common.legend = T, legend = 'bottom')
   c.pow <- ggarrange(plt.pow.fdr, plt.pow.p,
-                 common.legend = T, legend = 'right')
-  ggarrange(c.fpr, c.pow,
+                 common.legend = T, legend = 'bottom')
+  edis <- ggarrange(c.fpr, c.pow,
             nrow = 2, ncol = 1)
+  annotate_figure(edis,
+                  top = text_grob(expt_name))
+  
   ggsave(sprintf("%s%s_EDIS_%d.jpg",out_path,expt_name,rep),
-         height = 20, width = 20, units = "cm",
+         height = 22, width = 20, units = "cm",
          dpi = 300)
 }
 
