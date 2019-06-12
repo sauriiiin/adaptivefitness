@@ -337,7 +337,7 @@ for (rep in unique(reps)) {
     # geom_point(aes(x = cen, y = Deleterious, fill = 'Deleterious'), shape = 21, col = 'black') +
     geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.6) +
     # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
-    labs(title = "",
+    labs(title = "Which effects are detected?",
          subtitle = sprintf('With %d Technical Replicate (FDR = 0.05)',rep),
          x = 'Mean Relative Fitness',
          y = 'Effect Distribution') +
@@ -364,7 +364,7 @@ for (rep in unique(reps)) {
           # axis.title = element_blank(),
           legend.text = element_text(size=5),
           legend.title = element_text(size=6),
-          legend.position = "right",
+          legend.position = "bottom",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
     guides(color = guide_legend(override.aes = list(size=2)),
@@ -404,11 +404,11 @@ for (rep in unique(reps)) {
     theme(axis.text.x = element_text(size=8),
           axis.title.x = element_text(size=10),
           axis.text.y = element_text(size=8),
-          axis.title.y = element_text(size=10),
+          axis.title.y = element_blank(),
           # axis.title = element_blank(),
           legend.text = element_text(size=5),
           legend.title = element_text(size=6),
-          legend.position = "right",
+          legend.position = "bottom",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
     guides(color = guide_legend(override.aes = list(size=2)),
@@ -422,8 +422,44 @@ for (rep in unique(reps)) {
   plt.fpr <- ggplot(stats.tmp[stats.tmp$hours == stats.tmp$cont_hrs,]) +
     geom_abline(col = 'red', linetype = 'dashed', lwd = 1) +
     geom_line(aes(x = p, y = fpr, col = hours), lwd = 1.2) +
-    labs(title = expt_name,
-         subtitle = "False positive rate",
+    geom_segment(aes(x=0,xend=0.2,y=0,yend=0), col = 'black', lwd = 0.8) +
+    geom_segment(aes(x=0.2,xend=0.2,y=0,yend=0.2), col = 'black', lwd = 0.8) +
+    geom_segment(aes(x=0.2,xend=0,y=0.2,yend=0.2), col = 'black', lwd = 0.8) +
+    geom_segment(aes(x=0,xend=0,y=0.2,yend=0), col = 'black', lwd = 0.8) +
+    labs(title = "Does FPR follow random expectation?",
+         subtitle = "for p between 0 and 1",
+         x = "p-value cut-off",
+         y = "False Positive Rate") +
+    scale_x_continuous(breaks = seq(0,1,0.2),
+                       minor_breaks = seq(0,1,0.05),
+                       limits = c(0,1)) +
+    scale_y_continuous(breaks = seq(0,1,0.2),
+                       minor_breaks = seq(0,1,0.05),
+                       limits = c(0,1)) +
+    scale_color_manual(name = "Hours",
+                       breaks=c("13","14","16","17","18"),
+                       values=c("13"="#D32F2F","14"="#536DFE","16"="#388E3C","17"="#795548","18"="#00BCD4",
+                                "0"="transparent","8"="transparent","9"="transparent","10"="transparent","11"="transparent")) +
+    theme_linedraw() +
+    theme(axis.text.x = element_text(size=8),
+          axis.title.x = element_text(size=10),
+          axis.text.y = element_text(size=8),
+          axis.title.y = element_text(size=10),
+          # axis.title = element_blank(),
+          legend.text = element_text(size=5),
+          legend.title = element_text(size=6),
+          legend.position = "bottom",
+          plot.title = element_text(size=12),
+          plot.subtitle = element_text(size=10)) +
+    guides(color = guide_legend(override.aes = list(size=4)),
+           shape = guide_legend(override.aes = list(size=4))) +
+    coord_cartesian(xlim = c(0, 1), ylim = c(0, 1))
+  
+  plt.fpr.z <- ggplot(stats.tmp[stats.tmp$hours == stats.tmp$cont_hrs,]) +
+    geom_abline(col = 'red', linetype = 'dashed', lwd = 1) +
+    geom_line(aes(x = p, y = fpr, col = hours), lwd = 1.2) +
+    labs(title = "",
+         subtitle = "for p < 0.2",
          x = "p-value cut-off",
          y = "False Positive Rate") +
     scale_x_continuous(breaks = seq(0,1,0.05),
@@ -440,21 +476,25 @@ for (rep in unique(reps)) {
     theme(axis.text.x = element_text(size=8),
           axis.title.x = element_text(size=10),
           axis.text.y = element_text(size=8),
-          axis.title.y = element_text(size=10),
+          axis.title.y = element_blank(),
           # axis.title = element_blank(),
           legend.text = element_text(size=5),
           legend.title = element_text(size=6),
-          legend.position = "right",
+          legend.position = "bottom",
           plot.title = element_text(size=12),
           plot.subtitle = element_text(size=10)) +
     guides(color = guide_legend(override.aes = list(size=4)),
            shape = guide_legend(override.aes = list(size=4))) +
     coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
   
-  ggarrange(plt.fpr, plt.pow.fdr, plt.pow.p,
-            nrow = 1, ncol = 3)
+  c.fpr <- ggarrange(plt.fpr, plt.fpr.z,
+                 common.legend = T, legend = 'right')
+  c.pow <- ggarrange(plt.pow.fdr, plt.pow.p,
+                 common.legend = T, legend = 'right')
+  ggarrange(c.fpr, c.pow,
+            nrow = 2, ncol = 1)
   ggsave(sprintf("%s%s_EDIS_%d.jpg",out_path,expt_name,rep),
-         height = 8, width = 20, units = "cm",
+         height = 20, width = 20, units = "cm",
          dpi = 300)
 }
 
