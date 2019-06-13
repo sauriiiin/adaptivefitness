@@ -336,8 +336,53 @@ alldat$average[alldat$Gap ==  "YES"] = alldat$average[alldat$Gap ==  "YES"] *
 ggplot() +
   geom_point(data = alldat, aes(x = average, col = Gap), stat = "density")
 
+##### CHANGING DATA ON SQL USING GAP MEDIAN CORRECTION
+fitdat = dbGetQuery(conn, sprintf('select a.*, b.*
+                                      from %s a, %s b
+                                      where a.pos = b.pos
+                                      order by b.%s, b.%s',
+                                  tablename_fit,
+                                  p2c_info[1],
+                                  p2c_info[3],p2c_info[4]))
 
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
 
+fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
+fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
+fitdat$colony[is.na(fitdat$orf_name)] = 'Gap'
 
+for (hr in unique(fitdat$hours)) {
+  for (pl in unique(fitdat$`6144plate`[fitdat$hours == hr])) {
+    temp <- fitdat[fitdat$hours == hr & fitdat$`6144plate` == pl,]
+    for (o in temp$pos) {
+      c = temp$`6144col`[temp$pos == o]
+      r = temp$`6144row`[temp$pos == o]
+      num.gaps <- sum(temp$colony[temp$`6144row` == r - 1 & temp$`6144col` == c |
+                                      temp$`6144row` == r + 1 & temp$`6144col` == c |
+                                      temp$`6144row` == r & temp$`6144col` == c - 1 |
+                                      temp$`6144row` == r & temp$`6144col` == c + 1 |
+                                      temp$`6144row` == r - 1 & temp$`6144col` == c - 1 |
+                                      temp$`6144row` == r + 1 & temp$`6144col` == c + 1|
+                                      temp$`6144row` == r - 1 & temp$`6144col` == c + 1 |
+                                      temp$`6144row` == r + 1 & temp$`6144col` == c - 1] == 'Gap')
+      if (num.gaps > 0) {
+        temp$gaps[temp$pos == o] = num.gaps
+        # fitdat$gaps[fitdat$hours == hr & fitdat$`6144plate` == pl & fitdat$pos == o] = num.gaps
+      }
+    }
+    temp$NearGap[is.na(temp$gaps)] = "NO"
+    temp$NearGap[!is.na(temp$gaps)] = "YES"
+    temp$average[temp$NearGap ==  "YES"] = temp$average[temp$NearGap ==  "YES"] *
+      median(temp$average[temp$NearGap ==  "NO"], na.rm = T)/median(temp$average[temp$NearGap ==  "YES"], na.rm = T)
+    fitdat$average[fitdat$hours == hr & fitdat$`6144plate` == pl] = temp$average
+  }
+}
 
+ggplot(temp) +
+  geom_point(aes(x = average, col = NearGap), stat = "density")
+
+dbWriteTable(conn, "4C3_GA1_MCG_6144_FITNESS", fitdat[1:6], overwrite = T)
 
