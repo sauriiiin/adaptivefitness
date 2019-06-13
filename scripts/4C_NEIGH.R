@@ -93,133 +93,133 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
       alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff < (diff_mean - 3*diff_std)] = 'Smaller'
       alldat$outlier[is.na(alldat$outlier)] = 'Normal'
       
-      ngh.sca <- ggplot(alldat[alldat$source == sr,]) +
-        geom_abline(linetype = 2, col = 'red', lwd = 1.2) +
-        geom_abline(linetype = 2, col = 'blue', lwd = 1,
-                    intercept = 3*diff_std) +
-        geom_abline(linetype = 2, col = 'blue', lwd = 1,
-                    intercept = -3*diff_std) +
-        geom_point(aes(x=average, y=neigh,
-                       col = outlier,
-                       shape = colony),
-                   size = 3, alpha = 0.7) +
-        scale_color_manual(name="wrt Neigh Ref",
-                           breaks=c("Smaller","Normal","Bigger"),
-                           values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50"),
-                           guide = F) +
-        scale_shape_manual(name = 'Colony Type',
-                           breaks=c('Reference','Query','Gap'),
-                           values=c('Reference' = 18,'Query' = 15, 'Gap' =1),
-                           guide = F) +
-        labs(title = "Comparison With Neighboring References :",
-             x = "Colony Pixel Count",
-             y = "Neighbor Pixel Count Average") +
-        scale_x_continuous(breaks = seq(0,1000,100),
-                           minor_breaks = seq(0,1000,25)) +
-        scale_y_continuous(breaks = seq(0,1000,100),
-                           minor_breaks = seq(0,1000,25)) +
-        theme_linedraw() +
-        theme(axis.text.x = element_text(size=10),
-              axis.title.x = element_text(size=15),
-              axis.text.y = element_text(size=10),
-              axis.title.y = element_text(size=15),
-              legend.position = c(0.8,0.2),
-              legend.background = element_rect(fill="gray90",
-                                               size=.5,
-                                               linetype="dotted"),
-              legend.text = element_text(size=10),
-              legend.title =  element_text(size=15),
-              plot.title = element_text(size=20,hjust = 0.5),
-              plot.subtitle = element_text(size=13,hjust = 0.5)) +
-        coord_cartesian(xlim = c(200,600),
-                        ylim = c(200,600))
-
-      ngh.plt <- ggplot(alldat[alldat$source == sr,]) +
-        geom_point(aes(x=`6144col`, y=`6144row`,
-                       col = outlier,
-                       shape = colony,
-                       alpha = sr),
-                   size = 3) +
-        geom_point(data = alldat,
-                   aes(x=`6144col`, y=`6144row`,
-                       col = outlier,
-                       shape = colony,
-                       alpha = 'REST'),
-                   size = 3) +
-        scale_color_manual(name="wrt Neigh Ref",
-                           breaks=c("Smaller","Normal","Bigger"),
-                           values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
-        scale_shape_manual(name = 'Colony Type',
-                           breaks=c('Reference','Query','Gap'),
-                           values=c('Reference' = 18,'Query' = 15, 'Gap' =1)) +
-        scale_alpha_manual(name = 'Source',
-                           breaks=c(sr,'REST'),
-                           values=c(sr = 1,'REST'=0.4)) +
-        scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
-        scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
-        labs(title = sprintf("%s | %d hours | Plate %d | %s",
-                             expt, hr, pl, sr),
-             x = "Column",
-             y = "Row") +
-        theme_linedraw() +
-        theme(axis.text.x = element_text(size=10),
-              axis.title.x = element_text(size=15),
-              axis.text.y = element_text(size=10),
-              axis.title.y = element_text(size=15),
-              legend.position = 'right',
-              legend.text = element_text(size=10),
-              legend.title =  element_text(size=15),
-              plot.title = element_text(size=20,hjust = 0.5),
-              plot.subtitle = element_text(size=13,hjust = 0.5)) +
-        guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
-               shape = guide_legend(override.aes = list(size=3)),
-               alpha = guide_legend(override.aes = list(size=3, alpha = c(1,0.3))))
-
-      fig<- ggarrange(ngh.sca, ngh.plt,
-                      widths = c(1,1.5),
-                      nrow = 1)
-
-      ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d_%s.png",
-                     out_path,expt_name,hr,pl,sr),
-             fig,
-             width = 25,height = 10)
-      
-      ggplot(alldat[alldat$source == sr,]) +
-        geom_density(aes(x = average, col = source),lwd = 1.2) +
-        geom_point(aes(x = average, y = 0, fill = outlier),
-                   col = 'transparent',
-                   alpha = 0.7,
-                   shape = 21,
-                   size = 3) +
-        scale_fill_manual(name="wrt Neigh Ref",
-                          breaks=c("Smaller","Normal","Bigger"),
-                          values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
-        scale_color_manual(name="Source",
-                           values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
-                           breaks=c("TL","TR","BL","BR"),
-                           labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
-        labs(title = "Outliers on Density Plot",
-             subtitle = sprintf("%s | %d hours | Plate %d | %s",
-                                expt, hr, pl, sr),
-             x = 'Observed Pixel Count',
-             y = 'Density') +
-        theme_linedraw() +
-        theme(axis.text.x = element_text(size=10),
-              axis.title.x = element_text(size=15),
-              axis.text.y = element_text(size=10),
-              axis.title.y = element_text(size=15),
-              legend.position = 'right',
-              legend.text = element_text(size=10),
-              legend.title =  element_text(size=15),
-              plot.title = element_text(size=20,hjust = 0.5),
-              plot.subtitle = element_text(size=13,hjust = 0.5)) +
-        guides(color = guide_legend(override.aes = list(size=2, alpha = 1))) +
-        coord_cartesian(xlim = c(200,600),
-                        ylim = c(0,0.016))
-      
-      ggsave(sprintf("%s%s_NEIGH_OUT_DEN_%d_%d_%s.png",
-                     out_path,expt_name,hr,pl,sr),
-             width = 10,height = 10)
+      # ngh.sca <- ggplot(alldat[alldat$source == sr,]) +
+      #   geom_abline(linetype = 2, col = 'red', lwd = 1.2) +
+      #   geom_abline(linetype = 2, col = 'blue', lwd = 1,
+      #               intercept = 3*diff_std) +
+      #   geom_abline(linetype = 2, col = 'blue', lwd = 1,
+      #               intercept = -3*diff_std) +
+      #   geom_point(aes(x=average, y=neigh,
+      #                  col = outlier,
+      #                  shape = colony),
+      #              size = 3, alpha = 0.7) +
+      #   scale_color_manual(name="wrt Neigh Ref",
+      #                      breaks=c("Smaller","Normal","Bigger"),
+      #                      values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50"),
+      #                      guide = F) +
+      #   scale_shape_manual(name = 'Colony Type',
+      #                      breaks=c('Reference','Query','Gap'),
+      #                      values=c('Reference' = 18,'Query' = 15, 'Gap' =1),
+      #                      guide = F) +
+      #   labs(title = "Comparison With Neighboring References :",
+      #        x = "Colony Pixel Count",
+      #        y = "Neighbor Pixel Count Average") +
+      #   scale_x_continuous(breaks = seq(0,1000,100),
+      #                      minor_breaks = seq(0,1000,25)) +
+      #   scale_y_continuous(breaks = seq(0,1000,100),
+      #                      minor_breaks = seq(0,1000,25)) +
+      #   theme_linedraw() +
+      #   theme(axis.text.x = element_text(size=10),
+      #         axis.title.x = element_text(size=15),
+      #         axis.text.y = element_text(size=10),
+      #         axis.title.y = element_text(size=15),
+      #         legend.position = c(0.8,0.2),
+      #         legend.background = element_rect(fill="gray90",
+      #                                          size=.5,
+      #                                          linetype="dotted"),
+      #         legend.text = element_text(size=10),
+      #         legend.title =  element_text(size=15),
+      #         plot.title = element_text(size=20,hjust = 0.5),
+      #         plot.subtitle = element_text(size=13,hjust = 0.5)) +
+      #   coord_cartesian(xlim = c(200,600),
+      #                   ylim = c(200,600))
+      # 
+      # ngh.plt <- ggplot(alldat[alldat$source == sr,]) +
+      #   geom_point(aes(x=`6144col`, y=`6144row`,
+      #                  col = outlier,
+      #                  shape = colony,
+      #                  alpha = sr),
+      #              size = 3) +
+      #   geom_point(data = alldat,
+      #              aes(x=`6144col`, y=`6144row`,
+      #                  col = outlier,
+      #                  shape = colony,
+      #                  alpha = 'REST'),
+      #              size = 3) +
+      #   scale_color_manual(name="wrt Neigh Ref",
+      #                      breaks=c("Smaller","Normal","Bigger"),
+      #                      values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
+      #   scale_shape_manual(name = 'Colony Type',
+      #                      breaks=c('Reference','Query','Gap'),
+      #                      values=c('Reference' = 18,'Query' = 15, 'Gap' =1)) +
+      #   scale_alpha_manual(name = 'Source',
+      #                      breaks=c(sr,'REST'),
+      #                      values=c(sr = 1,'REST'=0.4)) +
+      #   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
+      #   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
+      #   labs(title = sprintf("%s | %d hours | Plate %d | %s",
+      #                        expt, hr, pl, sr),
+      #        x = "Column",
+      #        y = "Row") +
+      #   theme_linedraw() +
+      #   theme(axis.text.x = element_text(size=10),
+      #         axis.title.x = element_text(size=15),
+      #         axis.text.y = element_text(size=10),
+      #         axis.title.y = element_text(size=15),
+      #         legend.position = 'right',
+      #         legend.text = element_text(size=10),
+      #         legend.title =  element_text(size=15),
+      #         plot.title = element_text(size=20,hjust = 0.5),
+      #         plot.subtitle = element_text(size=13,hjust = 0.5)) +
+      #   guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+      #          shape = guide_legend(override.aes = list(size=3)),
+      #          alpha = guide_legend(override.aes = list(size=3, alpha = c(1,0.3))))
+      # 
+      # fig<- ggarrange(ngh.sca, ngh.plt,
+      #                 widths = c(1,1.5),
+      #                 nrow = 1)
+      # 
+      # ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d_%s.png",
+      #                out_path,expt_name,hr,pl,sr),
+      #        fig,
+      #        width = 25,height = 10)
+      # 
+      # ggplot(alldat[alldat$source == sr,]) +
+      #   geom_density(aes(x = average, col = source),lwd = 1.2) +
+      #   geom_point(aes(x = average, y = 0, fill = outlier),
+      #              col = 'transparent',
+      #              alpha = 0.7,
+      #              shape = 21,
+      #              size = 3) +
+      #   scale_fill_manual(name="wrt Neigh Ref",
+      #                     breaks=c("Smaller","Normal","Bigger"),
+      #                     values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
+      #   scale_color_manual(name="Source",
+      #                      values=c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548"),
+      #                      breaks=c("TL","TR","BL","BR"),
+      #                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+      #   labs(title = "Outliers on Density Plot",
+      #        subtitle = sprintf("%s | %d hours | Plate %d | %s",
+      #                           expt, hr, pl, sr),
+      #        x = 'Observed Pixel Count',
+      #        y = 'Density') +
+      #   theme_linedraw() +
+      #   theme(axis.text.x = element_text(size=10),
+      #         axis.title.x = element_text(size=15),
+      #         axis.text.y = element_text(size=10),
+      #         axis.title.y = element_text(size=15),
+      #         legend.position = 'right',
+      #         legend.text = element_text(size=10),
+      #         legend.title =  element_text(size=15),
+      #         plot.title = element_text(size=20,hjust = 0.5),
+      #         plot.subtitle = element_text(size=13,hjust = 0.5)) +
+      #   guides(color = guide_legend(override.aes = list(size=2, alpha = 1))) +
+      #   coord_cartesian(xlim = c(200,600),
+      #                   ylim = c(0,0.016))
+      # 
+      # ggsave(sprintf("%s%s_NEIGH_OUT_DEN_%d_%d_%s.png",
+      #                out_path,expt_name,hr,pl,sr),
+      #        width = 10,height = 10)
     }
     
     for (o in alldat$pos[alldat$outlier == 'Bigger']) {
