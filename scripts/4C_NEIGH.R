@@ -286,25 +286,57 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
   }
 }
 
+for (o in alldat$pos) {
+  c = alldat$`6144col`[alldat$pos == o]
+  r = alldat$`6144row`[alldat$pos == o]
+  num.gaps <- sum(alldat$colony[alldat$`6144row` == r - 1 & alldat$`6144col` == c |
+                                  alldat$`6144row` == r + 1 & alldat$`6144col` == c |
+                                  alldat$`6144row` == r & alldat$`6144col` == c - 1 |
+                                  alldat$`6144row` == r & alldat$`6144col` == c + 1 |
+                                  alldat$`6144row` == r - 1 & alldat$`6144col` == c - 1 |
+                                  alldat$`6144row` == r + 1 & alldat$`6144col` == c + 1|
+                                  alldat$`6144row` == r - 1 & alldat$`6144col` == c + 1 |
+                                  alldat$`6144row` == r + 1 & alldat$`6144col` == c - 1] == 'Gap')
+  if (num.gaps > 0) {
+    alldat$gaps[alldat$pos == o] = num.gaps
+  }
+}
+
 alldat$Gap[is.na(alldat$gaps)] = "NO"
 alldat$Gap[!is.na(alldat$gaps)] = "YES"
 
+# ggplot() +
+#   geom_point(data = alldat[alldat$Gap == "NO",], aes(x = average, y = fitness, col = source, alpha = source)) +
+#   geom_point(data = alldat[!is.na(alldat$gaps),], aes(x = average, y = fitness, col = "Gap", alpha = "Gap")) +
+#   geom_smooth(data = alldat, aes(x = average, y = fitness), method = "lm", color = "black") +
+#   scale_alpha_manual(values = c("Gap" = 1,"TL" = 0.3,"TR" = 0.3,"BL" = 0.3,"BR" = 0.3), guide = F) +
+#   labs(x = "Colony Size",
+#        y = "Fitness") +
+#   scale_x_continuous(breaks = seq(0,800,100),
+#                      minor_breaks = seq(0,800,50)) +
+#   scale_y_continuous(breaks = seq(0,2,0.1),
+#                      minor_breaks = seq(0,2,0.05)) +
+#   scale_color_manual(values = c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548",
+#                                 "Gap" = "black")) +
+#   theme_linedraw() +
+#   coord_cartesian(xlim = c(200,700),
+#                   ylim = c(0.8,1.2))
+
+  
 ggplot() +
-  geom_point(data = alldat[alldat$Gap == "NO",], aes(x = average, y = fitness, col = source, alpha = source)) +
-  geom_point(data = alldat[!is.na(alldat$gaps),], aes(x = average, y = fitness, col = "Gap", alpha = "Gap")) +
-  geom_smooth(data = alldat, aes(x = average, y = fitness), method = "lm", color = "black") +
-  scale_alpha_manual(values = c("Gap" = 1,"TL" = 0.3,"TR" = 0.3,"BL" = 0.3,"BR" = 0.3), guide = F) +
-  labs(x = "Colony Size",
-       y = "Fitness") +
-  scale_x_continuous(breaks = seq(0,800,100),
-                     minor_breaks = seq(0,800,50)) +
-  scale_y_continuous(breaks = seq(0,2,0.1),
-                     minor_breaks = seq(0,2,0.05)) +
-  scale_color_manual(values = c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548",
-                                "Gap" = ))
-  theme_linedraw() +
-  coord_cartesian(xlim = c(200,700),
-                  ylim = c(0.8,1.2))
+  geom_point(data = alldat, aes(x = average, col = Gap), stat = "density")
+
+
+median(alldat$average[alldat$Gap ==  "YES"], na.rm = T)
+median(alldat$average[alldat$Gap ==  "NO"], na.rm = T)
+
+alldat$average[alldat$Gap ==  "YES"] = alldat$average[alldat$Gap ==  "YES"] *
+  median(alldat$average[alldat$Gap ==  "NO"], na.rm = T)/median(alldat$average[alldat$Gap ==  "YES"], na.rm = T)
+
+ggplot() +
+  geom_point(data = alldat, aes(x = average, col = Gap), stat = "density")
+
+
 
 
 

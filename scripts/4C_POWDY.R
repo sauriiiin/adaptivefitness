@@ -15,7 +15,7 @@ expt_name <- '4C3_GA1_TLBR'
 pvals = seq(0,1,0.005)
 
 getmode <- function(v) {
-  uniqv <- unique(v)
+  uniqv <- unique(v[!is.na(v)])
   uniqv[which.max(tabulate(match(v, uniqv)))]
 }
 
