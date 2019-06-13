@@ -1,3 +1,4 @@
+##### NEIGHBOR EFFECT
 ##### Author  : Saurin Parikh (dr.saurin.parikh@gmail.com)
 ##### Date    : 05/16/2019
 
@@ -278,9 +279,33 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
             plot.subtitle = element_text(size=13,hjust = 0.5)) +
       guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
              shape = guide_legend(override.aes = list(size=3)))
-    ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
-                   out_path,expt_name,hr,pl),
-           width = 15,height = 10)
+    # ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
+    #                out_path,expt_name,hr,pl),
+    #        width = 15,height = 10)
     
   }
 }
+
+alldat$Gap[is.na(alldat$gaps)] = "NO"
+alldat$Gap[!is.na(alldat$gaps)] = "YES"
+
+ggplot() +
+  geom_point(data = alldat[alldat$Gap == "NO",], aes(x = average, y = fitness, col = source, alpha = source)) +
+  geom_point(data = alldat[!is.na(alldat$gaps),], aes(x = average, y = fitness, col = "Gap", alpha = "Gap")) +
+  geom_smooth(data = alldat, aes(x = average, y = fitness), method = "lm", color = "black") +
+  scale_alpha_manual(values = c("Gap" = 1,"TL" = 0.3,"TR" = 0.3,"BL" = 0.3,"BR" = 0.3), guide = F) +
+  labs(x = "Colony Size",
+       y = "Fitness") +
+  scale_x_continuous(breaks = seq(0,800,100),
+                     minor_breaks = seq(0,800,50)) +
+  scale_y_continuous(breaks = seq(0,2,0.1),
+                     minor_breaks = seq(0,2,0.05)) +
+  scale_color_manual(values = c("TL"="#D32F2F","TR"="#536DFE","BL"="#388E3C","BR"="#795548",
+                                "Gap" = ))
+  theme_linedraw() +
+  coord_cartesian(xlim = c(200,700),
+                  ylim = c(0.8,1.2))
+
+
+
+
