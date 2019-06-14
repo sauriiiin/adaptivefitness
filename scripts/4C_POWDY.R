@@ -10,14 +10,14 @@ library(tidyverse)
 library(egg)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_TLBR_LID/"
-expt_name <- '4C3_GA1_TLBR'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_MCG_LID/"
+expt_name <- '4C3_GA1_MCG'
 pvals = seq(0,1,0.005)
 
-getmode <- function(v) {
-  uniqv <- unique(v[!is.na(v)])
-  uniqv[which.max(tabulate(match(v, uniqv)))]
-}
+# getmode <- function(v) {
+#   uniqv <- unique(v[!is.na(v)])
+#   uniqv[which.max(tabulate(match(v, uniqv)))]
+# }
 
 ##### GET DATA
 stats.files <- list.files(path = dat.dir,
@@ -488,7 +488,7 @@ for (rep in unique(reps)) {
     coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
   
   c.fpr <- ggarrange(plt.fpr, plt.fpr.z,
-                 common.legend = T, legend = 'bottom')
+                     common.legend = T, legend = 'bottom')
   c.pow <- ggarrange(plt.pow.fdr, plt.pow.p,
                  common.legend = T, legend = 'bottom')
   edis <- ggarrange(c.fpr, c.pow,

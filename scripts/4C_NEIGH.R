@@ -10,16 +10,13 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1'
-expt = 'FS1-1'
+expt_name = '4C3_GA1_MCG'
+expt = 'FS1-1-MCG'
 out_path = 'figs/neigh/';
 density = 6144;
 
 ##### CHECK POSITION WISE VARIABILITY
 conn <- initialize.sql("saurin_test")
-
-expt = 'FS1-1'
-density = 6144;
 
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
 tablename_p2o = '4C3_pos2orf_name1';
@@ -279,9 +276,9 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
             plot.subtitle = element_text(size=13,hjust = 0.5)) +
       guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
              shape = guide_legend(override.aes = list(size=3)))
-    # ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
-    #                out_path,expt_name,hr,pl),
-    #        width = 15,height = 10)
+    ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
+                   out_path,expt_name,hr,pl),
+           width = 15,height = 10)
     
   }
 }
@@ -324,7 +321,7 @@ alldat$Gap[!is.na(alldat$gaps)] = "YES"
 
   
 ggplot() +
-  geom_point(data = alldat, aes(x = average, col = Gap), stat = "density")
+  geom_point(data = alldat, aes(x = fitness, col = Gap), stat = "density")
 
 
 median(alldat$average[alldat$Gap ==  "YES"], na.rm = T)
@@ -377,12 +374,12 @@ for (hr in unique(fitdat$hours)) {
     temp$NearGap[!is.na(temp$gaps)] = "YES"
     temp$average[temp$NearGap ==  "YES"] = temp$average[temp$NearGap ==  "YES"] *
       median(temp$average[temp$NearGap ==  "NO"], na.rm = T)/median(temp$average[temp$NearGap ==  "YES"], na.rm = T)
-    fitdat$average[fitdat$hours == hr & fitdat$`6144plate` == pl] = temp$average
+    fitdat$mca[fitdat$hours == hr & fitdat$`6144plate` == pl] = temp$average
   }
 }
 
 ggplot(temp) +
-  geom_point(aes(x = average, col = NearGap), stat = "density")
+  geom_point(aes(x = mca, col = NearGap), stat = "density")
 
 dbWriteTable(conn, "4C3_GA1_MCG_6144_FITNESS", fitdat[1:6], overwrite = T)
 
