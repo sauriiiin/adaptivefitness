@@ -41,7 +41,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
                                     p2c_info[2]))
 
 hr = 18
-pl = 1
+pl = 2
 
 alldat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
@@ -63,10 +63,6 @@ alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
 alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
 alldat$colony[is.na(alldat$orf_name)] = 'Gap'
 
-# alldat$border[alldat$`6144row` %in% 1:4 | alldat$`6144row` %in% 61:64 |
-#                 alldat$`6144col` %in% 1:4 | alldat$`6144col` %in% 93:96] = 'Y'
-# alldat$border[is.na(alldat$border)] = 'N'
-
 alldat$border[alldat$`6144row` %in% 1 | alldat$`6144row` %in% 64 |
                 alldat$`6144col` %in% 1 | alldat$`6144col` %in% 96] = 'B1'
 alldat$border[alldat$`6144row` %in% 2 | alldat$`6144row` %in% 63 |
@@ -77,6 +73,7 @@ alldat$border[alldat$`6144row` %in% 4 | alldat$`6144row` %in% 61 |
                 alldat$`6144col` %in% 4 | alldat$`6144col` %in% 93] = 'B4'
 alldat$border[is.na(alldat$border)] = 'N'
 
+##### PLOTTING THE PIXEL COUNTS OF BORDERS WRT SOURCE INFORMATION
 ggplot(alldat) +
   geom_point(aes(x = average, col = border), stat = 'density') +
   facet_wrap(.~source, ncol = 2) +
@@ -85,23 +82,119 @@ ggplot(alldat) +
   scale_color_discrete(name = 'Border',
                      breaks = c('B1','B2','B3','B4','N'),
                      labels = c('One','Two','Three','Four','Interior')) +
+  scale_y_continuous(breaks = seq(0,0.03,0.005)) +
   theme_linedraw() +
-  theme(legend.position = 'bottom')
-
+  theme(legend.position = 'bottom') +
+  coord_cartesian(xlim = c(200,700),
+                  ylim = c(0,0.03))
 ggsave(sprintf("%s%s_BORDERS_%d_%d.png",
                out_path,expt_name,hr,pl),
-       width = 10,height = 11)
+       width = 7,height = 7.5)
 
+##### MEDIAN CORRECTING THE BORDERS
 alldat$average_mbc <- alldat$average
-alldat$average_mbc[alldat$border == 'B1']  <- alldat$average_mbc[alldat$border ==  "B1"] *
-  median(alldat$average_mbc[alldat$border ==  "N"], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B1"], na.rm = T)
-alldat$average_mbc[alldat$border == 'B2']  <- alldat$average_mbc[alldat$border ==  "B2"] *
-  median(alldat$average_mbc[alldat$border ==  "N"], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B2"], na.rm = T)
-alldat$average_mbc[alldat$border == 'B3']  <- alldat$average_mbc[alldat$border ==  "B3"] *
-  median(alldat$average_mbc[alldat$border ==  "N"], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B3"], na.rm = T)
-alldat$average_mbc[alldat$border == 'B4']  <- alldat$average_mbc[alldat$border ==  "B4"] *
-  median(alldat$average_mbc[alldat$border ==  "N"], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B4"], na.rm = T)
+
+for (sr in unique(alldat$source)) {
+  alldat$average_mbc[alldat$border == 'B1' & alldat$source == sr]  <- alldat$average_mbc[alldat$border ==  "B1" & alldat$source == sr] *
+    median(alldat$average_mbc[alldat$border ==  "N" & alldat$source == sr], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B1" & alldat$source == sr], na.rm = T)
+  alldat$average_mbc[alldat$border == 'B2' & alldat$source == sr]  <- alldat$average_mbc[alldat$border ==  "B2" & alldat$source == sr] *
+    median(alldat$average_mbc[alldat$border ==  "N" & alldat$source == sr], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B2" & alldat$source == sr], na.rm = T)
+  alldat$average_mbc[alldat$border == 'B3' & alldat$source == sr]  <- alldat$average_mbc[alldat$border ==  "B3" & alldat$source == sr] *
+    median(alldat$average_mbc[alldat$border ==  "N" & alldat$source == sr], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B3" & alldat$source == sr], na.rm = T)
+  alldat$average_mbc[alldat$border == 'B4' & alldat$source == sr]  <- alldat$average_mbc[alldat$border ==  "B4" & alldat$source == sr] *
+    median(alldat$average_mbc[alldat$border ==  "N" & alldat$source == sr], na.rm = T)/median(alldat$average_mbc[alldat$border ==  "B4" & alldat$source == sr], na.rm = T)
+}
 
 ggplot(alldat) +
   geom_point(aes(x = average_mbc, col = border), stat = 'density') +
-  facet_grid(.~source)
+  facet_wrap(.~source, ncol = 2) +
+  labs(x = 'Pixel Count',
+       y = 'Density') +
+  scale_color_discrete(name = 'Border',
+                       breaks = c('B1','B2','B3','B4','N'),
+                       labels = c('One','Two','Three','Four','Interior')) +
+  scale_y_continuous(breaks = seq(0,0.03,0.005)) +
+  theme_linedraw() +
+  theme(legend.position = 'bottom') +
+  coord_cartesian(xlim = c(200,700),
+                  ylim = c(0,0.03))
+ggsave(sprintf("%s%s_BORDERS_MBC_%d_%d.png",
+               out_path,expt_name,hr,pl),
+       width = 7,height = 7.5)
+
+##### WHAT HAPPENS NEAR GAPS
+alldat$gap <- 'N'
+for (o in alldat$pos) {
+  c = alldat$`6144col`[alldat$pos == o]
+  r = alldat$`6144row`[alldat$pos == o]
+  if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap') {
+    alldat$gap[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+                 alldat$`6144col` == c & alldat$`6144row` == r - 1 |
+                 alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
+                 alldat$`6144col` == c - 1 & alldat$`6144row` == r |
+                 alldat$`6144col` == c + 1 & alldat$`6144row` == r |
+                 alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
+                 alldat$`6144col` == c & alldat$`6144row` == r + 1 |
+                 alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'G1'
+    alldat$gap[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+                 alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
+                 alldat$`6144col` == c & alldat$`6144row` == r - 2 |
+                 alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
+                 alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
+                 alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
+                 alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
+                 alldat$`6144col` == c - 2 & alldat$`6144row` == r |
+                 alldat$`6144col` == c + 2 & alldat$`6144row` == r |
+                 alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
+                 alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
+                 alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
+                 alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
+                 alldat$`6144col` == c & alldat$`6144row` == r + 2 |
+                 alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
+                 alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'G2'
+  }
+}
+
+ggplot(alldat) +
+  geom_point(aes(x = average_mbc, col = gap), stat = 'density') +
+  facet_wrap(.~source, ncol = 2) +
+  labs(x = 'Pixel Count',
+       y = 'Density') +
+  scale_color_discrete(name = 'Gaps',
+                       breaks = c('G1','G2','N'),
+                       labels = c('One','Two','Away')) +
+  scale_y_continuous(breaks = seq(0,0.03,0.005)) +
+  theme_linedraw() +
+  theme(legend.position = 'bottom') +
+  coord_cartesian(xlim = c(200,700),
+                  ylim = c(0,0.02))
+ggsave(sprintf("%s%s_NEIGHS_%d_%d.png",
+               out_path,expt_name,hr,pl),
+       width = 7,height = 7.5)
+
+##### CORRECTING THE NEAR GAP POSITIONS
+alldat$average_mgc <- alldat$average_mbc
+
+for (sr in unique(alldat$source)) {
+  alldat$average_mgc[alldat$gap == 'G1' & alldat$source == sr]  <- alldat$average_mgc[alldat$gap ==  "G1" & alldat$source == sr] *
+    median(alldat$average_mgc[alldat$gap ==  "N" & alldat$source == sr], na.rm = T)/median(alldat$average_mgc[alldat$gap ==  "G1" & alldat$source == sr], na.rm = T)
+  alldat$average_mgc[alldat$gap == 'G2' & alldat$source == sr]  <- alldat$average_mgc[alldat$gap ==  "G2" & alldat$source == sr] *
+    median(alldat$average_mgc[alldat$gap ==  "N" & alldat$source == sr], na.rm = T)/median(alldat$average_mgc[alldat$gap ==  "G2" & alldat$source == sr], na.rm = T)
+}
+
+ggplot(alldat) +
+  geom_point(aes(x = average_mgc, col = gap), stat = 'density') +
+  facet_wrap(.~source, ncol = 2) +
+  labs(x = 'Pixel Count',
+       y = 'Density') +
+  scale_color_discrete(name = 'Gaps',
+                       breaks = c('G1','G2','N'),
+                       labels = c('One','Two','Away')) +
+  scale_y_continuous(breaks = seq(0,0.03,0.005)) +
+  theme_linedraw() +
+  theme(legend.position = 'bottom') +
+  coord_cartesian(xlim = c(200,700),
+                  ylim = c(0,0.02))
+ggsave(sprintf("%s%s_NEIGHS_MGC_%d_%d.png",
+               out_path,expt_name,hr,pl),
+       width = 7,height = 7.5)
