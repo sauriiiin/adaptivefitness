@@ -44,7 +44,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
 # pl = 2
 jpegdat <- data.frame()
 
-for (hr in hours$hours) {
+for (hr in 17:18) { #hours$hours
   for (pl in n_plates$`6144plate`) {
     alldat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
@@ -226,105 +226,125 @@ ggplot(alldat) +
              size = 3)
 
 ##### FITNESS FROM CORRECTED DATA
-expt_name = '4C3_GA1_MC'
-expt = 'FS1-1-MC'
+expt_name = '4C3_GA1_MC_BOR'
+expt = 'FS1-1-MC-BOR'
 
 ##### CHECK POSITION WISE VARIABILITY
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
 
-hr = 18
-pl = 1
-
-alldat = dbGetQuery(conn, sprintf('select a.*, b.*
+# hr = 18
+# pl = 1
+for (hr in 17:18) {
+  for (pl in 1:2) {
+    alldat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
                                       where a.hours = %d
                                       and a.pos = b.pos
                                       and b.%s = %d
                                       order by b.%s, b.%s',
-                                  tablename_fit,
-                                  p2c_info[1],hr,p2c_info[2],
-                                  pl,
-                                  p2c_info[3],p2c_info[4]))
-
-alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==1] = '1TL'
-alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==1] = '3BL'
-alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==0] = '2TR'
-alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
-
-alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
-alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
-alldat$colony[is.na(alldat$orf_name)] = 'Gap'
-
-alldat$border[alldat$`6144row` %in% 1 | alldat$`6144row` %in% 64 |
-                alldat$`6144col` %in% 1 | alldat$`6144col` %in% 96] = 'B1'
-alldat$border[alldat$`6144row` %in% 2 | alldat$`6144row` %in% 63 |
-                alldat$`6144col` %in% 2 | alldat$`6144col` %in% 95] = 'B2'
-alldat$border[alldat$`6144row` %in% 3 | alldat$`6144row` %in% 62 |
-                alldat$`6144col` %in% 3 | alldat$`6144col` %in% 94] = 'B3'
-alldat$border[alldat$`6144row` %in% 4 | alldat$`6144row` %in% 61 |
-                alldat$`6144col` %in% 4 | alldat$`6144col` %in% 93] = 'B4'
-alldat$border[is.na(alldat$border)] = 'N'
-
-alldat$gap <- 'N'
-for (o in alldat$pos) {
-  c = alldat$`6144col`[alldat$pos == o]
-  r = alldat$`6144row`[alldat$pos == o]
-  if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap') {
-    alldat$gap[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
-                 alldat$`6144col` == c & alldat$`6144row` == r - 1 |
-                 alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
-                 alldat$`6144col` == c - 1 & alldat$`6144row` == r |
-                 alldat$`6144col` == c + 1 & alldat$`6144row` == r |
-                 alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
-                 alldat$`6144col` == c & alldat$`6144row` == r + 1 |
-                 alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'G1'
-    alldat$gap[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
-                 alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
-                 alldat$`6144col` == c & alldat$`6144row` == r - 2 |
-                 alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
-                 alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
-                 alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
-                 alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
-                 alldat$`6144col` == c - 2 & alldat$`6144row` == r |
-                 alldat$`6144col` == c + 2 & alldat$`6144row` == r |
-                 alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
-                 alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
-                 alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
-                 alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
-                 alldat$`6144col` == c & alldat$`6144row` == r + 2 |
-                 alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
-                 alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'G2'
+                                      tablename_fit,
+                                      p2c_info[1],hr,p2c_info[2],
+                                      pl,
+                                      p2c_info[3],p2c_info[4]))
+    
+    alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==1] = '1TL'
+    alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==1] = '3BL'
+    alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==0] = '2TR'
+    alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
+    
+    alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
+    alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
+    alldat$colony[is.na(alldat$orf_name)] = 'Gap'
+    
+    alldat$border[alldat$`6144row` %in% 1 | alldat$`6144row` %in% 64 |
+                    alldat$`6144col` %in% 1 | alldat$`6144col` %in% 96] = 'B1'
+    alldat$border[alldat$`6144row` %in% 2 | alldat$`6144row` %in% 63 |
+                    alldat$`6144col` %in% 2 | alldat$`6144col` %in% 95] = 'B2'
+    alldat$border[alldat$`6144row` %in% 3 | alldat$`6144row` %in% 62 |
+                    alldat$`6144col` %in% 3 | alldat$`6144col` %in% 94] = 'B3'
+    alldat$border[alldat$`6144row` %in% 4 | alldat$`6144row` %in% 61 |
+                    alldat$`6144col` %in% 4 | alldat$`6144col` %in% 93] = 'B4'
+    alldat$border[is.na(alldat$border)] = 'N'
+    
+    alldat$gap <- 'N'
+    for (o in alldat$pos) {
+      c = alldat$`6144col`[alldat$pos == o]
+      r = alldat$`6144row`[alldat$pos == o]
+      if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap') {
+        alldat$gap[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'G1'
+        alldat$gap[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'G2'
+      }
+    }
+    
+    ggplot(alldat) +
+      geom_point(aes(x = fitness, col = gap), stat = 'density') +
+      facet_wrap(.~source, ncol = 2) +
+      labs(x = 'Relative Fitness',
+           y = 'Density') +
+      scale_color_discrete(name = 'Gaps',
+                           breaks = c('G1','G2','N'),
+                           labels = c('One','Two','Away')) +
+      theme_linedraw() +
+      theme(legend.position = 'bottom') +
+      coord_cartesian(xlim = c(0.5,1.5))
+    ggsave(sprintf("%s%s_GAPFIT_MGC_%d_%d.png",
+                   out_path,expt_name,hr,pl),
+           width = 7,height = 7.5)
+    
+    ggplot(alldat) +
+      geom_point(aes(x = fitness, col = border), stat = 'density') +
+      facet_wrap(.~source, ncol = 2) +
+      labs(x = 'Relative Fitness',
+           y = 'Density') +
+      scale_color_discrete(name = 'Border',
+                           breaks = c('B1','B2','B3','B4','N'),
+                           labels = c('One','Two','Three','Four','Interior')) +
+      theme_linedraw() +
+      theme(legend.position = 'bottom') +
+      coord_cartesian(xlim = c(0.5,1.5))
+    ggsave(sprintf("%s%s_BORFIT_MGC_%d_%d.png",
+                   out_path,expt_name,hr,pl),
+           width = 7,height = 7.5)
   }
 }
 
-ggplot(alldat) +
-  geom_point(aes(x = fitness, col = gap), stat = 'density') +
-  facet_wrap(.~source, ncol = 2) +
-  labs(x = 'Relative Fitness',
-       y = 'Density') +
-  scale_color_discrete(name = 'Gaps',
-                       breaks = c('G1','G2','N'),
-                       labels = c('One','Two','Away')) +
-  theme_linedraw() +
-  theme(legend.position = 'bottom') +
-  coord_cartesian(xlim = c(0.5,1.5))
-ggsave(sprintf("%s%s_GAPFIT_MGC_%d_%d.png",
-               out_path,expt_name,hr,pl),
-       width = 7,height = 7.5)
 
-ggplot(alldat) +
-  geom_point(aes(x = fitness, col = border), stat = 'density') +
-  facet_wrap(.~source, ncol = 2) +
-  labs(x = 'Relative Fitness',
-       y = 'Density') +
-  scale_color_discrete(name = 'Border',
-                       breaks = c('B1','B2','B3','B4','N'),
-                       labels = c('One','Two','Three','Four','Interior')) +
-  theme_linedraw() +
-  theme(legend.position = 'bottom') +
-  coord_cartesian(xlim = c(0.5,1.5))
-ggsave(sprintf("%s%s_BORFIT_MGC_%d_%d.png",
-               out_path,expt_name,hr,pl),
-       width = 7,height = 7.5)
+for (sr in unique(alldat$source)) {
+  fit.ul <- mean(alldat$fitness[alldat$source == sr], na.rm = T) + 2*sd(alldat$fitness[alldat$source == sr], na.rm = T)
+  fit.ll <- mean(alldat$fitness[alldat$source == sr], na.rm = T) - 2*sd(alldat$fitness[alldat$source == sr], na.rm = T)
+  
+  alldat$extreme[alldat$fitness > fit.ul & alldat$source == sr] <- 'Big'
+  alldat$extreme[alldat$fitness < fit.ll & alldat$source == sr] <- 'Small' 
+}
 
+ggplot(alldat[alldat$fitness > .7 & alldat$fitness < 1.3,]) +
+  geom_point(aes(x=fitness),stat = 'density')
+
+ggplot() +
+  geom_point(data = alldat[alldat$fitness < .8 & !is.na(alldat$fitness),],
+             aes(x=`6144col`, y=`6144row`, 
+                 shape = colony),
+             size = 3)
