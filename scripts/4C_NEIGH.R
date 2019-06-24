@@ -10,8 +10,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1_MCG'
-expt = 'FS1-1-MCG'
+expt_name = '4C3_GA1'
+expt = 'FS1-1'
 out_path = 'figs/neigh/';
 density = 6144;
 
@@ -240,46 +240,45 @@ for (hr in hours[[1]][9:length(hours[[1]])]) {
     num.big <- sum(alldat$outlier == 'Bigger')
     big.gap <- sum(alldat$gaps > 0, na.rm = T)
 
-    ggplot(alldat[alldat$source == sr,]) +
-      geom_point(data = alldat,
-                 aes(x=`6144col`, y=`6144row`,
-                     col = outlier,
-                     shape = colony,
-                     alpha = outlier),
-                 size = 3) +
-      scale_color_manual(name="wrt Neigh Ref",
-                         breaks=c("Smaller","Normal","Bigger"),
-                         values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
-      scale_shape_manual(name = 'Colony Type',
-                         breaks=c('Reference','Query','Gap'),
-                         values=c('Reference' = 18,'Query' = 15, 'Gap' =1)) +
-      scale_alpha_manual(name="wrt Neigh Ref",
-                         breaks=c("Smaller","Normal","Bigger"),
-                         values=c("Smaller"=1,"Bigger"=1,"Normal"=0.7),
-                         guide = F) +
-      scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
-      scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
-      labs(title = "Comparison With Neighboring References",
-           subtitle = sprintf("%s | %d hours | Plate %d | Outliers = %d | Bigger = %d | Bigger + Gap = %d",
-                           expt, hr, pl, num.out, num.big, big.gap),
-           x = "Column",
-           y = "Row") +
-      theme_linedraw() +
-      theme(axis.text.x = element_text(size=10),
-            axis.title.x = element_text(size=15),
-            axis.text.y = element_text(size=10),
-            axis.title.y = element_text(size=15),
-            legend.position = 'right',
-            legend.text = element_text(size=10),
-            legend.title =  element_text(size=15),
-            plot.title = element_text(size=20,hjust = 0.5),
-            plot.subtitle = element_text(size=13,hjust = 0.5)) +
-      guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
-             shape = guide_legend(override.aes = list(size=3)))
-    ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
-                   out_path,expt_name,hr,pl),
-           width = 15,height = 10)
-    
+    # ggplot(alldat[alldat$source == sr,]) +
+    #   geom_point(data = alldat,
+    #              aes(x=`6144col`, y=`6144row`,
+    #                  col = outlier,
+    #                  shape = colony,
+    #                  alpha = outlier),
+    #              size = 3) +
+    #   scale_color_manual(name="wrt Neigh Ref",
+    #                      breaks=c("Smaller","Normal","Bigger"),
+    #                      values=c("Smaller"="#FFA000","Bigger"="#009688","Normal"="grey50")) +
+    #   scale_shape_manual(name = 'Colony Type',
+    #                      breaks=c('Reference','Query','Gap'),
+    #                      values=c('Reference' = 18,'Query' = 15, 'Gap' =1)) +
+    #   scale_alpha_manual(name="wrt Neigh Ref",
+    #                      breaks=c("Smaller","Normal","Bigger"),
+    #                      values=c("Smaller"=1,"Bigger"=1,"Normal"=0.7),
+    #                      guide = F) +
+    #   scale_x_continuous(breaks = seq(0,96,2),limits = c(1,96)) +
+    #   scale_y_continuous(breaks = seq(0,64,2),limits = c(64,1),trans = 'reverse') +
+    #   labs(title = "Comparison With Neighboring References",
+    #        subtitle = sprintf("%s | %d hours | Plate %d | Outliers = %d | Bigger = %d | Bigger + Gap = %d",
+    #                        expt, hr, pl, num.out, num.big, big.gap),
+    #        x = "Column",
+    #        y = "Row") +
+    #   theme_linedraw() +
+    #   theme(axis.text.x = element_text(size=10),
+    #         axis.title.x = element_text(size=15),
+    #         axis.text.y = element_text(size=10),
+    #         axis.title.y = element_text(size=15),
+    #         legend.position = 'right',
+    #         legend.text = element_text(size=10),
+    #         legend.title =  element_text(size=15),
+    #         plot.title = element_text(size=20,hjust = 0.5),
+    #         plot.subtitle = element_text(size=13,hjust = 0.5)) +
+    #   guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
+    #          shape = guide_legend(override.aes = list(size=3)))
+    # ggsave(sprintf("%s%s_NEIGH_OUTLIERS_%d_%d.png",
+    #                out_path,expt_name,hr,pl),
+    #        width = 15,height = 10)
   }
 }
 
@@ -320,18 +319,44 @@ alldat$Gap[!is.na(alldat$gaps)] = "YES"
 #                   ylim = c(0.8,1.2))
 
   
-ggplot() +
-  geom_point(data = alldat, aes(x = fitness, col = Gap), stat = "density")
+avg.den.ori <- ggplot() +
+  geom_point(data = alldat, aes(x = average, col = Gap), stat = "density")
 
 
 median(alldat$average[alldat$Gap ==  "YES"], na.rm = T)
 median(alldat$average[alldat$Gap ==  "NO"], na.rm = T)
 
-alldat$average[alldat$Gap ==  "YES"] = alldat$average[alldat$Gap ==  "YES"] *
-  median(alldat$average[alldat$Gap ==  "NO"], na.rm = T)/median(alldat$average[alldat$Gap ==  "YES"], na.rm = T)
+alldat$average_mcg <- alldat$average
 
-ggplot() +
-  geom_point(data = alldat, aes(x = average, col = Gap), stat = "density")
+alldat$average_mcg[alldat$Gap ==  "YES"] = alldat$average_mcg[alldat$Gap ==  "YES"] *
+  median(alldat$average_mcg[alldat$Gap ==  "NO"], na.rm = T)/median(alldat$average_mcg[alldat$Gap ==  "YES"], na.rm = T)
+
+avg.den.mcg <- ggplot() +
+  geom_point(data = alldat, aes(x = average_mcg, col = Gap), stat = "density")
+
+avg.ul <- mean(alldat$average, na.rm = T) + 2*sd(alldat$average, na.rm = T)
+avg.ll <- mean(alldat$average, na.rm = T) - 2*sd(alldat$average, na.rm = T)
+
+alldat$extreme[alldat$average > avg.ul] <- 'Big'
+
+avg.mcg.ul <- mean(alldat$average_mcg, na.rm = T) + 2*sd(alldat$average_mcg, na.rm = T)
+avg.mcg.ll <- mean(alldat$average_mcg, na.rm = T) - 2*sd(alldat$average_mcg, na.rm = T)
+
+alldat$extreme_mcg[alldat$average_mcg > avg.mcg.ul] <- 'Big'
+
+fit.ul <- mean(alldat$fitness, na.rm = T) + 2*sd(alldat$fitness, na.rm = T)
+fit.ll <- mean(alldat$fitness, na.rm = T) - 2*sd(alldat$fitness, na.rm = T)
+
+alldat$extreme_fit[alldat$fitness > fit.ul] <- 'Big'
+alldat$extreme_fit[alldat$fitness < fit.ll] <- 'Small'
+
+ggplot(alldat) +
+  geom_point(data = alldat,
+             aes(x=`6144col`, y=`6144row`,
+                 col = extreme_fit,
+                 shape = colony),
+             size = 3)
+  
 
 ##### CHANGING DATA ON SQL USING GAP MEDIAN CORRECTION
 fitdat = dbGetQuery(conn, sprintf('select a.*, b.*
@@ -383,3 +408,11 @@ ggplot(temp) +
 
 dbWriteTable(conn, "4C3_GA1_MCG_6144_FITNESS", fitdat[1:6], overwrite = T)
 
+##### MEDIAN CORRECTED FITNESS V/S ORIGINAL
+mcgdat = dbGetQuery(conn, sprintf('select a.*, b.*
+                                      from %s a, %s b
+                                      where a.pos = b.pos
+                                      order by b.%s, b.%s',
+                                  tablename_fit,
+                                  p2c_info[1],
+                                  p2c_info[3],p2c_info[4]))
