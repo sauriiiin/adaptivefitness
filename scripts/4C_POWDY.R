@@ -4,14 +4,15 @@
 
 ##### INITIALIZE
 library(ggplot2)
+library(ggpubr)
 library(gridExtra)
 library(grid)
 library(tidyverse)
 library(egg)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_MCG_LID/"
-expt_name <- '4C3_GA1_MCG'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_MC_LID/"
+expt_name <- '4C3_GA1_MC'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -488,7 +489,7 @@ for (rep in unique(reps)) {
     coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
   
   c.fpr <- ggarrange(plt.fpr, plt.fpr.z,
-                     common.legend = T, legend = 'bottom')
+                     common.legend = TRUE, legend = 'bottom')
   c.pow <- ggarrange(plt.pow.fdr, plt.pow.p,
                  common.legend = T, legend = 'bottom')
   edis <- ggarrange(c.fpr, c.pow,

@@ -344,7 +344,10 @@ ggplot(alldat[alldat$fitness > .7 & alldat$fitness < 1.3,]) +
   geom_point(aes(x=fitness),stat = 'density')
 
 ggplot() +
-  geom_point(data = alldat[alldat$fitness < .8 & !is.na(alldat$fitness),],
+  geom_point(data = alldat,
+             aes(x=`6144col`, y=`6144row`),
+             size = 0.2) +
+  geom_point(data = alldat[alldat$fitness < 0.8 | alldat$fitness > 1.2,],
              aes(x=`6144col`, y=`6144row`, 
                  shape = colony),
              size = 3)
