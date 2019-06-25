@@ -333,8 +333,8 @@ for (hr in 17:18) {
 
 
 for (sr in unique(alldat$source)) {
-  fit.ul <- mean(alldat$fitness[alldat$source == sr], na.rm = T) + 2*sd(alldat$fitness[alldat$source == sr], na.rm = T)
-  fit.ll <- mean(alldat$fitness[alldat$source == sr], na.rm = T) - 2*sd(alldat$fitness[alldat$source == sr], na.rm = T)
+  fit.ul <- mean(alldat$fitness[alldat$source == sr], na.rm = T) + 3*sd(alldat$fitness[alldat$source == sr], na.rm = T)
+  fit.ll <- mean(alldat$fitness[alldat$source == sr], na.rm = T) - 3*sd(alldat$fitness[alldat$source == sr], na.rm = T)
   
   alldat$extreme[alldat$fitness > fit.ul & alldat$source == sr] <- 'Big'
   alldat$extreme[alldat$fitness < fit.ll & alldat$source == sr] <- 'Small' 

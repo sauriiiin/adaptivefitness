@@ -11,8 +11,8 @@ library(tidyverse)
 library(egg)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_MC_LID/"
-expt_name <- '4C3_GA1_MC'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_MC_BOR_LID/"
+expt_name <- '4C3_GA1_MC_BOR'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -30,7 +30,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[5]))
+  hours <- c(hours, as.numeric(s[6]))
 }
 reps <- unique(reps)
 hours <- unique(hours)
@@ -501,7 +501,6 @@ for (rep in unique(reps)) {
          height = 22, width = 20, units = "cm",
          dpi = 300)
 }
-
 
 
 # save(stats.tmp, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FDR.RData")
