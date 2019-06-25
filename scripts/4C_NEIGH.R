@@ -406,7 +406,7 @@ for (hr in unique(fitdat$hours)) {
 ggplot(temp) +
   geom_point(aes(x = mca, col = NearGap), stat = "density")
 
-dbWriteTable(conn, "4C3_GA1_MCG_6144_FITNESS", fitdat[1:6], overwrite = T)
+# dbWriteTable(conn, "4C3_GA1_MCG_6144_FITNESS", fitdat[1:6], overwrite = T)
 
 ##### MEDIAN CORRECTED FITNESS V/S ORIGINAL
 mcgdat = dbGetQuery(conn, sprintf('select a.*, b.*

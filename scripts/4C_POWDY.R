@@ -4,15 +4,15 @@
 
 ##### INITIALIZE
 library(ggplot2)
-library(ggpubr)
 library(gridExtra)
 library(grid)
 library(tidyverse)
-library(egg)
+# library(egg)
+library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_MC_BOR_LID/"
-expt_name <- '4C3_GA1_MC_BOR'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
+expt_name <- '4C3_GA1'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -30,7 +30,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[6]))
+  hours <- c(hours, as.numeric(s[3]))
 }
 reps <- unique(reps)
 hours <- unique(hours)
@@ -44,21 +44,21 @@ for (ii in 1:length(reps)) {
   for (i in 1:length(hours)) {
     hr <- hours[i]
     
-    dat.stats <- read.csv(paste0(dat.dir,
-                                 sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
-                          na.strings = "NaN")
     # dat.stats <- read.csv(paste0(dat.dir,
-    #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+    #                              sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
     #                       na.strings = "NaN")
+    dat.stats <- read.csv(paste0(dat.dir,
+                                 sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+                          na.strings = "NaN")
     dat.stats <- dat.stats[dat.stats$hours != 0,]
     dat.stats$cont_hrs <- hr
     dat.stats$rep <- rep
-    dat.fit <- read.csv(paste0(dat.dir,
-                               sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
-                        na.strings = "NaN")
     # dat.fit <- read.csv(paste0(dat.dir,
-    #                            sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+    #                            sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
     #                     na.strings = "NaN")
+    dat.fit <- read.csv(paste0(dat.dir,
+                               sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+                        na.strings = "NaN")
     dat.fit$cont_hrs <- hr
     dat.fit$rep <- rep
     dat.fit$se <- dat.fit$average - dat.fit$bg
@@ -489,7 +489,7 @@ for (rep in unique(reps)) {
     coord_cartesian(xlim = c(0, 0.2), ylim = c(0, 0.2))
   
   c.fpr <- ggarrange(plt.fpr, plt.fpr.z,
-                     common.legend = TRUE, legend = 'bottom')
+                     common.legend = TRUE, legend = "bottom")
   c.pow <- ggarrange(plt.pow.fdr, plt.pow.p,
                  common.legend = T, legend = 'bottom')
   edis <- ggarrange(c.fpr, c.pow,
@@ -502,10 +502,9 @@ for (rep in unique(reps)) {
          dpi = 300)
 }
 
-
 # save(stats.tmp, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FDR.RData")
 
-###### NON TECH REP ANALYSIS
+##### NON TECH REP ANALYSIS
 norep.dat <- read.csv("/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_POWANA.csv",
                       na.strings = "NaN")
 colnames(norep.dat) <- c("rep","cont_hrs","hours","cen","pow",
