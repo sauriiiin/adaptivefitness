@@ -63,8 +63,14 @@ for (ii in 1:length(reps)) {
     dat.fit$rep <- rep
     dat.fit$se <- dat.fit$average - dat.fit$bg
     
-    cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
-    dat.stats$es <-round(dat.stats$cs_mean/cont.mean,4)
+    # cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
+    # dat.stats$es <-round(dat.stats$cs_mean/cont.mean,4)
+    
+    for (h in unique(dat.stats$hours)) {
+      cont.mean <- mean(dat.fit$fitness[dat.fit$hours == h & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
+      dat.stats$es[dat.stats$hours == h] <- round(dat.stats$cs_mean[dat.stats$hours == h]/cont.mean,4)
+    }
+    
     dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
     for (ii in unique(dat.stats$hours)) {
       # dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
