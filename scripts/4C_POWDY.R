@@ -11,8 +11,8 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_BEAN/"
-expt_name <- '4C3_GA1_BEAN'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
+expt_name <- '4C3_GA1'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -30,7 +30,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[5]))
+  hours <- c(hours, as.numeric(s[3]))
 }
 reps <- unique(reps)
 hours <- unique(hours)
@@ -44,21 +44,21 @@ for (ii in 1:length(reps)) {
   for (i in 1:length(hours)) {
     hr <- hours[i]
     
-    dat.stats <- read.csv(paste0(dat.dir,
-                                 sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
-                          na.strings = "NaN")
     # dat.stats <- read.csv(paste0(dat.dir,
-    #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+    #                              sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
     #                       na.strings = "NaN")
+    dat.stats <- read.csv(paste0(dat.dir,
+                                 sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+                          na.strings = "NaN")
     dat.stats <- dat.stats[dat.stats$hours != 0,]
     dat.stats$cont_hrs <- hr
     dat.stats$rep <- rep
-    dat.fit <- read.csv(paste0(dat.dir,
-                               sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
-                        na.strings = "NaN")
     # dat.fit <- read.csv(paste0(dat.dir,
-    #                            sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+    #                            sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
     #                     na.strings = "NaN")
+    dat.fit <- read.csv(paste0(dat.dir,
+                               sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+                        na.strings = "NaN")
     dat.fit$cont_hrs <- hr
     dat.fit$rep <- rep
     dat.fit$se <- dat.fit$average - dat.fit$bg
@@ -66,24 +66,36 @@ for (ii in 1:length(reps)) {
     # cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
     # dat.stats$es <-round(dat.stats$cs_mean/cont.mean,4)
     
+    dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
+    
     for (h in unique(dat.stats$hours)) {
       cont.mean <- mean(dat.fit$fitness[dat.fit$hours == h & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
       dat.stats$es[dat.stats$hours == h] <- round(dat.stats$cs_mean[dat.stats$hours == h]/cont.mean,4)
+      
+      dat.stats$cen[dat.stats$hours == h] <- mean(dat.stats$es[dat.stats$hours == h])
+      
+      dat.stats$effect[dat.stats$hours == h & dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+      dat.stats$effect[dat.stats$hours == h & dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+      dat.stats$effect[dat.stats$hours == h & is.na(dat.stats$effect)] <- 'Neutral'
+      
+      dat.stats$effect_p[dat.stats$hours == h & dat.stats$p <= 0.05 & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+      dat.stats$effect_p[dat.stats$hours == h & dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+      dat.stats$effect_p[dat.stats$hours == h & is.na(dat.stats$effect_p)] <- 'Neutral'
     }
     
-    dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
-    for (ii in unique(dat.stats$hours)) {
-      # dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
-      dat.stats$cen[dat.stats$hours == ii] <- mean(dat.stats$es[dat.stats$hours == ii])
-    }
+    
+    # for (ii in unique(dat.stats$hours)) {
+    #   # dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
+    #   dat.stats$cen[dat.stats$hours == ii] <- mean(dat.stats$es[dat.stats$hours == ii])
+    # }
 
-    dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
-    dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
-    dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
-    
-    dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
-    dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
-    dat.stats$effect_p[is.na(dat.stats$effect_p)] <- 'Neutral'
+    # dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+    # dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+    # dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
+    # 
+    # dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+    # dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+    # dat.stats$effect_p[is.na(dat.stats$effect_p)] <- 'Neutral'
     
     stats.all <- rbind(stats.all,dat.stats)
     fit.all <- rbind(fit.all,dat.fit)
@@ -215,7 +227,7 @@ for (rep in unique(reps)) {
   
   ##### BOX PLOTS OF EFFECT DISTRIBUTION
   stats.tmp <- stats.all[stats.all$rep == rep &
-                           stats.all$cont_hrs > 11 & stats.all$hours > 16,]
+                           stats.all$cont_hrs > 11 & stats.all$hours > 11,]
   
   for (ii in unique(stats.tmp$cont_hrs)) {
     for (pp in sort(unique(stats.tmp$p[stats.tmp$hours == ii & stats.tmp$cont_hrs == stats.tmp$hours]))) {
@@ -316,6 +328,8 @@ for (rep in unique(reps)) {
   temp <- NULL
   dat.cnt <- data.frame()
   for (pos in unique(dat.srt$pos)) {
+    temp$hours <- dat.srt$hours[dat.srt$pos == pos][1]
+    temp$cont_hrs <- dat.srt$cont_hrs[dat.srt$pos == pos][1]
     temp$cen <- mean(dat.srt$cen[dat.srt$pos == pos])
     temp$Deleterious <- sum(dat.srt$pos == pos & dat.srt$effect == 'Deleterious')
     temp$Neutral <- sum(dat.srt$pos == pos & dat.srt$effect == 'Neutral')
@@ -327,6 +341,8 @@ for (rep in unique(reps)) {
   }
   
   dat.cnt2 <- NULL
+  dat.cnt2$hours <- dat.cnt$hours
+  dat.cnt2$cont_hrs <- dat.cnt$cont_hrs
   dat.cnt2$cen <- dat.cnt$cen
   dat.cnt2$Neutral <- dat.cnt$Neutral
   dat.cnt2$Deleterious <- dat.cnt2$Neutral + dat.cnt$Deleterious
@@ -622,8 +638,8 @@ for (rep in unique(norep.dat$rep)) {
 
 ##### BEAN VS LID
 ## fit.all2 is LID data
-r = 18
-q = 18
+# r = 18
+# q = 18
 
 # es <- mean(fit.all$fitness[fit.all$cont_hrs == r & fit.all$hours == q &
 #                              fit.all$orf_name != "BF_control" & fit.all$x6144plate_1 == 1],na.rm = T)/
@@ -676,16 +692,26 @@ cfit.dat <- read.csv("/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_BEAN_CO
                      na.strings = "NaN")
 colnames(cfit.dat) <- c("cont_hrs","hours","fitness")
 
-ggplot(cfit.dat[cfit.dat$hours == q & cfit.dat$cont_hrs == r,]) +
-  geom_line(aes(x = fitness, col = "Reference"), stat = "density", lwd = 2) +
-  geom_line(data = stats.all[stats.all$hours == q & stats.all$cont_hrs == r,],
-            aes(x = cs_mean, col = "Query"), stat = "density", lwd = 2) +
-  scale_color_discrete(name = "Strain") +
-  labs(title = 'BEAN',
-       subtitle = sprintf('t(R) = %d | t(Q) = %d', r, q),
-       x = "Fitness", y = "Density") +
-  theme_linedraw() +
-  coord_cartesian(xlim = c(0.8,1.2))
-ggsave(sprintf("figs/%s_FDIS_%d_%d.jpg",expt_name,r,q),
-       height = 20, width = 20, units = "cm",
-       dpi = 300)
+q = 13
+r = 17
+
+# for (q in unique(stats.all$hours)) {
+#   for (r in unique(stats.all$cont_hrs)) {
+    ggplot(cfit.dat[cfit.dat$hours == q & cfit.dat$cont_hrs == r,]) +
+      geom_line(aes(x = fitness, col = "Reference"), stat = "density", lwd = 2) +
+      geom_line(data = stats.all[stats.all$hours == q & stats.all$cont_hrs == r,],
+                aes(x = cs_mean, col = "Query"), stat = "density", lwd = 2) +
+      scale_color_discrete(name = "Strain") +
+      labs(title = sprintf('BEAN | t(R) = %d | t(Q) = %d', r, q),
+           subtitle = sprintf('D = %s | N = %s | B = %s',
+                              sprintf("%s",dat.cnt[dat.cnt$hours == q & dat.cnt$cont_hrs == r,][4:6])[1],
+                              sprintf("%s",dat.cnt[dat.cnt$hours == q & dat.cnt$cont_hrs == r,][4:6])[2],
+                              sprintf("%s",dat.cnt[dat.cnt$hours == q & dat.cnt$cont_hrs == r,][4:6])[3]),
+           x = "Fitness", y = "Density") +
+      theme_linedraw() +
+      coord_cartesian(xlim = c(0.8,1.2))
+    ggsave(sprintf("figs/%s_FDIS_%d_%d.jpg",expt_name,r,q),
+           height = 20, width = 20, units = "cm",
+           dpi = 300)
+#   }
+# }
