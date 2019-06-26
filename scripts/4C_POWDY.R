@@ -63,11 +63,7 @@ for (ii in 1:length(reps)) {
     dat.fit$rep <- rep
     dat.fit$se <- dat.fit$average - dat.fit$bg
     
-    # cont.mean <- mean(dat.fit$fitness[dat.fit$hours == hr & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
-    # dat.stats$es <-round(dat.stats$cs_mean/cont.mean,4)
-    
     dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
-    
     for (h in unique(dat.stats$hours)) {
       cont.mean <- mean(dat.fit$fitness[dat.fit$hours == h & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
       dat.stats$es[dat.stats$hours == h] <- round(dat.stats$cs_mean[dat.stats$hours == h]/cont.mean,4)
@@ -82,20 +78,6 @@ for (ii in 1:length(reps)) {
       dat.stats$effect_p[dat.stats$hours == h & dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
       dat.stats$effect_p[dat.stats$hours == h & is.na(dat.stats$effect_p)] <- 'Neutral'
     }
-    
-    
-    # for (ii in unique(dat.stats$hours)) {
-    #   # dat.stats$cen[dat.stats$hours == ii] <- median(dat.stats$cs_mean[dat.stats$hours == ii])
-    #   dat.stats$cen[dat.stats$hours == ii] <- mean(dat.stats$es[dat.stats$hours == ii])
-    # }
-
-    # dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
-    # dat.stats$effect[dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
-    # dat.stats$effect[is.na(dat.stats$effect)] <- 'Neutral'
-    # 
-    # dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
-    # dat.stats$effect_p[dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
-    # dat.stats$effect_p[is.na(dat.stats$effect_p)] <- 'Neutral'
     
     stats.all <- rbind(stats.all,dat.stats)
     fit.all <- rbind(fit.all,dat.fit)
