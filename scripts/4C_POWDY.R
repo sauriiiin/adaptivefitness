@@ -511,7 +511,9 @@ for (rep in unique(reps)) {
 # save(stats.tmp, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FDR.RData")
 
 ##### NON TECH REP ANALYSIS
-norep.dat <- read.csv("/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_POWANA.csv",
+expt_name = '4C3_GA1_TRBLBR'
+out_path = "figs/lid_paper/EDIS/"
+norep.dat <- read.csv("/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_TRBLBR_POWANA.csv",
                       na.strings = "NaN")
 colnames(norep.dat) <- c("rep","cont_hrs","hours","cen","pow",
                          "Neutral","Deleterious","Beneficial",
@@ -617,3 +619,55 @@ for (rep in unique(norep.dat$rep)) {
          height = 11, width = 20, units = "cm",
          dpi = 300)
 }
+
+##### BEAN VS LID
+## fit.all2 is LID data
+
+r = 14
+q = 18
+
+es <- mean(fit.all$fitness[fit.all$cont_hrs == r & fit.all$hours == q &
+                             fit.all$orf_name != "BF_control" & fit.all$x6144plate_1 == 1],na.rm = T)/
+  mean(fit.all$fitness[fit.all$cont_hrs == r & fit.all$hours == q &
+                         fit.all$orf_name == "BF_control" & fit.all$x6144plate_1 == 1],na.rm = T)
+
+bean <- ggplot() +
+  geom_line(data = fit.all[fit.all$cont_hrs == r & fit.all$hours == q & 
+                             fit.all$orf_name == "BF_control" & fit.all$x6144plate_1 == 1,],
+            aes(x = fitness, col = "Reference"), stat = "density", lwd = 2) +
+  geom_line(data = fit.all[fit.all$cont_hrs == r & fit.all$hours == q &
+                             fit.all$orf_name != "BF_control" & fit.all$x6144plate_1 == 1,],
+            aes(x = fitness, col = "Query"), stat = "density", lwd = 2) +
+  scale_color_discrete(name = "Strain") +
+  labs(title = sprintf("BEAN (ES = %.3f)",es),
+       x = "Fitness", y = "Density") +
+  theme_linedraw() +
+  coord_cartesian(xlim = c(0.5,1.5))
+
+es2 <- mean(fit.all2$fitness[fit.all2$cont_hrs == r & fit.all2$hours == q &
+                               fit.all2$orf_name != "BF_control" & fit.all2$x6144plate_1 == 1],na.rm = T)/
+  mean(fit.all2$fitness[fit.all2$cont_hrs == r & fit.all2$hours == q &
+                          fit.all2$orf_name == "BF_control" & fit.all2$x6144plate_1 == 1],na.rm = T)
+
+lid <- ggplot() +
+  geom_line(data = fit.all2[fit.all2$cont_hrs == r & fit.all2$hours == q &
+                              fit.all2$orf_name == "BF_control" & fit.all2$x6144plate_1 == 1,],
+            aes(x = fitness, col = "Reference"), stat = "density", lwd = 2) +
+  geom_line(data = fit.all2[fit.all2$cont_hrs == r & fit.all2$hours == q &
+                              fit.all2$orf_name != "BF_control" & fit.all2$x6144plate_1 == 1,],
+            aes(x = fitness, col = "Query"), stat = "density", lwd = 2) +
+  scale_color_discrete(name = "Strain") +
+  labs(title = sprintf("LID (ES = %.3f)",es2),
+       x = "Fitness", y = "Density") +
+  theme_linedraw() +
+  theme(axis.title.y = element_blank()) +
+  coord_cartesian(xlim = c(0.5,1.5))
+
+fd <- ggarrange(bean, lid,
+                nrow = 1, ncol = 2,
+                common.legend = T, legend = "right")
+annotate_figure(fd,
+                top = text_grob(sprintf("Fitness Distribution\nt(R) = %d | t(Q) = %d", r, q)))
+ggsave(sprintf("figs/%s_FDIS_COMP_%d_%d.jpg",expt_name,r,q),
+       height = 10, width = 20, units = "cm",
+       dpi = 300)
