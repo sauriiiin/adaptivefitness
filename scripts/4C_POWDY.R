@@ -11,8 +11,8 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
-expt_name <- '4C3_GA1'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_RND_LID/"
+expt_name <- '4C3_GA1_RND'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -30,10 +30,10 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[3]))
+  hours <- c(hours, as.numeric(s[5]))
 }
 reps <- unique(reps)
-hours <- unique(hours)
+hours <- sort(unique(hours))
 
 stats.all <- NULL
 fit.all <- NULL
@@ -41,24 +41,24 @@ fpr.all <- NULL
 ##### PUTTING IT TOGETHER
 for (ii in 1:length(reps)) {
   rep <- reps[ii]
-  for (i in 1:length(hours)) {
+  for (i in 2:length(hours)) {
     hr <- hours[i]
     
-    # dat.stats <- read.csv(paste0(dat.dir,
-    #                              sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
-    #                       na.strings = "NaN")
     dat.stats <- read.csv(paste0(dat.dir,
-                                 sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+                                 sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
                           na.strings = "NaN")
+    # dat.stats <- read.csv(paste0(dat.dir,
+    #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+    #                       na.strings = "NaN")
     dat.stats <- dat.stats[dat.stats$hours != 0,]
     dat.stats$cont_hrs <- hr
     dat.stats$rep <- rep
-    # dat.fit <- read.csv(paste0(dat.dir,
-    #                            sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
-    #                     na.strings = "NaN")
     dat.fit <- read.csv(paste0(dat.dir,
-                               sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+                               sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
                         na.strings = "NaN")
+    # dat.fit <- read.csv(paste0(dat.dir,
+    #                            sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+    #                     na.strings = "NaN")
     dat.fit$cont_hrs <- hr
     dat.fit$rep <- rep
     dat.fit$se <- dat.fit$average - dat.fit$bg
