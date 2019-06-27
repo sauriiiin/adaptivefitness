@@ -41,7 +41,7 @@ fpr.all <- NULL
 ##### PUTTING IT TOGETHER
 for (ii in 1:length(reps)) {
   rep <- reps[ii]
-  for (i in 2:length(hours)) {
+  for (i in 1:length(hours)) {
     hr <- hours[i]
     
     dat.stats <- read.csv(paste0(dat.dir,
