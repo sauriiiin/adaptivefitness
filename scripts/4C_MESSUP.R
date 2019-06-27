@@ -151,7 +151,7 @@ for (hr in sort(unique(fit.all$hours))) {
 }
 ref.all <- data.frame(ref.all)
 
-hr = 14
+hr = 18
 cs <- ggplot() +
   geom_point(data = fit.all[fit.all$hours == hr,],
              aes(x = x6144col_1, y = x6144row_1, col = average), shape = 15) +
@@ -161,7 +161,7 @@ cs <- ggplot() +
                         limits = c(quantile(fit.all$average[fit.all$hours == hr],0.05,na.rm = T)[[1]],
                                    quantile(fit.all$average[fit.all$hours == hr],0.95,na.rm = T)[[1]]),
                         palette = "Spectral") +
-  labs(title = sprintf("LID at %d hours",hr),
+  labs(title = "",
        subtitle = "Colony Sizes",
        x = "Columns",
        y = "Rows") +
@@ -216,7 +216,7 @@ csVf <- ggplot() +
                      labels = c("Ref","B","N","D")) +
   scale_x_continuous(breaks = seq(0,1000,100), minor_breaks = seq(0,1000,25)) +
   scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
-  labs(title = "",
+  labs(title = sprintf("LID at %d hours",hr),
        subtitle = "CS and Fitness Correlation",
        x = "Colony Size (pix)",
        y = "Fitness") +
@@ -225,7 +225,12 @@ csVf <- ggplot() +
   coord_cartesian(xlim = c(100,500),
                   ylim = c(0.2,2))
 
-ggarrange(cs,f,csVf,
+ggsave(sprintf("%s%s_CSVFIT_%d.png",
+               out_path,expt_name,hr),
+       csVf,
+       width = 7,height = 7)
+
+ggarrange(csVf,cs,f,
           nrow = 1, ncol = 3, widths = c(1.8,1.8,1.4))
 
 ggsave(sprintf("%s%s_CSFIT_%d.png",
