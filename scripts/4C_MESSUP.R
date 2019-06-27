@@ -151,9 +151,43 @@ for (hr in sort(unique(fit.all$hours))) {
 }
 ref.all <- data.frame(ref.all)
 
-hr = 14
+hr = 11
 
-ggplot() +
+cs <- ggplot() +
+  geom_point(data = fit.all[fit.all$hours == hr,],
+             aes(x = x6144col_1, y = x6144row_1, col = average), shape = 15) +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "PIX",
+                        limits = c(quantile(fit.all$average[fit.all$hours == hr],0.05,na.rm = T)[[1]],
+                                   quantile(fit.all$average[fit.all$hours == hr],0.95,na.rm = T)[[1]]),
+                        palette = "Spectral") +
+  labs(title = sprintf("LID at %d hours",hr),
+       subtitle = "Colony Sizes",
+       x = "Columns",
+       y = "Rows") +
+  theme_linedraw() +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())
+
+f <- ggplot() +
+  geom_point(data = fit.all[fit.all$hours == hr,],
+             aes(x = x6144col_1, y = x6144row_1, col = fitness), shape = 15) +
+  scale_x_continuous(breaks = seq(1,96,1)) +
+  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+  scale_color_distiller(name = "FIT",
+                        limits = c(quantile(fit.all$fitness[fit.all$hours == hr],0.05,na.rm = T)[[1]],
+                                   quantile(fit.all$fitness[fit.all$hours == hr],0.95,na.rm = T)[[1]]),
+                        palette = "PiYG") +
+  labs(title = "",
+       subtitle = "Fitness",
+       x = "Columns",
+       y = "Rows") +
+  theme_linedraw() +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())
+
+csVf <- ggplot() +
   geom_point(data = ref.all[ref.all$hours == hr,],
              aes(x = pix_mean, y = cs_mean, col = "Reference"), alpha = 0.5) +
   # geom_smooth(data = fit.all[fit.all$cont_hrs == hr & fit.all$hours == hr & fit.all$orf_name == "BF_control",],
@@ -170,13 +204,17 @@ ggplot() +
                                 "Deleterious" = "#D32F2F")) +
   scale_x_continuous(breaks = seq(0,1000,100), minor_breaks = seq(0,1000,25)) +
   scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
-  labs(title = "CS and Fitness Correlation",
-       subtitle = sprintf("LID at %d hours",hr),
+  labs(title = "",
+       subtitle = "CS and Fitness Correlation",
        x = "Colony Size (pix)",
        y = "Fitness") +
   theme_linedraw() +
   coord_cartesian(xlim = c(100,500),
                   ylim = c(0.2,2))
+
+ggarrange(cs,f,csVf,
+          nrow = 1, ncol = 3, widths = c(1.8,1.8,1.4))
+
 ggsave(sprintf("%s%s_CSFIT_%d.png",
                out_path,expt_name,hr),
-       width = 7,height = 7)
+       width = 18,height = 4.5)
