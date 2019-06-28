@@ -151,6 +151,12 @@ for (hr in sort(unique(fit.all$hours))) {
 }
 ref.all <- data.frame(ref.all)
 
+for (hr in sort(unique(ref.all$hours))) {
+  pix_mean <- mean(ref.all$pix_mean[ref.all$hours == hr],na.rm = T)
+  stats.all$from[stats.all$hours == hr & stats.all$pix_mean < pix_mean] = 'less'
+  stats.all$from[stats.all$hours == hr & stats.all$pix_mean > pix_mean] = 'more'
+}
+
 # hr = 18
 # cs <- ggplot() +
 #   geom_point(data = fit.all[fit.all$hours == hr,],
@@ -356,5 +362,27 @@ ggsave(sprintf("%s%s_EDIS_ALL.png",
                out_path,expt_name),
        edis.all,
        width = 15,height = 15)
-  
 
+##### LOOKING AT THE ORIGINAL DATA
+
+ggplot(stats.all) +
+  geom_bar(aes(x = from, y = (..count..)/913*100, fill = from)) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
+  scale_fill_manual(name = "Colony Size",
+                    breaks = c("less", "more"),
+                    values = c("more" = "#388E3C",
+                               "less" = "#D32F2F"),
+                    labels = c("Less","More")) +
+  scale_y_continuous(breaks = seq(-20,110,20), minor_breaks = seq(-20,110,5)) +
+  scale_x_discrete(limits=c("less","more"),
+                   labels = c("Less","More")) +
+  labs(title = "Original Data",
+       subtitle = "Is the query mean CS more or less than ref mean CS?",
+       x = "Colony Size (pix)",
+       y = "Percentage") +
+  theme_linedraw() +
+  theme(legend.position = "right") +
+  coord_cartesian(ylim = c(0,100))
+ggsave(sprintf("%s%s_OCS_ALL.png",
+               out_path,expt_name),
+       width = 15,height = 15)
