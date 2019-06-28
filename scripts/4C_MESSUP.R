@@ -151,58 +151,102 @@ for (hr in sort(unique(fit.all$hours))) {
 }
 ref.all <- data.frame(ref.all)
 
-hr = 18
-cs <- ggplot() +
-  geom_point(data = fit.all[fit.all$hours == hr,],
-             aes(x = x6144col_1, y = x6144row_1, col = average), shape = 15) +
-  scale_x_continuous(breaks = seq(1,96,1)) +
-  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
-  scale_color_distiller(name = "PIX",
-                        limits = c(quantile(fit.all$average[fit.all$hours == hr],0.05,na.rm = T)[[1]],
-                                   quantile(fit.all$average[fit.all$hours == hr],0.95,na.rm = T)[[1]]),
-                        palette = "Spectral") +
-  labs(title = "",
-       subtitle = "Colony Sizes",
-       x = "Columns",
-       y = "Rows") +
-  theme_linedraw() +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank())
-
-f <- ggplot() +
-  geom_point(data = fit.all[fit.all$hours == hr,],
-             aes(x = x6144col_1, y = x6144row_1, col = fitness), shape = 15) +
-  scale_x_continuous(breaks = seq(1,96,1)) +
-  scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
-  scale_color_distiller(name = "FIT",
-                        limits = c(quantile(fit.all$fitness[fit.all$hours == hr],0.05,na.rm = T)[[1]],
-                                   quantile(fit.all$fitness[fit.all$hours == hr],0.95,na.rm = T)[[1]]),
-                        palette = "PiYG") +
-  labs(title = "",
-       subtitle = "Fitness",
-       x = "Columns",
-       y = "Rows") +
-  theme_linedraw() +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank())
-
+# hr = 18
 # cs <- ggplot() +
-#   geom_line(data = fit.all[fit.all$hours == hr,],
-#                aes(x = average, col = strain), lwd = 1.2, stat = "density")
+#   geom_point(data = fit.all[fit.all$hours == hr,],
+#              aes(x = x6144col_1, y = x6144row_1, col = average), shape = 15) +
+#   scale_x_continuous(breaks = seq(1,96,1)) +
+#   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+#   scale_color_distiller(name = "PIX",
+#                         limits = c(quantile(fit.all$average[fit.all$hours == hr],0.05,na.rm = T)[[1]],
+#                                    quantile(fit.all$average[fit.all$hours == hr],0.95,na.rm = T)[[1]]),
+#                         palette = "Spectral") +
+#   labs(title = "",
+#        subtitle = "Colony Sizes",
+#        x = "Columns",
+#        y = "Rows") +
+#   theme_linedraw() +
+#   theme(axis.ticks = element_blank(),
+#         axis.text = element_blank())
 # 
 # f <- ggplot() +
-#   geom_line(data = fit.all[fit.all$hours == hr,],
-#             aes(x = fitness, col = strain), lwd = 1.2, stat = "density")
+#   geom_point(data = fit.all[fit.all$hours == hr,],
+#              aes(x = x6144col_1, y = x6144row_1, col = fitness), shape = 15) +
+#   scale_x_continuous(breaks = seq(1,96,1)) +
+#   scale_y_continuous(breaks = seq(1,64,1),trans = 'reverse') +
+#   scale_color_distiller(name = "FIT",
+#                         limits = c(quantile(fit.all$fitness[fit.all$hours == hr],0.05,na.rm = T)[[1]],
+#                                    quantile(fit.all$fitness[fit.all$hours == hr],0.95,na.rm = T)[[1]]),
+#                         palette = "PiYG") +
+#   labs(title = "",
+#        subtitle = "Fitness",
+#        x = "Columns",
+#        y = "Rows") +
+#   theme_linedraw() +
+#   theme(axis.ticks = element_blank(),
+#         axis.text = element_blank())
+# 
+# # cs <- ggplot() +
+# #   geom_line(data = fit.all[fit.all$hours == hr,],
+# #                aes(x = average, col = strain), lwd = 1.2, stat = "density")
+# # 
+# # f <- ggplot() +
+# #   geom_line(data = fit.all[fit.all$hours == hr,],
+# #             aes(x = fitness, col = strain), lwd = 1.2, stat = "density")
+# 
+# csVf <- ggplot() +
+#   geom_point(data = ref.all[ref.all$hours == hr,],
+#              aes(x = pix_mean, y = cs_mean, col = "Reference"), alpha = 1) +
+#   geom_smooth(data = ref.all[ref.all$hours == hr,],
+#              aes(x = pix_mean, y = cs_mean),
+#              col = "black",
+#              method = lm, se = F) +
+#   geom_point(data = stats.all[stats.all$hours == hr,],
+#              aes(x = pix_mean, y = cs_mean, col = effect_p), alpha = 0.5) +
+#   # geom_smooth(data = stats.all[stats.all$hours == hr,],
+#   #            aes(x = pix_mean, y = cs_mean),
+#   #            col = "black",
+#   #            method = lm, se = F) +
+#   scale_color_manual(name = "Strain Kind",
+#                      breaks = c("Reference", "Beneficial", "Neutral", "Deleterious"),
+#                      values = c("Reference" = "#607D8B",
+#                                 "Beneficial" = "#388E3C",
+#                                 "Neutral" = "#303F9F",
+#                                 "Deleterious" = "#D32F2F"),
+#                      labels = c("Ref","B","N","D")) +
+#   scale_x_continuous(breaks = seq(0,1000,100), minor_breaks = seq(0,1000,25)) +
+#   scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
+#   labs(title = sprintf("LID at %d hours",hr),
+#        subtitle = "CS and Fitness Correlation",
+#        x = "Colony Size (pix)",
+#        y = "Fitness") +
+#   theme_linedraw() +
+#   theme(legend.position = "right") +
+#   coord_cartesian(xlim = c(100,500),
+#                   ylim = c(0.2,2))
+# 
+# ggsave(sprintf("%s%s_CSVFIT_%d.png",
+#                out_path,expt_name,hr),
+#        csVf,
+#        width = 7,height = 7)
+# 
+# ggarrange(csVf,cs,f,
+#           nrow = 1, ncol = 3, widths = c(1.8,1.8,1.4))
+# 
+# ggsave(sprintf("%s%s_CSFIT_%d.png",
+#                out_path,expt_name,hr),
+#        width = 18,height = 4.5)
 
-csVf <- ggplot() +
-  geom_point(data = ref.all[ref.all$hours == hr,],
+csVf.all <- ggplot() +
+  geom_point(data = ref.all,
              aes(x = pix_mean, y = cs_mean, col = "Reference"), alpha = 1) +
-  geom_smooth(data = ref.all[ref.all$hours == hr,],
-             aes(x = pix_mean, y = cs_mean),
-             col = "black",
-             method = lm, se = F) +
-  geom_point(data = stats.all[stats.all$hours == hr,],
+  geom_smooth(data = ref.all,
+              aes(x = pix_mean, y = cs_mean),
+              col = "black",
+              method = lm, se = F) +
+  geom_point(data = stats.all,
              aes(x = pix_mean, y = cs_mean, col = effect_p), alpha = 0.5) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
   # geom_smooth(data = stats.all[stats.all$hours == hr,],
   #            aes(x = pix_mean, y = cs_mean),
   #            col = "black",
@@ -216,7 +260,7 @@ csVf <- ggplot() +
                      labels = c("Ref","B","N","D")) +
   scale_x_continuous(breaks = seq(0,1000,100), minor_breaks = seq(0,1000,25)) +
   scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
-  labs(title = sprintf("LID at %d hours",hr),
+  labs(title = "LID",
        subtitle = "CS and Fitness Correlation",
        x = "Colony Size (pix)",
        y = "Fitness") +
@@ -225,14 +269,92 @@ csVf <- ggplot() +
   coord_cartesian(xlim = c(100,500),
                   ylim = c(0.2,2))
 
-ggsave(sprintf("%s%s_CSVFIT_%d.png",
-               out_path,expt_name,hr),
-       csVf,
-       width = 7,height = 7)
+ggsave(sprintf("%s%s_CSVFIT_ALL.png",
+               out_path,expt_name),
+       csVf.all,
+       width = 15,height = 15)
 
-ggarrange(csVf,cs,f,
-          nrow = 1, ncol = 3, widths = c(1.8,1.8,1.4))
 
-ggsave(sprintf("%s%s_CSFIT_%d.png",
-               out_path,expt_name,hr),
-       width = 18,height = 4.5)
+csden.all <- ggplot() +
+  geom_line(data = ref.all,
+             aes(x = pix_mean, col = "Reference"), stat = "density", lwd = 1.2) +
+  geom_line(data = stats.all,
+             aes(x = pix_mean, col = effect_p), stat = "density", lwd = 1.2) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
+  scale_color_manual(name = "Strain Kind",
+                     breaks = c("Reference", "Beneficial", "Neutral", "Deleterious"),
+                     values = c("Reference" = "#607D8B",
+                                "Beneficial" = "#388E3C",
+                                "Neutral" = "#303F9F",
+                                "Deleterious" = "#D32F2F"),
+                     labels = c("Ref","B","N","D")) +
+  scale_x_continuous(breaks = seq(0,1000,100), minor_breaks = seq(0,1000,25)) +
+  # scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
+  labs(title = "LID",
+       subtitle = "CS Density",
+       x = "Colony Size (pix)",
+       y = "Density") +
+  theme_linedraw() +
+  theme(legend.position = "right") +
+  coord_cartesian(xlim = c(100,500))
+
+ggsave(sprintf("%s%s_CSDEN_ALL.png",
+               out_path,expt_name),
+       csden.all,
+       width = 15,height = 15)
+
+fden.all <- ggplot() +
+  geom_line(data = ref.all,
+            aes(x = cs_mean, col = "Reference"), stat = "density", lwd = 1.2) +
+  geom_line(data = stats.all,
+            aes(x = cs_mean, col = effect_p), stat = "density", lwd = 1.2) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
+  scale_color_manual(name = "Strain Kind",
+                     breaks = c("Reference", "Beneficial", "Neutral", "Deleterious"),
+                     values = c("Reference" = "#607D8B",
+                                "Beneficial" = "#388E3C",
+                                "Neutral" = "#303F9F",
+                                "Deleterious" = "#D32F2F"),
+                     labels = c("Ref","B","N","D")) +
+  scale_x_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
+  # scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
+  labs(title = "LID",
+       subtitle = "Fitness Density",
+       x = "Fitness",
+       y = "Density") +
+  theme_linedraw() +
+  theme(legend.position = "right") +
+  coord_cartesian(xlim = c(0.2,2))
+
+ggsave(sprintf("%s%s_FDEN_ALL.png",
+               out_path,expt_name),
+       fden.all,
+       width = 15,height = 15)
+
+
+edis.all <- ggplot() + 
+  geom_bar(data = stats.all,
+           aes(x=effect_p, y=(..count..)/913*100, fill = effect_p)) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
+  scale_fill_manual(name = "Strain Kind",
+                     breaks = c("Beneficial", "Neutral", "Deleterious"),
+                     values = c("Beneficial" = "#388E3C",
+                                "Neutral" = "#303F9F",
+                                "Deleterious" = "#D32F2F"),
+                     labels = c("B","N","D")) +
+  scale_y_continuous(breaks = seq(-20,110,20), minor_breaks = seq(-20,110,5)) +
+  scale_x_discrete(limits=c("Deleterious","Neutral","Beneficial")) +
+  labs(title = "LID",
+       subtitle = "Effect Distribution",
+       x = "Effect",
+       y = "Percentage") +
+  theme_linedraw() +
+  theme(legend.position = "right") +
+  coord_cartesian(ylim = c(0,100))
+
+ggsave(sprintf("%s%s_EDIS_ALL.png",
+               out_path,expt_name),
+       edis.all,
+       width = 15,height = 15)
+  
+
