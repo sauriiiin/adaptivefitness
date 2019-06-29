@@ -17,8 +17,8 @@ library(stringr)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 out_path = 'figs/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_RND_LID/"
-expt_name <- '4C3_GA1_RND'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_RND_BEAN/"
+expt_name <- '4C3_GA1_RND_BEAN'
 pvals = seq(0,1,0.005)
 
 ##### MAKING THE MESS
@@ -72,7 +72,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[5]))
+  hours <- c(hours, as.numeric(s[6]))
 }
 reps <- unique(reps)
 hours <- unique(hours)
@@ -386,3 +386,23 @@ ggplot(stats.all) +
 ggsave(sprintf("%s%s_OCS_ALL.png",
                out_path,expt_name),
        width = 15,height = 15)
+
+##### T-TEST
+sig.dat <- NULL
+i = 0
+for (hr in sort(unique(stats.all$hours))) {
+  i = i + 1
+  sig.dat$hours[i] <- hr
+  sig.dat$con_ben[i] <- sum(stats.all$hours == hr & stats.all$from == 'more')/dim(stats.all[stats.all$hours == hr,])[1] * 100
+  sig.dat$pre_ben[i] <- sum(stats.all$hours == hr & stats.all$effect_p == 'Beneficial')/dim(stats.all[stats.all$hours == hr,])[1] * 100
+  sig.dat$con_del[i] <- sum(stats.all$hours == hr & stats.all$from == 'less')/dim(stats.all[stats.all$hours == hr,])[1] * 100
+  sig.dat$pre_del[i] <- sum(stats.all$hours == hr & stats.all$effect_p == 'Deleterious')/dim(stats.all[stats.all$hours == hr,])[1] * 100
+  sig.dat$p[i] <- t.test(c(sig.dat$con_ben[i],sig.dat$con_del[i]), c(sig.dat$pre_ben[i],sig.dat$pre_del[i]),paired=TRUE)$p.value
+  sig.dat$p_unpaired[i] <- t.test(c(sig.dat$con_ben[i],sig.dat$con_del[i]), c(sig.dat$pre_ben[i],sig.dat$pre_del[i]))$p.value
+}
+sig.dat <- data.frame(sig.dat)
+
+
+
+
+
