@@ -10,8 +10,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1'
-expt = 'FS1-1'
+expt_name = '4C3_GA1_MC_BOR'
+expt = 'FS1-1-MC-BOR'
 out_path = 'figs/neigh/';
 density = 6144;
 
@@ -407,12 +407,46 @@ ggplot(temp) +
   geom_point(aes(x = mca, col = NearGap), stat = "density")
 
 # dbWriteTable(conn, "4C3_GA1_MCG_6144_FITNESS", fitdat[1:6], overwrite = T)
+#####
 
-##### MEDIAN CORRECTED FITNESS V/S ORIGINAL
-mcgdat = dbGetQuery(conn, sprintf('select a.*, b.*
+alldat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
                                       where a.pos = b.pos
-                                      order by b.%s, b.%s',
-                                  tablename_fit,
-                                  p2c_info[1],
-                                  p2c_info[3],p2c_info[4]))
+                                      order by a.hours, b.%s, b.%s, b.%s',
+                                  tablename_fit,p2c_info[1],
+                                  p2c_info[2],p2c_info[3],p2c_info[4]))
+
+alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==1] = '1TL'
+alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==1] = '3BL'
+alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==0] = '2TR'
+alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
+
+alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
+alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
+alldat$colony[is.na(alldat$orf_name)] = 'Gap'
+
+alldat$ex_avg <- NULL
+alldat$ex_fit <- NULL
+
+for (hr in unique(alldat$hours)) {
+  for (pl in unique(alldat$`6144plate`[alldat$hours == hr])) {
+    for (sr in unique(alldat$source[alldat$hours == hr & alldat$`6144plate` == pl])) {
+      l_avg <- quantile(alldat$average[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr],0.01,na.rm=T)[[1]]
+      u_avg <- quantile(alldat$average[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr],0.99,na.rm=T)[[1]]
+      l_fit <- quantile(alldat$fitness[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr],0.01,na.rm=T)[[1]]
+      u_fit <- quantile(alldat$fitness[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr],0.99,na.rm=T)[[1]]
+      
+      
+      alldat$ex_avg[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr & alldat$average < l_avg] <- 'Small'
+      alldat$ex_avg[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr & alldat$average > u_avg] <- 'Big'
+      alldat$ex_fit[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr & alldat$fitness < l_fit] <- 'Small'
+      alldat$ex_fit[alldat$hours == hr & alldat$`6144plate` == pl & alldat$source == sr & alldat$fitness > u_fit] <- 'Big'
+    }
+  }
+}
+
+ggplot(alldat[alldat$hours == 18 & alldat$`6144plate` == 1,]) +
+  geom_point(aes(x = `6144col`, y = `6144row`, col = ex_fit, shape = colony))
+
+
+
