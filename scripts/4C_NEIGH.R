@@ -10,8 +10,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1_MC_BOR'
-expt = 'FS1-1-MC-BOR'
+expt_name = '4C3_GA1_MC'
+expt = 'FS1-1-MC'
 out_path = 'figs/neigh/';
 density = 6144;
 
