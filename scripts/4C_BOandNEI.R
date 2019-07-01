@@ -127,27 +127,34 @@ for (hr in hours$hours) {
     #        width = 14,height = 7.5)
     
     ##### WHAT HAPPENS NEAR GAPS
+    alldat$average[alldat$colony == "Gap"] <- 0
     alldat$gap <- 'N'
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
       if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap') {
-        alldat$gap[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'G2'
+      # sr = alldat$source[alldat$`6144col` == c & alldat$`6144row` == r]
+      # l = quantile(alldat$average[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.1, na.rm = T)[[1]]
+      # if (!is.na(alldat$average[alldat$`6144col` == c & alldat$`6144row` == r])) {
+      #   if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap' |
+      #       alldat$average[alldat$`6144col` == c & alldat$`6144row` == r] < l) {
+          alldat$gap[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+                       alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
+                       alldat$`6144col` == c & alldat$`6144row` == r - 2 |
+                       alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
+                       alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
+                       alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
+                       alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
+                       alldat$`6144col` == c - 2 & alldat$`6144row` == r |
+                       alldat$`6144col` == c + 2 & alldat$`6144row` == r |
+                       alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
+                       alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
+                       alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
+                       alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
+                       alldat$`6144col` == c & alldat$`6144row` == r + 2 |
+                       alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
+                       alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'G2'
+        # }
       }
     }
     
@@ -155,16 +162,33 @@ for (hr in hours$hours) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
       if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap') {
-        alldat$gap[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'G1'
+      # sr = alldat$source[alldat$`6144col` == c & alldat$`6144row` == r]
+      # l = quantile(alldat$average[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.1, na.rm = T)[[1]]
+      # if (!is.na(alldat$average[alldat$`6144col` == c & alldat$`6144row` == r])) {
+      #   if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap' |
+      #       alldat$average[alldat$`6144col` == c & alldat$`6144row` == r] < l) {
+          alldat$gap[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+                       alldat$`6144col` == c & alldat$`6144row` == r - 1 |
+                       alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
+                       alldat$`6144col` == c - 1 & alldat$`6144row` == r |
+                       alldat$`6144col` == c + 1 & alldat$`6144row` == r |
+                       alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
+                       alldat$`6144col` == c & alldat$`6144row` == r + 1 |
+                       alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'G1'
+        # }
       }
     }
+    
+    ggplot(alldat[alldat$average > 0,]) +
+      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = gap)) +
+      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+      # scale_color_discrete(guide = F) +
+      scale_shape_discrete(guide = F) +
+      theme_linedraw() +
+      theme(axis.title = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank())
     
     ##### CORRECTING THE NEAR GAP POSITIONS
     # alldat$average_mgc <- alldat$average_mbc
@@ -180,23 +204,23 @@ for (hr in hours$hours) {
         median(alldat$average_mgc[alldat$gap ==  "G2" & alldat$source == sr & alldat$orf_name == "BF_control"], na.rm = T)
     }
     
-    # plot.raw <- ggplot(alldat) +
-    #   geom_point(aes(x = average, col = gap), stat = 'density') +
-    #   facet_wrap(.~source, ncol = 2) +
-    #   labs(title = 'Raw Data',
-    #        x = 'Pixel Count',
-    #        y = 'Density') +
-    #   scale_color_discrete(name = 'Gaps',
-    #                        breaks = c('G1','G2','N'),
-    #                        labels = c('One','Two','Away')) +
-    #   scale_y_continuous(breaks = seq(0,0.03,0.005)) +
-    #   theme_linedraw() +
-    #   theme(legend.position = 'bottom') +
-    #   coord_cartesian(xlim = c(200,600),
-    #                   ylim = c(0,0.022))
+    plot.raw <- ggplot(alldat) +
+      geom_line(aes(x = average, col = gap), stat = 'density', lwd = 1.2) +
+      facet_wrap(.~source, ncol = 2) +
+      labs(title = 'Raw Data',
+           x = 'Pixel Count',
+           y = 'Density') +
+      scale_color_discrete(name = 'Gaps',
+                           breaks = c('G1','G2','N'),
+                           labels = c('One','Two','Away')) +
+      scale_y_continuous(breaks = seq(0,0.03,0.005)) +
+      theme_linedraw() +
+      theme(legend.position = 'bottom') +
+      coord_cartesian(xlim = c(200,600),
+                      ylim = c(0,0.022))
     # 
     # plot.mcg <- ggplot(alldat) +
-    #   geom_point(aes(x = average_mgc, col = gap), stat = 'density') +
+    #   geom_line(aes(x = average_mgc, col = gap), stat = 'density', lwd = 1.2) +
     #   facet_wrap(.~source, ncol = 2) +
     #   labs(title = 'Median Corrected Gaps',
     #        x = 'Pixel Count',
@@ -214,17 +238,6 @@ for (hr in hours$hours) {
     # ggsave(sprintf("%s%s_NEIGHS_MGC_%d_%d.png",
     #                out_path,expt_name,hr,pl),
     #        width = 14,height = 7.5)
-    
-    ggplot(alldat[alldat$average_mgc > 0,]) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = gap)) +
-      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
-      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
-      scale_color_discrete(guide = F) +
-      scale_shape_discrete(guide = F) +
-      theme_linedraw() +
-      theme(axis.title = element_blank(),
-            axis.text = element_blank(),
-            axis.ticks = element_blank())
     
     jpegdat <- rbind(jpegdat, alldat)
   }
