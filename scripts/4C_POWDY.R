@@ -11,8 +11,8 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_RND_LID/"
-expt_name <- '4C3_GA1_RND'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_MCG/"
+expt_name <- '4C3_GA1_MCG'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
