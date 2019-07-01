@@ -407,7 +407,8 @@ ggplot(temp) +
   geom_point(aes(x = mca, col = NearGap), stat = "density")
 
 # dbWriteTable(conn, "4C3_GA1_MCG_6144_FITNESS", fitdat[1:6], overwrite = T)
-#####
+
+##### WHERE ARE THE OTHER POSITIONS WHICH NEED TO BE NORMALIZED?
 
 alldat = dbGetQuery(conn, sprintf('select a.*, b.*
                                       from %s a, %s b
@@ -445,8 +446,29 @@ for (hr in unique(alldat$hours)) {
   }
 }
 
-ggplot(alldat[alldat$hours == 18 & alldat$`6144plate` == 1,]) +
-  geom_point(aes(x = `6144col`, y = `6144row`, col = ex_fit, shape = colony))
+ggplot(alldat[alldat$hours == 18 & alldat$`6144plate` == 1 & alldat$source == '1TL' & alldat$orf_name == 'BF_control',]) +
+  geom_point(aes(x = `6144col`, y = `6144row`, col = average))
+
+temp <- alldat[alldat$hours == 18 & alldat$`6144plate` == 1 & alldat$source == '1TL' & alldat$orf_name == 'BF_control',]
+
+ggplot() +
+  geom_line(data = temp[temp$`6144row` == unique(temp$`6144col`)[2],],
+            aes(x = fitness),
+            col = 'Red',
+            lwd = 1.2,
+            stat = 'density') +
+  geom_line(data = temp[temp$`6144row` != unique(temp$`6144col`)[2],],
+            aes(x = fitness),
+            col = 'Blue',
+            lwd = 1.2,
+            stat = 'density')
+
+
+ggplot() +
+  geom_line(data = temp,
+            aes(x = fitness, col = 'Red'),
+            lwd = 1.2,
+            stat = 'density')
 
 
 
