@@ -127,16 +127,16 @@ for (hr in hours$hours) {
     #        width = 14,height = 7.5)
     
     ##### WHAT HAPPENS NEAR GAPS
-    alldat$average[alldat$colony == "Gap"] <- 0
+    # alldat$average[alldat$colony == "Gap"] <- 0
     alldat$gap <- 'N'
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
       if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap') {
       # sr = alldat$source[alldat$`6144col` == c & alldat$`6144row` == r]
-      # l = quantile(alldat$average[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.1, na.rm = T)[[1]]
+      # l = quantile(alldat$average[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.2, na.rm = T)[[1]]
       # if (!is.na(alldat$average[alldat$`6144col` == c & alldat$`6144row` == r])) {
-      #   if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap' |
+      #   if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Reference' &
       #       alldat$average[alldat$`6144col` == c & alldat$`6144row` == r] < l) {
           alldat$gap[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
                        alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
@@ -163,9 +163,9 @@ for (hr in hours$hours) {
       r = alldat$`6144row`[alldat$pos == o]
       if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap') {
       # sr = alldat$source[alldat$`6144col` == c & alldat$`6144row` == r]
-      # l = quantile(alldat$average[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.1, na.rm = T)[[1]]
+      # l = quantile(alldat$average[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.2, na.rm = T)[[1]]
       # if (!is.na(alldat$average[alldat$`6144col` == c & alldat$`6144row` == r])) {
-      #   if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Gap' |
+      #   if (alldat$colony[alldat$`6144col` == c & alldat$`6144row` == r] == 'Reference' &
       #       alldat$average[alldat$`6144col` == c & alldat$`6144row` == r] < l) {
           alldat$gap[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
                        alldat$`6144col` == c & alldat$`6144row` == r - 1 |
@@ -245,7 +245,7 @@ for (hr in hours$hours) {
 
 jpegdat <- data.frame(jpegdat$pos, jpegdat$hours, jpegdat$average_mgc)
 colnames(jpegdat) <- c('pos','hours','average')
-dbWriteTable(conn, "4C3_GA1_MCG_6144_JPEG", jpegdat, overwrite = T)
+# dbWriteTable(conn, "4C3_GA1_MCG_6144_JPEG", jpegdat, overwrite = T)
 
 ##### BEFORE AND AFTER
 alldat = dbGetQuery(conn, sprintf('select a.*, b.*, c.*
