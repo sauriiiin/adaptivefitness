@@ -191,7 +191,7 @@ for (hr in hours$hours) {
     }
     alldat$nearSmall[alldat$outlier == 'Smaller'] = 'S'
     
-    neigh.small <- ggplot(alldat) +
+   ggplot(alldat) +
       # geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearSmall)) +
       geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearSmall)) +
       scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
@@ -216,7 +216,7 @@ for (hr in hours$hours) {
             panel.grid = element_blank(),
             legend.position = 'bottom')
     
-    neigh.big <- ggplot(alldat) +
+    ggplot(alldat) +
       geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearBig)) +
       scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
       scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
@@ -256,6 +256,22 @@ for (hr in hours$hours) {
                          labels = c('Rest','Small','Deg1','Deg2')) +
       theme_linedraw() +
       theme(legend.position = 'bottom')
+    
+    ggplot(alldat[!is.na(alldat$average),]) +
+      geom_point(aes(x = average, y =  neigh, col = nearSmall)) +
+      # facet_wrap(.~source) +
+      # labs(title = 'Small Colonies and Neighbors',
+      #      x = 'Colony Size (pix)',
+      #      y = 'Density') +
+      scale_color_manual(name = '',
+                         breaks = c('N','S','S1','S2'),
+                         values = c('N'='#BDBDBD',
+                                    'S' = '#FFA000',
+                                    'S1' = '#009688',
+                                    'S2' = '#673AB7'),
+                         labels = c('Rest','Small','Deg1','Deg2')) +
+      theme_linedraw() +
+      theme(legend.position = 'bottom')
       
     ggplot(alldat[!is.na(alldat$average),]) +
       geom_line(aes(x = average, col = nearBig), stat = 'density', lwd = 1.2) +
@@ -285,8 +301,50 @@ median(alldat$average[alldat$nearBig == 'B1'],na.rm = T)
 median(alldat$average[alldat$nearBig == 'B2'],na.rm = T)
 
 
-median(alldat$average[alldat$nearSmall == 'N'],na.rm = T)
-median(alldat$average[alldat$nearSmall == 'S'],na.rm = T)
-median(alldat$average[alldat$nearSmall == 'S1'],na.rm = T)
-median(alldat$average[alldat$nearSmall == 'S2'],na.rm = T)
+mean(alldat$average[alldat$nearSmall == 'N'],na.rm = T)
+mean(alldat$average[alldat$nearSmall == 'S'],na.rm = T)
+mean(alldat$average[alldat$nearSmall == 'S1'],na.rm = T)
+mean(alldat$average[alldat$nearSmall == 'S2'],na.rm = T)
 
+#####
+alldat$outlier <- NULL
+alldat$var <- NULL
+alldat$neigh <- NULL
+alldat$diff <- NULL
+
+temp <- alldat
+for (i in seq(1,length(unique(temp$`6144col`)))) {
+  col <- unique(temp$`6144col`)[i]
+  lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+  rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+  for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+    row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+    up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+    dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+    if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
+      a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
+      u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
+      d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
+      l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
+      r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
+      alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
+      alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  mean(c(u,d,l,r),na.rm = T)
+      alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - mean(c(u,d,l,r),na.rm = T)
+    }
+    # cnt <- cnt + 1
+  }
+}
+diff_std <- sd(alldat$diff,na.rm = T)
+diff_mean <- mean(alldat$diff,na.rm = T)
+alldat$outlier[!is.na(alldat$average) &
+                 alldat$diff > quantile(alldat$diff[alldat$orf_name == 'BF_control'], 0.98, na.rm = T)[[1]]] = 'Bigger'
+alldat$outlier[!is.na(alldat$average) &
+                 alldat$diff < quantile(alldat$diff[alldat$orf_name == 'BF_control'], 0.02, na.rm = T)[[1]]] = 'Smaller'
+alldat$outlier[is.na(alldat$outlier)] = 'Normal'
+
+
+ggplot(alldat[!is.na(alldat$average),]) +
+  geom_abline(slope = c(1/0.7,1,0.7)) +
+  geom_point(aes(x = average, y =  neigh, col = colony)) +
+  coord_cartesian(xlim = c(0,600),
+                  ylim = c(0,600))
