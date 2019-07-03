@@ -59,6 +59,10 @@ for (hr in hours$hours) {
     alldat$average[alldat$colony == 'Gap'] = 0
     
     alldat$outlier <- NULL
+    alldat$var <- NULL
+    alldat$neigh <- NULL
+    alldat$diff <- NULL
+    
     for (sr in unique(alldat$source)) {
       temp <- alldat[alldat$source == sr,]
       for (i in seq(1,length(unique(temp$`6144col`)))) {
@@ -86,22 +90,28 @@ for (hr in hours$hours) {
       diff_mean <- mean(alldat$diff[alldat$source == sr],na.rm = T)
       # alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff > (diff_mean + 3*diff_std)] = 'Bigger'
       # alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff < (diff_mean - 3*diff_std)] = 'Smaller'
-      alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff > (diff_mean + 3*diff_std)] = 'Bigger'
-      alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff < (diff_mean - 3*diff_std)] = 'Smaller'
+      alldat$outlier[alldat$source == sr & !is.na(alldat$average) &
+                       alldat$diff > quantile(alldat$diff[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.995, na.rm = T)[[1]]] = 'Bigger'
+      alldat$outlier[alldat$source == sr & !is.na(alldat$average) &
+                       alldat$diff < quantile(alldat$diff[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.005, na.rm = T)[[1]]] = 'Smaller'
       alldat$outlier[is.na(alldat$outlier)] = 'Normal'
       
     }
     
-    ggplot(alldat[alldat$average > 0,]) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = outlier)) +
+    ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
       scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
       scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+      scale_size_manual(values = c('Smaller' = 2, 'Normal' = 1, 'Bigger' = 2)) +
       # scale_color_discrete(guide = F) +
       scale_shape_discrete(guide = F) +
       theme_linedraw() +
       theme(axis.title = element_blank(),
             axis.text = element_blank(),
             axis.ticks = element_blank())
+    
+    ggplot(alldat) +
+      geom_line(aes(x = average, col = outlier), stat = 'density')
     
     
     alldat$nearBig <- 'N'
@@ -143,6 +153,8 @@ for (hr in hours$hours) {
       }
     }
     
+    alldat$nearBig[alldat$outlier == 'Bigger'] = 'B'
+    
     alldat$nearSmall <- 'N'
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
@@ -181,35 +193,77 @@ for (hr in hours$hours) {
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'S1'
       }
     }
-
-    ggplot(alldat[alldat$average > 0 & alldat$orf_name == 'BF_control',]) +
+    
+    alldat$nearSmall[alldat$outlier == 'Smaller'] = 'S'
+    
+    neigh.small <- ggplot(alldat) +
       # geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearSmall)) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearBig)) +
+      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearSmall)) +
       scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
       scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
-      # scale_color_discrete(guide = F) +
-      scale_shape_discrete(guide = F) +
+      labs(title = 'Small Colonies and Neighbors') +
+      scale_color_manual(name = '',
+                         breaks = c('S','S1','S2'),
+                         values = c('N'='#BDBDBD',
+                                    'S' = '#FFA000',
+                                    'S1' = '#009688',
+                                    'S2' = '#673AB7'),
+                         labels = c('Small','Deg1','Deg2')) +
+      scale_shape_manual(breaks = c('Reference','Query','Gap'),
+                         values = c('Reference' = 19,
+                                    'Query' = 19,
+                                    'Gap' = 0),
+                         guide = F) +
       theme_linedraw() +
       theme(axis.title = element_blank(),
             axis.text = element_blank(),
-            axis.ticks = element_blank())
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = 'bottom')
+    
+    neigh.big <- ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearBig)) +
+      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+      labs(title = 'Big Colonies and Neighbors') +
+      scale_color_manual(name = '',
+                         breaks = c('B','B1','B2'),
+                         values = c('N'='#BDBDBD',
+                                    'B' = '#FFA000',
+                                    'B1' = '#009688',
+                                    'B2' = '#673AB7'),
+                         labels = c('Big','Deg1','Deg2')) +
+      scale_shape_manual(breaks = c('Reference','Query','Gap'),
+                         values = c('Reference' = 19,
+                                    'Query' = 19,
+                                    'Gap' = 0),
+                         guide = F) +
+      theme_linedraw() +
+      theme(axis.title = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = 'bottom')
     
     ggplot(alldat[alldat$orf_name == 'BF_control' & alldat$outlier != 'Bigger' & !is.na(alldat$average),]) +
-      geom_bar(aes(x = average, col = nearBig), stat = 'density') +
-      geom_bar(data = alldat[alldat$outlier == 'Bigger' & !is.na(alldat$average),],
-               aes(x = average, col = 'B'), stat = 'density') +
+      geom_line(aes(x = fitness, col = nearBig), stat = 'density') +
+      geom_line(data = alldat[alldat$outlier == 'Bigger' & !is.na(alldat$average),],
+               aes(x = fitness, col = 'B'), stat = 'density') +
       facet_wrap(.~source)
     
-    ggplot(alldat[alldat$orf_name == 'BF_control' & alldat$outlier != 'Smaller' & !is.na(alldat$average),]) +
-      geom_bar(aes(x = average, col = nearSmall), stat = 'density') +
-      geom_bar(data = alldat[alldat$outlier == 'Smaller' & !is.na(alldat$average),],
-               aes(x = average, col = 'S'), stat = 'density') +
-      facet_wrap(.~source)
+    ggplot(alldat[alldat$orf_name == 'BF_control' & !is.na(alldat$average),]) +
+      geom_line(aes(x = average, col = nearSmall), stat = 'density') +
+      facet_wrap(.~source) +
+      coord_cartesian(ylim = c(0,0.1))
+    
+    ggplot(alldat) +
+      geom_point(aes(x = average, y = fitness, col = nearSmall))
     
     jpegdat <- rbind(jpegdat, alldat)
     
   }
 }
 
+median(alldat$average[alldat$nearSmall == 'N'],na.rm = T)
 
 
