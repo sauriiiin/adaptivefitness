@@ -62,40 +62,38 @@ for (hr in hours$hours) {
     alldat$var <- NULL
     alldat$neigh <- NULL
     alldat$diff <- NULL
-    for (sr in unique(alldat$source)) {
-      temp <- alldat[alldat$source == sr & alldat$orf_name == 'BF_control',]
-      # temp <- alldat
-      for (i in seq(1,length(unique(temp$`6144col`)))) {
-        col <- unique(temp$`6144col`)[i]
-        lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-        rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-        for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
-          row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-          up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-          dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-          if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
-            a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
-            u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
-            d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
-            l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
-            r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
-            alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
-            alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  mean(c(u,d,l,r),na.rm = T)
-            alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - mean(c(u,d,l,r),na.rm = T)
-          }
-          # cnt <- cnt + 1
+    
+    temp <- alldat
+    for (i in seq(1,length(unique(temp$`6144col`)))) {
+      col <- unique(temp$`6144col`)[i]
+      lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+      rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+      for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+        row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+        up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+        dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+        if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
+          a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
+          u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
+          d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
+          l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
+          r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
+          alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/median(c(a,u,d,l,r),na.rm = T)
+          alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  median(c(u,d,l,r),na.rm = T)
+          alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - median(c(u,d,l,r),na.rm = T)
         }
+        # cnt <- cnt + 1
       }
-      diff_std <- sd(alldat$diff[alldat$source == sr],na.rm = T)
-      diff_mean <- mean(alldat$diff[alldat$source == sr],na.rm = T)
-      # alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff > (diff_mean + 3*diff_std)] = 'Bigger'
-      # alldat$outlier[alldat$source == sr & !is.na(alldat$average) & alldat$diff < (diff_mean - 3*diff_std)] = 'Smaller'
-      alldat$outlier[alldat$source == sr & !is.na(alldat$average) &
-                       alldat$diff > quantile(alldat$diff[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]]] = 'Bigger'
-      alldat$outlier[alldat$source == sr & !is.na(alldat$average) &
-                       alldat$diff < quantile(alldat$diff[alldat$source == sr & alldat$orf_name == 'BF_control'], 0.05, na.rm = T)[[1]]] = 'Smaller'
-      alldat$outlier[is.na(alldat$outlier)] = 'Normal'
     }
+    diff_std <- sd(alldat$diff,na.rm = T)
+    diff_mean <- mean(alldat$diff,na.rm = T)
+    alldat$outlier[!is.na(alldat$average) &
+                     alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
+                     alldat$diff > 0] = 'Bigger'
+    alldat$outlier[!is.na(alldat$average) &
+                     alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
+                     alldat$diff < 0] = 'Smaller'
+    alldat$outlier[is.na(alldat$outlier)] = 'Normal'
     
     ggplot(alldat) +
       geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
@@ -312,39 +310,25 @@ alldat$var <- NULL
 alldat$neigh <- NULL
 alldat$diff <- NULL
 
-temp <- alldat
-for (i in seq(1,length(unique(temp$`6144col`)))) {
-  col <- unique(temp$`6144col`)[i]
-  lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-  rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-  for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
-    row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-    up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-    dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-    if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
-      a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
-      u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
-      d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
-      l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
-      r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
-      alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/mean(c(a,u,d,l,r),na.rm = T)
-      alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  mean(c(u,d,l,r),na.rm = T)
-      alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - mean(c(u,d,l,r),na.rm = T)
-    }
-    # cnt <- cnt + 1
-  }
-}
-diff_std <- sd(alldat$diff,na.rm = T)
-diff_mean <- mean(alldat$diff,na.rm = T)
-alldat$outlier[!is.na(alldat$average) &
-                 alldat$diff > quantile(alldat$diff[alldat$orf_name == 'BF_control'], 0.98, na.rm = T)[[1]]] = 'Bigger'
-alldat$outlier[!is.na(alldat$average) &
-                 alldat$diff < quantile(alldat$diff[alldat$orf_name == 'BF_control'], 0.02, na.rm = T)[[1]]] = 'Smaller'
-alldat$outlier[is.na(alldat$outlier)] = 'Normal'
 
 
-ggplot(alldat[!is.na(alldat$average),]) +
-  geom_abline(slope = c(1/0.7,1,0.7)) +
+
+ggplot(alldat[!is.na(alldat$average) & alldat$orf_name == 'BF_control',]) +
+  geom_abline(slope = c(1/0.8,1,0.8)) +
   geom_point(aes(x = average, y =  neigh, col = colony)) +
   coord_cartesian(xlim = c(0,600),
                   ylim = c(0,600))
+
+ggplot(alldat[!is.na(alldat$orf_name) & alldat$orf_name == 'BF_control' &
+                alldat$nearBig == 'B',]) +
+  # geom_histogram(aes(x = var))
+  geom_point(aes(x = `6144col`, y = `6144row`, col = var)) 
+
+
+alldat$average[alldat$nearBig != 'N'] <- sqrt(alldat$average[alldat$nearBig != 'N'] * alldat$neigh[alldat$nearBig != 'N'])
+
+
+
+ggplot(alldat) +
+  geom_point(aes(x = average, y = neigh, col = nearBig))
+
