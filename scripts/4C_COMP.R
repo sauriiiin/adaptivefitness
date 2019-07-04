@@ -31,6 +31,10 @@ p2c_info[3] = '6144col'
 p2c_info[4] = '6144row'
 
 hours = dbGetQuery(conn, sprintf('select distinct hours from %s order by hours asc', tablename_fit))
+n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
+                                    p2c_info[2],
+                                    p2c_info[1],
+                                    p2c_info[2]))
 
 jpegdat <- data.frame()
 
@@ -188,147 +192,53 @@ for (hr in hours$hours) {
       }
     }
     alldat$nearSmall[alldat$outlier == 'Smaller'] = 'S'
-    
-   ggplot(alldat) +
-      # geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearSmall)) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearSmall)) +
-      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
-      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
-      labs(title = 'Small Colonies and Neighbors') +
-      scale_color_manual(name = '',
-                         breaks = c('S','S1','S2'),
-                         values = c('N'='#BDBDBD',
-                                    'S' = '#FFA000',
-                                    'S1' = '#009688',
-                                    'S2' = '#673AB7'),
-                         labels = c('Small','Deg1','Deg2')) +
-      scale_shape_manual(breaks = c('Reference','Query','Gap'),
-                         values = c('Reference' = 19,
-                                    'Query' = 19,
-                                    'Gap' = 0),
-                         guide = F) +
-      theme_linedraw() +
-      theme(axis.title = element_blank(),
-            axis.text = element_blank(),
-            axis.ticks = element_blank(),
-            panel.grid = element_blank(),
-            legend.position = 'bottom')
-    
-    ggplot(alldat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = nearBig)) +
-      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
-      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
-      labs(title = 'Big Colonies and Neighbors') +
-      scale_color_manual(name = '',
-                         breaks = c('B','B1','B2'),
-                         values = c('N'='#BDBDBD',
-                                    'B' = '#FFA000',
-                                    'B1' = '#009688',
-                                    'B2' = '#673AB7'),
-                         labels = c('Big','Deg1','Deg2')) +
-      scale_shape_manual(breaks = c('Reference','Query','Gap'),
-                         values = c('Reference' = 19,
-                                    'Query' = 19,
-                                    'Gap' = 0),
-                         guide = F) +
-      theme_linedraw() +
-      theme(axis.title = element_blank(),
-            axis.text = element_blank(),
-            axis.ticks = element_blank(),
-            panel.grid = element_blank(),
-            legend.position = 'bottom')
-    
-    
-    ggplot(alldat[!is.na(alldat$average),]) +
-      geom_line(aes(x = average, col = nearSmall), stat = 'density', lwd = 1.2) +
-      # facet_wrap(.~source) +
-      labs(title = 'Small Colonies and Neighbors',
-           x = 'Colony Size (pix)',
-           y = 'Density') +
-      scale_color_manual(name = '',
-                         breaks = c('N','S','S1','S2'),
-                         values = c('N'='#BDBDBD',
-                                    'S' = '#FFA000',
-                                    'S1' = '#009688',
-                                    'S2' = '#673AB7'),
-                         labels = c('Rest','Small','Deg1','Deg2')) +
-      theme_linedraw() +
-      theme(legend.position = 'bottom')
-    
-    ggplot(alldat[!is.na(alldat$average),]) +
-      geom_point(aes(x = average, y =  neigh, col = nearSmall)) +
-      # facet_wrap(.~source) +
-      # labs(title = 'Small Colonies and Neighbors',
-      #      x = 'Colony Size (pix)',
-      #      y = 'Density') +
-      scale_color_manual(name = '',
-                         breaks = c('N','S','S1','S2'),
-                         values = c('N'='#BDBDBD',
-                                    'S' = '#FFA000',
-                                    'S1' = '#009688',
-                                    'S2' = '#673AB7'),
-                         labels = c('Rest','Small','Deg1','Deg2')) +
-      theme_linedraw() +
-      theme(legend.position = 'bottom')
-      
-    ggplot(alldat[!is.na(alldat$average),]) +
-      geom_line(aes(x = average, col = nearBig), stat = 'density', lwd = 1.2) +
-      # facet_wrap(.~source) +
-      labs(title = 'Big Colonies and Neighbors',
-           x = 'Colony Size (pix)',
-           y = 'Density') +
-      scale_color_manual(name = '',
-                         breaks = c('N','B','B1','B2'),
-                         values = c('N'='#BDBDBD',
-                                    'B' = '#FFA000',
-                                    'B1' = '#009688',
-                                    'B2' = '#673AB7'),
-                         labels = c('Rest','Big','Deg1','Deg2')) +
-      theme_linedraw() +
-      theme(legend.position = 'bottom')
-    
+  
+    alldat$mca <- alldat$average
+    alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
+      median(alldat$average[alldat$nearBig == 'B'], na.rm = T)
+    alldat$mca[alldat$nearBig == 'B1'] <- alldat$average[alldat$nearBig == 'B1'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
+      median(alldat$average[alldat$nearBig == 'B1'], na.rm = T)
+    alldat$mca[alldat$nearBig == 'B2'] <- alldat$average[alldat$nearBig == 'B2'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
+      median(alldat$average[alldat$nearBig == 'B2'], na.rm = T)
     
     jpegdat <- rbind(jpegdat, alldat)
     
   }
 }
 
-median(alldat$average[alldat$nearBig == 'N'],na.rm = T)
-median(alldat$average[alldat$nearBig == 'B'],na.rm = T)
-median(alldat$average[alldat$nearBig == 'B1'],na.rm = T)
-median(alldat$average[alldat$nearBig == 'B2'],na.rm = T)
+jpegdat <- data.frame(jpegdat$pos, jpegdat$hours, jpegdat$mca)
+colnames(jpegdat) <- c('pos','hours','average')
+dbWriteTable(conn, "4C3_GA1_MCA_6144_JPEG", jpegdat, overwrite = T)
 
+ggplot(alldat[!is.na(alldat$average),]) +
+  geom_point(aes(x = average, y =  neigh, col = nearSmall)) +
+  # facet_wrap(.~source) +
+  # labs(title = 'Small Colonies and Neighbors',
+  #      x = 'Colony Size (pix)',
+  #      y = 'Density') +
+  scale_color_manual(name = '',
+                     breaks = c('N','S','S1','S2'),
+                     values = c('N'='#BDBDBD',
+                                'S' = '#FFA000',
+                                'S1' = '#009688',
+                                'S2' = '#673AB7'),
+                     labels = c('Rest','Small','Deg1','Deg2')) +
+  theme_linedraw() +
+  theme(legend.position = 'bottom')
 
-mean(alldat$average[alldat$nearSmall == 'N'],na.rm = T)
-mean(alldat$average[alldat$nearSmall == 'S'],na.rm = T)
-mean(alldat$average[alldat$nearSmall == 'S1'],na.rm = T)
-mean(alldat$average[alldat$nearSmall == 'S2'],na.rm = T)
-
-#####
-alldat$outlier <- NULL
-alldat$var <- NULL
-alldat$neigh <- NULL
-alldat$diff <- NULL
-
-
-
-
-ggplot(alldat[!is.na(alldat$average) & alldat$orf_name == 'BF_control',]) +
-  geom_abline(slope = c(1/0.8,1,0.8)) +
-  geom_point(aes(x = average, y =  neigh, col = colony)) +
-  coord_cartesian(xlim = c(0,600),
-                  ylim = c(0,600))
-
-ggplot(alldat[!is.na(alldat$orf_name) & alldat$orf_name == 'BF_control' &
-                alldat$nearBig == 'B',]) +
-  # geom_histogram(aes(x = var))
-  geom_point(aes(x = `6144col`, y = `6144row`, col = var)) 
-
-
-alldat$average[alldat$nearBig != 'N'] <- sqrt(alldat$average[alldat$nearBig != 'N'] * alldat$neigh[alldat$nearBig != 'N'])
-
-
-
-ggplot(alldat) +
-  geom_point(aes(x = average, y = neigh, col = nearBig))
+ggplot(alldat[!is.na(alldat$average),]) +
+  geom_line(aes(x = average, col = nearBig), stat = 'density', lwd = 1.2) +
+  # facet_wrap(.~source) +
+  labs(title = 'Big Colonies and Neighbors',
+       x = 'Colony Size (pix)',
+       y = 'Density') +
+  scale_color_manual(name = '',
+                     breaks = c('N','B','B1','B2'),
+                     values = c('N'='#BDBDBD',
+                                'B' = '#FFA000',
+                                'B1' = '#009688',
+                                'B2' = '#673AB7'),
+                     labels = c('Rest','Big','Deg1','Deg2')) +
+  theme_linedraw() +
+  theme(legend.position = 'bottom')
 
