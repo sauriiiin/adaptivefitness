@@ -11,8 +11,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1'
-expt = 'FS1-1'
+expt_name = '4C3_GA3'
+expt = 'FS1-3'
 out_path = 'figs/comp/';
 density = 6144;
 
@@ -21,7 +21,7 @@ conn <- initialize.sql("saurin_test")
 
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-tablename_p2o = '4C3_pos2orf_name1';
+tablename_p2o = '4C3_pos2orf_name3';
 tablename_bpos = '4C3_borderpos';
 
 p2c_info = NULL
@@ -208,7 +208,7 @@ for (hr in hours$hours) {
 
 jpegdat <- data.frame(jpegdat$pos, jpegdat$hours, jpegdat$mca)
 colnames(jpegdat) <- c('pos','hours','average')
-dbWriteTable(conn, "4C3_GA1_MCA_6144_JPEG", jpegdat, overwrite = T)
+dbWriteTable(conn, "4C3_GA3_MCA_6144_JPEG", jpegdat, overwrite = T)
 
 ggplot(alldat[!is.na(alldat$average),]) +
   geom_point(aes(x = average, y =  neigh, col = nearSmall)) +

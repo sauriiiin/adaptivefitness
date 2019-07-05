@@ -11,8 +11,8 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_LID/"
-expt_name <- '4C3_GA3'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
+expt_name <- '4C3_GA1'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -30,7 +30,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[4]))
+  hours <- c(hours, as.numeric(s[3]))
 }
 reps <- unique(reps)
 hours <- sort(unique(hours))
@@ -44,21 +44,21 @@ for (ii in 1:length(reps)) {
   for (i in 1:length(hours)) {
     hr <- hours[i]
     
-    dat.stats <- read.csv(paste0(dat.dir,
-                                 sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
-                          na.strings = "NaN")
     # dat.stats <- read.csv(paste0(dat.dir,
-    #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+    #                              sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
     #                       na.strings = "NaN")
+    dat.stats <- read.csv(paste0(dat.dir,
+                                 sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+                          na.strings = "NaN")
     dat.stats <- dat.stats[dat.stats$hours != 0,]
     dat.stats$cont_hrs <- hr
     dat.stats$rep <- rep
-    dat.fit <- read.csv(paste0(dat.dir,
-                               sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
-                        na.strings = "NaN")
     # dat.fit <- read.csv(paste0(dat.dir,
-    #                            sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+    #                            sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
     #                     na.strings = "NaN")
+    dat.fit <- read.csv(paste0(dat.dir,
+                               sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+                        na.strings = "NaN")
     dat.fit$cont_hrs <- hr
     dat.fit$rep <- rep
     dat.fit$se <- dat.fit$average - dat.fit$bg
@@ -670,12 +670,12 @@ for (rep in unique(norep.dat$rep)) {
 #        dpi = 300)
 
 ###
-cfit.dat <- read.csv("/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_BEAN_CONTFITALL_8.csv",
+cfit.dat <- read.csv("/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_CONTFITALL_8.csv",
                      na.strings = "NaN")
 colnames(cfit.dat) <- c("cont_hrs","hours","fitness")
 
-q = 13
-r = 17
+q = 8
+r = 18
 
 # for (q in unique(stats.all$hours)) {
 #   for (r in unique(stats.all$cont_hrs)) {
