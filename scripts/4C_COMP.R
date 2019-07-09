@@ -20,6 +20,7 @@ density = 6144;
 conn <- initialize.sql("saurin_test")
 
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
+tablename_jpeg_mca = sprintf('%s_MCA_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
 tablename_p2o = '4C3_96R_pos2orf_name';
 tablename_bpos = '4C3_borderpos';
@@ -67,12 +68,12 @@ for (hr in hours$hours) {
       alldat$health[alldat$colony != 'Refernce' &
                       alldat$source == sr &
                       alldat$average < quantile(alldat$average[alldat$colony == 'Reference' &
-                                                                 alldat$source == sr], 0.05, na.rm = T)[[1]] &
+                                                                 alldat$source == sr], 0.005, na.rm = T)[[1]] &
                       !is.na(alldat$average)] = 'Sick'
       alldat$health[alldat$colony != 'Reference' &
                       alldat$source == sr &
                       alldat$average > quantile(alldat$average[alldat$colony == 'Reference' &
-                                                                 alldat$source == sr], 0.95, na.rm = T)[[1]] &
+                                                                 alldat$source == sr], 0.995, na.rm = T)[[1]] &
                       !is.na(alldat$average)] = 'Healthy'
       # alldat$health[is.na(alldat$health[alldat$source == sr & alldat$colony != 'Reference'])] = 'Normal'
     }
@@ -81,8 +82,8 @@ for (hr in hours$hours) {
     # alldat$health[alldat$colony == 'Gap'] = 'Gap'
     alldat$health[alldat$colony == 'Reference'] = 'Reference'
     
-    ggplot(alldat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, col = health))
+    # ggplot(alldat) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, col = health))
     
     # alldat$outlier <- NULL
     # alldat$var <- NULL
@@ -137,51 +138,51 @@ for (hr in hours$hours) {
     #         axis.text = element_blank(),
     #         axis.ticks = element_blank())
     
-    alldat$nearBig <- 'N'
-    for (o in alldat$pos) {
-      c = alldat$`6144col`[alldat$pos == o]
-      r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
-        alldat$nearBig[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'B2'
-      }
-    }
-    for (o in alldat$pos) {
-      c = alldat$`6144col`[alldat$pos == o]
-      r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
-        alldat$nearBig[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'B1'
-      }
-    }
-    alldat$nearBig[alldat$health == 'Healthy'] = 'B'
+    # alldat$nearBig <- 'N'
+    # for (o in alldat$pos) {
+    #   c = alldat$`6144col`[alldat$pos == o]
+    #   r = alldat$`6144row`[alldat$pos == o]
+    #   if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
+    #     alldat$nearBig[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
+    #                  alldat$`6144col` == c & alldat$`6144row` == r - 2 |
+    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
+    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
+    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
+    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
+    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r |
+    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r |
+    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
+    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
+    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
+    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
+    #                  alldat$`6144col` == c & alldat$`6144row` == r + 2 |
+    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
+    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'B2'
+    #   }
+    # }
+    # for (o in alldat$pos) {
+    #   c = alldat$`6144col`[alldat$pos == o]
+    #   r = alldat$`6144row`[alldat$pos == o]
+    #   if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
+    #     alldat$nearBig[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+    #                  alldat$`6144col` == c & alldat$`6144row` == r - 1 |
+    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
+    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r |
+    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r |
+    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
+    #                  alldat$`6144col` == c & alldat$`6144row` == r + 1 |
+    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'B1'
+    #   }
+    # }
+    # alldat$nearBig[alldat$health == 'Healthy'] = 'B'
     
-    alldat$nearSmall <- 'N'
+    alldat$nearSick <- 'N'
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
       if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Sick') {
-        alldat$nearSmall[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+        alldat$nearSick[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
                          alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
                          alldat$`6144col` == c & alldat$`6144row` == r - 2 |
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
@@ -203,7 +204,7 @@ for (hr in hours$hours) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
       if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Sick') {
-        alldat$nearSmall[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+        alldat$nearSick[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
                          alldat$`6144col` == c & alldat$`6144row` == r - 1 |
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
                          alldat$`6144col` == c - 1 & alldat$`6144row` == r |
@@ -213,28 +214,35 @@ for (hr in hours$hours) {
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'S1'
       }
     }
-    alldat$nearSmall[alldat$health == 'Sick'] = 'S'
+    alldat$nearSick[alldat$health == 'Sick'] = 'S'
   
     alldat$mca <- alldat$average
-    alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
-      median(alldat$average[alldat$nearBig == 'B'], na.rm = T)
-    alldat$mca[alldat$nearBig == 'B1'] <- alldat$average[alldat$nearBig == 'B1'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
-      median(alldat$average[alldat$nearBig == 'B1'], na.rm = T)
-    alldat$mca[alldat$nearBig == 'B2'] <- alldat$average[alldat$nearBig == 'B2'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
-      median(alldat$average[alldat$nearBig == 'B2'], na.rm = T)
+    # alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
+    #   median(alldat$average[alldat$nearBig == 'B'], na.rm = T)
+    # alldat$mca[alldat$nearBig == 'B1'] <- alldat$average[alldat$nearBig == 'B1'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
+    #   median(alldat$average[alldat$nearBig == 'B1'], na.rm = T)
+    # alldat$mca[alldat$nearBig == 'B2'] <- alldat$average[alldat$nearBig == 'B2'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
+    #   median(alldat$average[alldat$nearBig == 'B2'], na.rm = T)
     
+    for (sr in unique(alldat$source)) {
+      alldat$mca[alldat$nearSick == 'S1' & alldat$source == sr] <-
+        alldat$average[alldat$nearSick == 'S1' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
+        median(alldat$average[alldat$nearSick == 'S1' & alldat$source == sr], na.rm = T)
+      alldat$mca[alldat$nearSick == 'S2' & alldat$source == sr] <-
+        alldat$average[alldat$nearSick == 'S2' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
+        median(alldat$average[alldat$nearSick == 'S2' & alldat$source == sr], na.rm = T)
+    }
     jpegdat <- rbind(jpegdat, alldat)
-    
   }
 }
 
 jpegdat <- data.frame(jpegdat$pos, jpegdat$hours, jpegdat$mca)
 colnames(jpegdat) <- c('pos','hours','average')
-dbWriteTable(conn, "4C3_GA3_MCA_6144_JPEG", jpegdat, overwrite = T)
+dbWriteTable(conn, tablename_jpeg_mca, jpegdat, overwrite = T)
 
 ggplot(alldat[!is.na(alldat$average),]) +
-  # geom_point(aes(x = average, y =  neigh, col = nearSmall)) +
-  geom_line(aes(x = average, col = nearSmall), stat = 'density', lwd = 1.2) +
+  # geom_point(aes(x = average, y =  neigh, col = nearSick)) +
+  geom_line(aes(x = average, col = nearSick), stat = 'density', lwd = 1.2) +
   facet_wrap(.~source) +
   # labs(title = 'Small Colonies and Neighbors',
   #      x = 'Colony Size (pix)',
@@ -251,7 +259,7 @@ ggplot(alldat[!is.na(alldat$average),]) +
 
 ggplot(alldat[!is.na(alldat$average),]) +
   geom_line(aes(x = average, col = nearBig), stat = 'density', lwd = 1.2) +
-  # facet_wrap(.~source) +
+  facet_wrap(.~source) +
   labs(title = 'Big Colonies and Neighbors',
        x = 'Colony Size (pix)',
        y = 'Density') +
