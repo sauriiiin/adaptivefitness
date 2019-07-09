@@ -11,8 +11,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA3'
-expt = 'FS1-3'
+expt_name = '4C3_96R'
+expt = 'FS1-96R'
 out_path = 'figs/comp/';
 density = 6144;
 
@@ -21,11 +21,11 @@ conn <- initialize.sql("saurin_test")
 
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-tablename_p2o = '4C3_pos2orf_name3';
+tablename_p2o = '4C3_96R_pos2orf_name';
 tablename_bpos = '4C3_borderpos';
 
 p2c_info = NULL
-p2c_info[1] = '4C3_pos2coor6144'
+p2c_info[1] = '4C3_96R_pos2coor6144'
 p2c_info[2] = '6144plate'
 p2c_info[3] = '6144col'
 p2c_info[4] = '6144row'
@@ -62,64 +62,86 @@ for (hr in hours$hours) {
     
     alldat$average[alldat$colony == 'Gap'] = 0
     
-    alldat$outlier <- NULL
-    alldat$var <- NULL
-    alldat$neigh <- NULL
-    alldat$diff <- NULL
-    
-    temp <- alldat
-    for (i in seq(1,length(unique(temp$`6144col`)))) {
-      col <- unique(temp$`6144col`)[i]
-      lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-      rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-      for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
-        row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-        up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-        dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-        if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
-          a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
-          u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
-          d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
-          l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
-          r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
-          alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/median(c(a,u,d,l,r),na.rm = T)
-          alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  median(c(u,d,l,r),na.rm = T)
-          alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - median(c(u,d,l,r),na.rm = T)
-        }
-        # cnt <- cnt + 1
-      }
+    alldat$health <- NULL
+    for (sr in unique(alldat$source)) {
+      alldat$health[alldat$colony != 'Refernce' &
+                      alldat$source == sr &
+                      alldat$average < quantile(alldat$average[alldat$colony == 'Reference' &
+                                                                 alldat$source == sr], 0.05, na.rm = T)[[1]] &
+                      !is.na(alldat$average)] = 'Sick'
+      alldat$health[alldat$colony != 'Reference' &
+                      alldat$source == sr &
+                      alldat$average > quantile(alldat$average[alldat$colony == 'Reference' &
+                                                                 alldat$source == sr], 0.95, na.rm = T)[[1]] &
+                      !is.na(alldat$average)] = 'Healthy'
+      # alldat$health[is.na(alldat$health[alldat$source == sr & alldat$colony != 'Reference'])] = 'Normal'
     }
-    diff_std <- sd(alldat$diff,na.rm = T)
-    diff_mean <- mean(alldat$diff,na.rm = T)
-    alldat$outlier[!is.na(alldat$average) &
-                     alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
-                     alldat$diff > 0] = 'Bigger'
-    alldat$outlier[!is.na(alldat$average) &
-                     alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
-                     alldat$diff < 0] = 'Smaller'
-    alldat$outlier[is.na(alldat$outlier)] = 'Normal'
+    
+    alldat$health[is.na(alldat$health) & alldat$colony != 'Reference'] = 'Normal'
+    # alldat$health[alldat$colony == 'Gap'] = 'Gap'
+    alldat$health[alldat$colony == 'Reference'] = 'Reference'
     
     ggplot(alldat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
-      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
-      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
-      scale_size_manual(values = c('Smaller' = 2, 'Normal' = 2, 'Bigger' = 2)) +
-      scale_shape_manual(breaks = c('Reference','Query','Gap'),
-                         values = c('Reference' = 19,
-                                    'Query' = 19,
-                                    'Gap' = 0),
-                         guide = F) +
-      # scale_color_discrete(guide = F) +
-      theme_linedraw() +
-      theme(axis.title = element_blank(),
-            axis.text = element_blank(),
-            axis.ticks = element_blank())
+      geom_point(aes(x = `6144col`, y = `6144row`, col = health))
+    
+    # alldat$outlier <- NULL
+    # alldat$var <- NULL
+    # alldat$neigh <- NULL
+    # alldat$diff <- NULL
+    # 
+    # temp <- alldat
+    # for (i in seq(1,length(unique(temp$`6144col`)))) {
+    #   col <- unique(temp$`6144col`)[i]
+    #   lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+    #   rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+    #   for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+    #     row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+    #     up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+    #     dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+    #     if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
+    #       a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
+    #       u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
+    #       d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
+    #       l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
+    #       r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
+    #       alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/median(c(a,u,d,l,r),na.rm = T)
+    #       alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  median(c(u,d,l,r),na.rm = T)
+    #       alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - median(c(u,d,l,r),na.rm = T)
+    #     }
+    #     # cnt <- cnt + 1
+    #   }
+    # }
+    # diff_std <- sd(alldat$diff,na.rm = T)
+    # diff_mean <- mean(alldat$diff,na.rm = T)
+    # alldat$outlier[!is.na(alldat$average) &
+    #                  alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
+    #                  alldat$diff > 0] = 'Bigger'
+    # alldat$outlier[!is.na(alldat$average) &
+    #                  alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
+    #                  alldat$diff < 0] = 'Smaller'
+    # alldat$outlier[is.na(alldat$outlier)] = 'Normal'
+    # 
+    # ggplot(alldat) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
+    #   scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+    #   scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+    #   scale_size_manual(values = c('Smaller' = 2, 'Normal' = 2, 'Bigger' = 2)) +
+    #   scale_shape_manual(breaks = c('Reference','Query','Gap'),
+    #                      values = c('Reference' = 19,
+    #                                 'Query' = 19,
+    #                                 'Gap' = 0),
+    #                      guide = F) +
+    #   # scale_color_discrete(guide = F) +
+    #   theme_linedraw() +
+    #   theme(axis.title = element_blank(),
+    #         axis.text = element_blank(),
+    #         axis.ticks = element_blank())
     
     alldat$nearBig <- 'N'
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Bigger') {
+      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
         alldat$nearBig[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
                      alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
                      alldat$`6144col` == c & alldat$`6144row` == r - 2 |
@@ -141,7 +163,7 @@ for (hr in hours$hours) {
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Bigger') {
+      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
         alldat$nearBig[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
                      alldat$`6144col` == c & alldat$`6144row` == r - 1 |
                      alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
@@ -152,13 +174,13 @@ for (hr in hours$hours) {
                      alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'B1'
       }
     }
-    alldat$nearBig[alldat$outlier == 'Bigger'] = 'B'
+    alldat$nearBig[alldat$health == 'Healthy'] = 'B'
     
     alldat$nearSmall <- 'N'
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
+      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Sick') {
         alldat$nearSmall[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
                          alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
                          alldat$`6144col` == c & alldat$`6144row` == r - 2 |
@@ -180,7 +202,7 @@ for (hr in hours$hours) {
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
+      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Sick') {
         alldat$nearSmall[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
                          alldat$`6144col` == c & alldat$`6144row` == r - 1 |
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
@@ -191,7 +213,7 @@ for (hr in hours$hours) {
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'S1'
       }
     }
-    alldat$nearSmall[alldat$outlier == 'Smaller'] = 'S'
+    alldat$nearSmall[alldat$health == 'Sick'] = 'S'
   
     alldat$mca <- alldat$average
     alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
@@ -211,8 +233,9 @@ colnames(jpegdat) <- c('pos','hours','average')
 dbWriteTable(conn, "4C3_GA3_MCA_6144_JPEG", jpegdat, overwrite = T)
 
 ggplot(alldat[!is.na(alldat$average),]) +
-  geom_point(aes(x = average, y =  neigh, col = nearSmall)) +
-  # facet_wrap(.~source) +
+  # geom_point(aes(x = average, y =  neigh, col = nearSmall)) +
+  geom_line(aes(x = average, col = nearSmall), stat = 'density', lwd = 1.2) +
+  facet_wrap(.~source) +
   # labs(title = 'Small Colonies and Neighbors',
   #      x = 'Colony Size (pix)',
   #      y = 'Density') +
