@@ -62,28 +62,6 @@ for (hr in hours$hours) {
     alldat$colony[is.na(alldat$orf_name)] = 'Gap'
     
     alldat$average[alldat$colony == 'Gap'] = 0
-    
-    alldat$health <- NULL
-    for (sr in unique(alldat$source)) {
-      alldat$health[alldat$colony != 'Refernce' &
-                      alldat$source == sr &
-                      alldat$average < quantile(alldat$average[alldat$colony == 'Reference' &
-                                                                 alldat$source == sr], 0.005, na.rm = T)[[1]] &
-                      !is.na(alldat$average)] = 'Sick'
-      alldat$health[alldat$colony != 'Reference' &
-                      alldat$source == sr &
-                      alldat$average > quantile(alldat$average[alldat$colony == 'Reference' &
-                                                                 alldat$source == sr], 0.995, na.rm = T)[[1]] &
-                      !is.na(alldat$average)] = 'Healthy'
-      # alldat$health[is.na(alldat$health[alldat$source == sr & alldat$colony != 'Reference'])] = 'Normal'
-    }
-    
-    alldat$health[is.na(alldat$health) & alldat$colony != 'Reference'] = 'Normal'
-    # alldat$health[alldat$colony == 'Gap'] = 'Gap'
-    alldat$health[alldat$colony == 'Reference'] = 'Reference'
-    
-    # ggplot(alldat) +
-    #   geom_point(aes(x = `6144col`, y = `6144row`, col = health))
 
     alldat$outlier <- NULL
     alldat$var <- NULL
@@ -238,22 +216,6 @@ for (hr in hours$hours) {
     ggplot(alldat) +
       geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
   
-    # alldat$mca <- alldat$average
-    # alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
-    #   median(alldat$average[alldat$nearBig == 'B'], na.rm = T)
-    # alldat$mca[alldat$nearBig == 'B1'] <- alldat$average[alldat$nearBig == 'B1'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
-    #   median(alldat$average[alldat$nearBig == 'B1'], na.rm = T)
-    # alldat$mca[alldat$nearBig == 'B2'] <- alldat$average[alldat$nearBig == 'B2'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
-    #   median(alldat$average[alldat$nearBig == 'B2'], na.rm = T)
-    
-    # for (sr in unique(alldat$source)) {
-    #   alldat$mca[alldat$nearSick == 'S1' & alldat$source == sr] <-
-    #     alldat$average[alldat$nearSick == 'S1' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
-    #     median(alldat$average[alldat$nearSick == 'S1' & alldat$source == sr], na.rm = T)
-    #   alldat$mca[alldat$nearSick == 'S2' & alldat$source == sr] <-
-    #     alldat$average[alldat$nearSick == 'S2' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
-    #     median(alldat$average[alldat$nearSick == 'S2' & alldat$source == sr], na.rm = T)
-    # }
     alldat$mca <- alldat$average/comp_coef #change this
     jpegdat <- rbind(jpegdat, alldat)
   }
