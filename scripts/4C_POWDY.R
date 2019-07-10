@@ -209,7 +209,7 @@ for (rep in unique(reps)) {
   
   ##### BOX PLOTS OF EFFECT DISTRIBUTION
   stats.tmp <- stats.all[stats.all$rep == rep &
-                           stats.all$cont_hrs > 11 & stats.all$hours > 11,]
+                           stats.all$cont_hrs > 10 & stats.all$hours > 10,]
   
   for (ii in unique(stats.tmp$cont_hrs)) {
     for (pp in sort(unique(stats.tmp$p[stats.tmp$hours == ii & stats.tmp$cont_hrs == stats.tmp$hours]))) {
