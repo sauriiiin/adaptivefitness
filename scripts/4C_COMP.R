@@ -122,32 +122,33 @@ for (hr in hours$hours) {
                      alldat$diff < 0] = 'Smaller'
     alldat$outlier[is.na(alldat$outlier)] = 'Normal'
     
-    alldat$coef <- alldat$neigh/alldat$average
+    alldat$coef <- alldat$average/alldat$neigh
+    comp_coef <- mean(alldat$coef, na.rm = T)
 
-    ggplot(alldat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
-      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
-      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
-      scale_size_manual(values = c('Smaller' = 2, 'Normal' = 2, 'Bigger' = 2)) +
-      scale_shape_manual(breaks = c('Reference','Query','Gap'),
-                         values = c('Reference' = 19,
-                                    'Query' = 19,
-                                    'Gap' = 0),
-                         guide = F) +
-      # scale_color_discrete(guide = F) +
-      theme_linedraw() +
-      theme(axis.title = element_blank(),
-            axis.text = element_blank(),
-            axis.ticks = element_blank())
-    
-    ggplot(alldat) +
-      geom_line(aes(x = average, col = outlier), stat = 'density') +
-      geom_line(aes(x = neigh, col = outlier), stat = 'density', linetype = 'dotted')
-    
-    ggplot(alldat) +
-      # geom_point(aes(x = `6144col`, y = `6144row`, col = coef))
-      geom_line(aes(x = coef), stat = 'density') +
-      labs(title = sprintf('Mean = %0.3f',mean(alldat$coef, na.rm = T)))
+    # ggplot(alldat) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
+    #   scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+    #   scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+    #   scale_size_manual(values = c('Smaller' = 2, 'Normal' = 2, 'Bigger' = 2)) +
+    #   scale_shape_manual(breaks = c('Reference','Query','Gap'),
+    #                      values = c('Reference' = 19,
+    #                                 'Query' = 19,
+    #                                 'Gap' = 0),
+    #                      guide = F) +
+    #   # scale_color_discrete(guide = F) +
+    #   theme_linedraw() +
+    #   theme(axis.title = element_blank(),
+    #         axis.text = element_blank(),
+    #         axis.ticks = element_blank())
+    # 
+    # ggplot(alldat) +
+    #   geom_line(aes(x = average, col = outlier), stat = 'density') +
+    #   geom_line(aes(x = neigh, col = outlier), stat = 'density', linetype = 'dotted')
+    # 
+    # ggplot(alldat) +
+    #   # geom_point(aes(x = `6144col`, y = `6144row`, col = coef))
+    #   geom_line(aes(x = coef), stat = 'density') +
+    #   labs(title = sprintf('Median = %0.3f',median(alldat$coef, na.rm = T)))
     
     # alldat$nearBig <- 'N'
     # for (o in alldat$pos) {
@@ -227,7 +228,7 @@ for (hr in hours$hours) {
     }
     alldat$nearSick[alldat$health == 'Sick'] = 'S'
   
-    alldat$mca <- alldat$average
+    # alldat$mca <- alldat$average
     # alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
     #   median(alldat$average[alldat$nearBig == 'B'], na.rm = T)
     # alldat$mca[alldat$nearBig == 'B1'] <- alldat$average[alldat$nearBig == 'B1'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
@@ -235,14 +236,15 @@ for (hr in hours$hours) {
     # alldat$mca[alldat$nearBig == 'B2'] <- alldat$average[alldat$nearBig == 'B2'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
     #   median(alldat$average[alldat$nearBig == 'B2'], na.rm = T)
     
-    for (sr in unique(alldat$source)) {
-      alldat$mca[alldat$nearSick == 'S1' & alldat$source == sr] <-
-        alldat$average[alldat$nearSick == 'S1' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
-        median(alldat$average[alldat$nearSick == 'S1' & alldat$source == sr], na.rm = T)
-      alldat$mca[alldat$nearSick == 'S2' & alldat$source == sr] <-
-        alldat$average[alldat$nearSick == 'S2' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
-        median(alldat$average[alldat$nearSick == 'S2' & alldat$source == sr], na.rm = T)
-    }
+    # for (sr in unique(alldat$source)) {
+    #   alldat$mca[alldat$nearSick == 'S1' & alldat$source == sr] <-
+    #     alldat$average[alldat$nearSick == 'S1' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
+    #     median(alldat$average[alldat$nearSick == 'S1' & alldat$source == sr], na.rm = T)
+    #   alldat$mca[alldat$nearSick == 'S2' & alldat$source == sr] <-
+    #     alldat$average[alldat$nearSick == 'S2' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
+    #     median(alldat$average[alldat$nearSick == 'S2' & alldat$source == sr], na.rm = T)
+    # }
+    alldat$mca <- alldat$average/comp_coef
     jpegdat <- rbind(jpegdat, alldat)
   }
 }
