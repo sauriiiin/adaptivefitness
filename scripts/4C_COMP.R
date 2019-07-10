@@ -122,8 +122,12 @@ for (hr in hours$hours) {
                      alldat$diff < 0] = 'Smaller'
     alldat$outlier[is.na(alldat$outlier)] = 'Normal'
     
-    alldat$coef <- alldat$average/alldat$neigh
-    comp_coef <- mean(alldat$coef, na.rm = T)
+    alldat$coef[alldat$outlier == 'Bigger'] <-
+      mean(alldat$average[alldat$outlier == 'Bigger']/alldat$neigh[alldat$outlier == 'Bigger'], na.rm = T)
+    alldat$coef[alldat$outlier == 'Smaller'] <-
+      mean(alldat$average[alldat$outlier == 'Smaller']/alldat$neigh[alldat$outlier == 'Smaller'], na.rm = T)
+    alldat$coef[alldat$outlier == 'Normal'] <-
+      mean(alldat$average[alldat$outlier == 'Normal']/alldat$neigh[alldat$outlier == 'Normal'], na.rm = T)
 
     # ggplot(alldat) +
     #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
@@ -150,50 +154,53 @@ for (hr in hours$hours) {
     #   geom_line(aes(x = coef), stat = 'density') +
     #   labs(title = sprintf('Median = %0.3f',median(alldat$coef, na.rm = T)))
     
-    # alldat$nearBig <- 'N'
-    # for (o in alldat$pos) {
-    #   c = alldat$`6144col`[alldat$pos == o]
-    #   r = alldat$`6144row`[alldat$pos == o]
-    #   if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
-    #     alldat$nearBig[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
-    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
-    #                  alldat$`6144col` == c & alldat$`6144row` == r - 2 |
-    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
-    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
-    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
-    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
-    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r |
-    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r |
-    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
-    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
-    #                  alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
-    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
-    #                  alldat$`6144col` == c & alldat$`6144row` == r + 2 |
-    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
-    #                  alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'B2'
-    #   }
-    # }
-    # for (o in alldat$pos) {
-    #   c = alldat$`6144col`[alldat$pos == o]
-    #   r = alldat$`6144row`[alldat$pos == o]
-    #   if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Healthy') {
-    #     alldat$nearBig[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
-    #                  alldat$`6144col` == c & alldat$`6144row` == r - 1 |
-    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
-    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r |
-    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r |
-    #                  alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
-    #                  alldat$`6144col` == c & alldat$`6144row` == r + 1 |
-    #                  alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'B1'
-    #   }
-    # }
-    # alldat$nearBig[alldat$health == 'Healthy'] = 'B'
+    alldat$nearBig <- 'N'
+    for (o in alldat$pos) {
+      c = alldat$`6144col`[alldat$pos == o]
+      r = alldat$`6144row`[alldat$pos == o]
+      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Bigger') {
+        alldat$nearBig[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
+                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'B2'
+      }
+    }
+    for (o in alldat$pos) {
+      c = alldat$`6144col`[alldat$pos == o]
+      r = alldat$`6144row`[alldat$pos == o]
+      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Bigger') {
+        alldat$nearBig[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r |
+                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c & alldat$`6144row` == r + 1 |
+                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'B1'
+      }
+    }
+    alldat$nearBig[alldat$outlier == 'Bigger'] = 'B'
+    
+    ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, col = nearBig))
     
     alldat$nearSick <- 'N'
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Sick') {
+      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
         alldat$nearSick[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
                          alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
                          alldat$`6144col` == c & alldat$`6144row` == r - 2 |
@@ -215,7 +222,7 @@ for (hr in hours$hours) {
     for (o in alldat$pos) {
       c = alldat$`6144col`[alldat$pos == o]
       r = alldat$`6144row`[alldat$pos == o]
-      if (alldat$health[alldat$`6144col` == c & alldat$`6144row` == r] == 'Sick') {
+      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
         alldat$nearSick[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
                          alldat$`6144col` == c & alldat$`6144row` == r - 1 |
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
@@ -226,7 +233,10 @@ for (hr in hours$hours) {
                          alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'S1'
       }
     }
-    alldat$nearSick[alldat$health == 'Sick'] = 'S'
+    alldat$nearSick[alldat$outlier == 'Smaller'] = 'S'
+    
+    ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
   
     # alldat$mca <- alldat$average
     # alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B'] * median(alldat$average[alldat$nearBig == 'N'], na.rm = T)/
@@ -244,7 +254,7 @@ for (hr in hours$hours) {
     #     alldat$average[alldat$nearSick == 'S2' & alldat$source == sr] * median(alldat$average[alldat$nearSick == 'N' & alldat$source == sr], na.rm = T)/
     #     median(alldat$average[alldat$nearSick == 'S2' & alldat$source == sr], na.rm = T)
     # }
-    alldat$mca <- alldat$average/comp_coef
+    alldat$mca <- alldat$average/comp_coef #change this
     jpegdat <- rbind(jpegdat, alldat)
   }
 }
