@@ -84,59 +84,70 @@ for (hr in hours$hours) {
     
     # ggplot(alldat) +
     #   geom_point(aes(x = `6144col`, y = `6144row`, col = health))
+
+    alldat$outlier <- NULL
+    alldat$var <- NULL
+    alldat$neigh <- NULL
+    alldat$diff <- NULL
+
+    temp <- alldat[alldat$orf_name == 'BF_control' & !is.na(alldat$orf_name),]
+    for (i in seq(1,length(unique(temp$`6144col`)))) {
+      col <- unique(temp$`6144col`)[i]
+      lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+      rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+      for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
+        row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
+        up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+        dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+        if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
+          a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
+          u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
+          d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
+          l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
+          r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
+          alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/median(c(a,u,d,l,r),na.rm = T)
+          alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  median(c(u,d,l,r),na.rm = T)
+          alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - median(c(u,d,l,r),na.rm = T)
+        }
+        # cnt <- cnt + 1
+      }
+    }
+    diff_std <- sd(alldat$diff,na.rm = T)
+    diff_mean <- mean(alldat$diff,na.rm = T)
+    alldat$outlier[!is.na(alldat$average) &
+                     alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
+                     alldat$diff > 0] = 'Bigger'
+    alldat$outlier[!is.na(alldat$average) &
+                     alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
+                     alldat$diff < 0] = 'Smaller'
+    alldat$outlier[is.na(alldat$outlier)] = 'Normal'
     
-    # alldat$outlier <- NULL
-    # alldat$var <- NULL
-    # alldat$neigh <- NULL
-    # alldat$diff <- NULL
-    # 
-    # temp <- alldat
-    # for (i in seq(1,length(unique(temp$`6144col`)))) {
-    #   col <- unique(temp$`6144col`)[i]
-    #   lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-    #   rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-    #   for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
-    #     row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-    #     up <- tail(temp$`6144row`[temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-    #     dw <- temp$`6144row`[temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-    #     if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
-    #       a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
-    #       u <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == up]
-    #       d <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw]
-    #       l <- alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row]
-    #       r <- alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row]
-    #       alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/median(c(a,u,d,l,r),na.rm = T)
-    #       alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  median(c(u,d,l,r),na.rm = T)
-    #       alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - median(c(u,d,l,r),na.rm = T)
-    #     }
-    #     # cnt <- cnt + 1
-    #   }
-    # }
-    # diff_std <- sd(alldat$diff,na.rm = T)
-    # diff_mean <- mean(alldat$diff,na.rm = T)
-    # alldat$outlier[!is.na(alldat$average) &
-    #                  alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
-    #                  alldat$diff > 0] = 'Bigger'
-    # alldat$outlier[!is.na(alldat$average) &
-    #                  alldat$var > quantile(alldat$var[alldat$orf_name == 'BF_control'], 0.95, na.rm = T)[[1]] &
-    #                  alldat$diff < 0] = 'Smaller'
-    # alldat$outlier[is.na(alldat$outlier)] = 'Normal'
-    # 
-    # ggplot(alldat) +
-    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
-    #   scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
-    #   scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
-    #   scale_size_manual(values = c('Smaller' = 2, 'Normal' = 2, 'Bigger' = 2)) +
-    #   scale_shape_manual(breaks = c('Reference','Query','Gap'),
-    #                      values = c('Reference' = 19,
-    #                                 'Query' = 19,
-    #                                 'Gap' = 0),
-    #                      guide = F) +
-    #   # scale_color_discrete(guide = F) +
-    #   theme_linedraw() +
-    #   theme(axis.title = element_blank(),
-    #         axis.text = element_blank(),
-    #         axis.ticks = element_blank())
+    alldat$coef <- alldat$neigh/alldat$average
+
+    ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, size = outlier, col = outlier)) +
+      scale_x_continuous(breaks = seq(1,96,1),limits = c(1,96)) +
+      scale_y_continuous(breaks = seq(1,64,1),limits = c(64,1),trans = 'reverse') +
+      scale_size_manual(values = c('Smaller' = 2, 'Normal' = 2, 'Bigger' = 2)) +
+      scale_shape_manual(breaks = c('Reference','Query','Gap'),
+                         values = c('Reference' = 19,
+                                    'Query' = 19,
+                                    'Gap' = 0),
+                         guide = F) +
+      # scale_color_discrete(guide = F) +
+      theme_linedraw() +
+      theme(axis.title = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank())
+    
+    ggplot(alldat) +
+      geom_line(aes(x = average, col = outlier), stat = 'density') +
+      geom_line(aes(x = neigh, col = outlier), stat = 'density', linetype = 'dotted')
+    
+    ggplot(alldat) +
+      # geom_point(aes(x = `6144col`, y = `6144row`, col = coef))
+      geom_line(aes(x = coef), stat = 'density') +
+      labs(title = sprintf('Mean = %0.3f',mean(alldat$coef, na.rm = T)))
     
     # alldat$nearBig <- 'N'
     # for (o in alldat$pos) {
@@ -243,7 +254,7 @@ dbWriteTable(conn, tablename_jpeg_mca, jpegdat, overwrite = T)
 ggplot(alldat[!is.na(alldat$average),]) +
   # geom_point(aes(x = average, y =  neigh, col = nearSick)) +
   geom_line(aes(x = average, col = nearSick), stat = 'density', lwd = 1.2) +
-  facet_wrap(.~source) +
+  # facet_wrap(.~source) +
   # labs(title = 'Small Colonies and Neighbors',
   #      x = 'Colony Size (pix)',
   #      y = 'Density') +
