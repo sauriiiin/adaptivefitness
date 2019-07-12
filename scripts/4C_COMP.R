@@ -61,66 +61,68 @@ for (hr in hours$hours) {
     alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
     alldat$colony[is.na(alldat$orf_name)] = 'Gap'
     
-    alldat$average[alldat$colony == 'Gap'] = 0
+    # alldat$average[alldat$colony == 'Gap'] = 0
 
     alldat$outlier <- NULL
     alldat$var <- NULL
     alldat$neigh <- NULL
     alldat$diff <- NULL
 
-    temp <- alldat[alldat$orf_name == 'BF_control' & !is.na(alldat$orf_name),]
-    for (i in seq(1,length(unique(temp$`6144col`)))) {
-      col <- unique(temp$`6144col`)[i]
-      lf <- tail(temp$`6144col`[temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-      rt <- temp$`6144col`[temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+    # temp <- alldat[alldat$orf_name == 'BF_control' & !is.na(alldat$orf_name),]
+    temp <- alldat
+    # cnt <- 0
+    for (i in seq(1,dim(temp)[1])) {
+      col <- temp$`6144col`[i]
+      row <- temp$`6144row`[i]
+      
+      lf <- tail(temp$`6144col`[temp$`6144row` == row & temp$`6144col` < col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+      rt <- temp$`6144col`[temp$`6144row` == row & temp$`6144col` > col & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
       if (length(lf) == 0) {
         up = NaN
       }
       if (length(rt) == 0) {
         up = NaN
       }
-      for (ii in seq(1,length(unique(temp$`6144row`[temp$`6144col` == col])))) {
-        row <- unique(temp$`6144row`[temp$`6144col` == col])[ii]
-        up <- tail(temp$`6144row`[temp$`6144col` == col & temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
-        dw <- temp$`6144row`[temp$`6144col` == col & temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
-        if (length(up) == 0) {
-          up = NaN
-        }
-        if (length(dw) == 0) {
-          up = NaN
-        }
-        if (!is.na(alldat$average[alldat$`6144col` == col & alldat$`6144row` == row])) {
-          a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
-          u <- mean(alldat$average[alldat$`6144col` == col & alldat$`6144row` == up], na.rm = T)
-          d <- mean(alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw], na.rm = T)
-          l <- mean(alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row], na.rm = T)
-          r <- mean(alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row], na.rm = T)
-          alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/median(c(a,u,d,l,r),na.rm = T)
-          alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  median(c(u,d,l,r),na.rm = T)
-          alldat$wt_neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-
-            weighted.mean(c(u,d,l,r), c(1/abs(row-up),1/abs(row-dw),1/abs(col-lf),1/abs(col-rt)),na.rm = T)
-          alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - median(c(u,d,l,r),na.rm = T)
-        }
-        # cnt <- cnt + 1
+      
+      up <- tail(temp$`6144row`[temp$`6144col` == col & temp$`6144row` < row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)],1)
+      dw <- temp$`6144row`[temp$`6144col` == col & temp$`6144row` > row & temp$orf_name == 'BF_control' & !is.na(temp$orf_name)][1]
+      if (length(up) == 0) {
+        up = NaN
       }
+      if (length(dw) == 0) {
+        up = NaN
+      }
+      
+      a <- alldat$average[alldat$`6144col` == col & alldat$`6144row` == row]
+      u <- mean(alldat$average[alldat$`6144col` == col & alldat$`6144row` == up], na.rm = T)
+      d <- mean(alldat$average[alldat$`6144col` == col & alldat$`6144row` == dw], na.rm = T)
+      l <- mean(alldat$average[alldat$`6144col` == lf & alldat$`6144row` == row], na.rm = T)
+      r <- mean(alldat$average[alldat$`6144col` == rt & alldat$`6144row` == row], na.rm = T)
+      alldat$var[alldat$`6144col` == col & alldat$`6144row` == row] <- sd(c(a,u,d,l,r),na.rm = T)/median(c(a,u,d,l,r),na.rm = T)
+      alldat$neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-  median(c(u,d,l,r),na.rm = T)
+      # alldat$wt_neigh[alldat$`6144col` == col & alldat$`6144row` == row] <-
+      #   weighted.mean(c(u,d,l,r), c(1/abs(row-up),1/abs(row-dw),1/abs(col-lf),1/abs(col-rt)),na.rm = T)
+      alldat$diff[alldat$`6144col` == col & alldat$`6144row` == row] <- a - median(c(u,d,l,r),na.rm = T)
+      
     }
+    
     diff_std <- sd(alldat$diff,na.rm = T)
     diff_mean <- mean(alldat$diff,na.rm = T)
-    alldat$coef <- alldat$average/alldat$wt_neigh
+    alldat$coef <- alldat$average/alldat$neigh
     
     med <- median(alldat$coef, na.rm = T)
-    lim.low <- median(alldat$coef, na.rm = T) - 2*sd(alldat$coef, na.rm = T)
-    lim.hig <- median(alldat$coef, na.rm = T) + 2*sd(alldat$coef, na.rm = T)
+    lim.low <- median(alldat$coef, na.rm = T) - 3*sd(alldat$coef, na.rm = T)
+    lim.hig <- median(alldat$coef, na.rm = T) + 3*sd(alldat$coef, na.rm = T)
     
     alldat$outlier[alldat$coef > lim.hig] = 'Bigger'
     alldat$outlier[alldat$coef < lim.low] = 'Smaller'
     alldat$outlier[is.na(alldat$outlier)] = 'Normal'
     
-    # ggplot() +
-    #   # geom_histogram(data = alldat, aes(x = coef))
-    #   geom_point(data = alldat[alldat$colony == 'Gap',], aes(x = `6144col`, y = `6144row`), col = 'Black') +
-    #   geom_point(data = alldat[alldat$coef > 1.25,], aes(x = `6144col`, y = `6144row`), col = 'Red') +
-    #   geom_point(data = alldat[alldat$coef < 0.75,], aes(x = `6144col`, y = `6144row`), col = 'Green')
+    ggplot() +
+      # geom_histogram(data = alldat, aes(x = coef))
+      geom_point(data = alldat[alldat$colony == 'Gap',], aes(x = `6144col`, y = `6144row`), col = 'Black') +
+      geom_point(data = alldat[alldat$coef > lim.hig,], aes(x = `6144col`, y = `6144row`), col = 'Red') +
+      geom_point(data = alldat[alldat$coef < lim.low,], aes(x = `6144col`, y = `6144row`), col = 'Green')
 
     
     alldat$nearBig <- 'N'
@@ -144,23 +146,23 @@ for (hr in hours$hours) {
                      alldat$`6144col` == c & alldat$`6144row` == r + 2 |
                      alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
                      alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'B2'
-        alldat$cor[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
-                     alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 
-          alldat$coef[alldat$`6144col` == c & alldat$`6144row` == r]
+        # alldat$cor[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+        #              alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
+        #              alldat$`6144col` == c & alldat$`6144row` == r - 2 |
+        #              alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
+        #              alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
+        #              alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
+        #              alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
+        #              alldat$`6144col` == c - 2 & alldat$`6144row` == r |
+        #              alldat$`6144col` == c + 2 & alldat$`6144row` == r |
+        #              alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
+        #              alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
+        #              alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
+        #              alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
+        #              alldat$`6144col` == c & alldat$`6144row` == r + 2 |
+        #              alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
+        #              alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 
+        #   alldat$coef[alldat$`6144col` == c & alldat$`6144row` == r]
       }
     }
     for (o in alldat$pos) {
@@ -175,64 +177,71 @@ for (hr in hours$hours) {
                      alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
                      alldat$`6144col` == c & alldat$`6144row` == r + 1 |
                      alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'B1'
-        alldat$cor[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r |
-                     alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c & alldat$`6144row` == r + 1 |
-                     alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 
-          alldat$coef[alldat$`6144col` == c & alldat$`6144row` == r]
+        # alldat$cor[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+        #              alldat$`6144col` == c & alldat$`6144row` == r - 1 |
+        #              alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
+        #              alldat$`6144col` == c - 1 & alldat$`6144row` == r |
+        #              alldat$`6144col` == c + 1 & alldat$`6144row` == r |
+        #              alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
+        #              alldat$`6144col` == c & alldat$`6144row` == r + 1 |
+        #              alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 
+        #   alldat$coef[alldat$`6144col` == c & alldat$`6144row` == r]
       }
     }
     alldat$nearBig[alldat$outlier == 'Bigger'] = 'B'
     # alldat$nearBig[alldat$colony == 'Gap']
     
-    # ggplot(alldat) +
-    #   geom_point(aes(x = `6144col`, y = `6144row`, col = nearBig, size = coef))
+    ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, col = nearBig, size = coef))
     
-    # alldat$nearSick <- 'N'
-    # for (o in alldat$pos) {
-    #   c = alldat$`6144col`[alldat$pos == o]
-    #   r = alldat$`6144row`[alldat$pos == o]
-    #   if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
-    #     alldat$nearSick[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
-    #                      alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
-    #                      alldat$`6144col` == c & alldat$`6144row` == r - 2 |
-    #                      alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
-    #                      alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
-    #                      alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
-    #                      alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
-    #                      alldat$`6144col` == c - 2 & alldat$`6144row` == r |
-    #                      alldat$`6144col` == c + 2 & alldat$`6144row` == r |
-    #                      alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
-    #                      alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
-    #                      alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
-    #                      alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
-    #                      alldat$`6144col` == c & alldat$`6144row` == r + 2 |
-    #                      alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
-    #                      alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'S2'
-    #   }
-    # }
-    # for (o in alldat$pos) {
-    #   c = alldat$`6144col`[alldat$pos == o]
-    #   r = alldat$`6144row`[alldat$pos == o]
-    #   if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
-    #     alldat$nearSick[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
-    #                      alldat$`6144col` == c & alldat$`6144row` == r - 1 |
-    #                      alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
-    #                      alldat$`6144col` == c - 1 & alldat$`6144row` == r |
-    #                      alldat$`6144col` == c + 1 & alldat$`6144row` == r |
-    #                      alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
-    #                      alldat$`6144col` == c & alldat$`6144row` == r + 1 |
-    #                      alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'S1'
-    #   }
-    # }
-    # alldat$nearSick[alldat$outlier == 'Smaller'] = 'S'
+    alldat$nearSick <- 'N'
+    for (o in alldat$pos) {
+      c = alldat$`6144col`[alldat$pos == o]
+      r = alldat$`6144row`[alldat$pos == o]
+      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
+        alldat$nearSick[alldat$`6144col` == c - 2 & alldat$`6144row` == r - 2 |
+                         alldat$`6144col` == c - 1 & alldat$`6144row` == r - 2 |
+                         alldat$`6144col` == c & alldat$`6144row` == r - 2 |
+                         alldat$`6144col` == c + 1 & alldat$`6144row` == r - 2 |
+                         alldat$`6144col` == c + 2 & alldat$`6144row` == r - 2 |
+                         alldat$`6144col` == c - 2 & alldat$`6144row` == r - 1 |
+                         alldat$`6144col` == c + 2 & alldat$`6144row` == r - 1 |
+                         alldat$`6144col` == c - 2 & alldat$`6144row` == r |
+                         alldat$`6144col` == c + 2 & alldat$`6144row` == r |
+                         alldat$`6144col` == c - 2 & alldat$`6144row` == r + 1 |
+                         alldat$`6144col` == c + 2 & alldat$`6144row` == r + 1 |
+                         alldat$`6144col` == c - 2 & alldat$`6144row` == r + 2 |
+                         alldat$`6144col` == c - 1 & alldat$`6144row` == r + 2 |
+                         alldat$`6144col` == c & alldat$`6144row` == r + 2 |
+                         alldat$`6144col` == c + 1 & alldat$`6144row` == r + 2 |
+                         alldat$`6144col` == c + 2 & alldat$`6144row` == r + 2] = 'S2'
+      }
+    }
+    for (o in alldat$pos) {
+      c = alldat$`6144col`[alldat$pos == o]
+      r = alldat$`6144row`[alldat$pos == o]
+      if (alldat$outlier[alldat$`6144col` == c & alldat$`6144row` == r] == 'Smaller') {
+        alldat$nearSick[alldat$`6144col` == c - 1 & alldat$`6144row` == r - 1 |
+                         alldat$`6144col` == c & alldat$`6144row` == r - 1 |
+                         alldat$`6144col` == c + 1 & alldat$`6144row` == r - 1 |
+                         alldat$`6144col` == c - 1 & alldat$`6144row` == r |
+                         alldat$`6144col` == c + 1 & alldat$`6144row` == r |
+                         alldat$`6144col` == c - 1 & alldat$`6144row` == r + 1 |
+                         alldat$`6144col` == c & alldat$`6144row` == r + 1 |
+                         alldat$`6144col` == c + 1 & alldat$`6144row` == r + 1] = 'S1'
+      }
+    }
+    alldat$nearSick[alldat$outlier == 'Smaller'] = 'S'
+    
+    ggplot(alldat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, col = nearSick, size = coef))
   
     alldat$mca <- alldat$average
-    alldat$mca[alldat$nearBig != 'N'] <- alldat$average[alldat$nearBig != 'N']/alldat$coef[alldat$nearBig != 'N']
+    # alldat$mca[alldat$nearBig != 'N'] <- alldat$average[alldat$nearBig != 'N']/alldat$coef[alldat$nearBig != 'N']
+    alldat$mca[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
+                     alldat$nearSick != 'N' & alldat$nearSick != 'S2'] <- alldat$average[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
+             alldat$nearSick != 'N' & alldat$nearSick != 'S2']/alldat$coef[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
+                                                                                alldat$nearSick != 'N' & alldat$nearSick != 'S2']
     
     # ggplot() +
     #   # geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
