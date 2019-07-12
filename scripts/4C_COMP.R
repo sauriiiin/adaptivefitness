@@ -240,15 +240,17 @@ for (hr in hours$hours) {
     ### NORM 1
     # alldat$mca[alldat$nearBig != 'N'] <- alldat$average[alldat$nearBig != 'N']/alldat$coef[alldat$nearBig != 'N']
     ### NORM 2
-    alldat$mca[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
-                     alldat$nearSick != 'N' & alldat$nearSick != 'S2'] <- alldat$average[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
-                                                                                           alldat$nearSick != 'N' & alldat$nearSick != 'S2']/
-      alldat$coef[alldat$nearBig != 'N' & alldat$nearBig != 'B2' & alldat$nearSick != 'N' & alldat$nearSick != 'S2']
+    # alldat$mca[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
+    #                  alldat$nearSick != 'N' & alldat$nearSick != 'S2'] <- alldat$average[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
+    #                                                                                        alldat$nearSick != 'N' & alldat$nearSick != 'S2']/
+    #   alldat$coef[alldat$nearBig != 'N' & alldat$nearBig != 'B2' & alldat$nearSick != 'N' & alldat$nearSick != 'S2']
     ### NORM 3
     # alldat$mca[alldat$nearBig == 'B' | alldat$nearBig == 'B1' |
     #              alldat$nearSick == 'S' | alldat$nearSick == 'S1'] <- alldat$average[alldat$nearBig == 'B' | alldat$nearBig == 'B1' |
     #                                                                                    alldat$nearSick == 'S' | alldat$nearSick == 'S1']/
     #   alldat$coef[alldat$nearBig == 'B' | alldat$nearBig == 'B1' | alldat$nearSick == 'S' | alldat$nearSick == 'S1']
+    ### NORM 4
+    alldat$mca[alldat$nearBig == 'B'] <- alldat$average[alldat$nearBig == 'B']/alldat$coef[alldat$nearBig == 'B']
     
     ggplot() +
       # geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))

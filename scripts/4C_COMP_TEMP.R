@@ -18,6 +18,10 @@ ggplot(alldat) +
   geom_line(aes(x = mca), stat = 'density', col = 'red') +
   geom_vline(xintercept = mean(alldat$mca, na.rm = T), col = 'red')
 
+ggplot(alldat) +
+  geom_abline() +
+  geom_point(aes(x = mca, y = neigh, col = nearBig))
+
 dim(alldat[alldat$coef[!is.na(alldat$coef)] > quantile(alldat$coef, .95, na.rm = T),])
     
 hello <- alldat[alldat$nearSick != 'N' & alldat$nearBig == 'B',]
