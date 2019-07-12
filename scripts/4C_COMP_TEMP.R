@@ -6,7 +6,7 @@ ggplot(alldat) +
 
 ggplot(alldat) + 
   geom_histogram(aes(x = coef)) +
-  geom_line(aes(x = coef), stat = 'density') +
+  # geom_line(aes(x = coef), stat = 'density') +
   geom_vline(xintercept = c(quantile(alldat$coef, .50, na.rm = T),
                             quantile(alldat$coef, .05, na.rm = T),
                             quantile(alldat$coef, .95, na.rm = T)))
@@ -68,4 +68,16 @@ for (i in seq(1,dim(temp)[1])) {
 diff_std <- sd(alldat2$diff,na.rm = T)
 diff_mean <- mean(alldat2$diff,na.rm = T)
 alldat2$coef <- alldat2$mca/alldat2$neigh
+
+ggplot(alldat2) + 
+  geom_histogram(aes(x = diff)) +
+  geom_line(aes(x = diff), stat = 'density') +
+  geom_vline(xintercept = median(alldat$diff, na.rm = T))
+
+ggplot(alldat2) + 
+  geom_histogram(aes(x = coef)) +
+  # geom_line(aes(x = coef), stat = 'density') +
+  geom_vline(xintercept = c(quantile(alldat$coef, .50, na.rm = T),
+                            quantile(alldat$coef, .05, na.rm = T),
+                            quantile(alldat$coef, .95, na.rm = T)))
 

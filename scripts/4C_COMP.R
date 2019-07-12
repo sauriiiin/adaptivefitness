@@ -114,8 +114,8 @@ for (hr in hours$hours) {
     lim.low <- median(alldat$coef, na.rm = T) - 3*sd(alldat$coef, na.rm = T)
     lim.hig <- median(alldat$coef, na.rm = T) + 3*sd(alldat$coef, na.rm = T)
     
-    alldat$outlier[alldat$coef > lim.hig] = 'Bigger'
-    alldat$outlier[alldat$coef < lim.low] = 'Smaller'
+    alldat$outlier[alldat$coef > lim.hig & !is.na(alldat$coef)] = 'Bigger'
+    alldat$outlier[alldat$coef < lim.low & !is.na(alldat$coef)] = 'Smaller'
     alldat$outlier[is.na(alldat$outlier)] = 'Normal'
     
     ggplot() +
@@ -237,22 +237,29 @@ for (hr in hours$hours) {
       geom_point(aes(x = `6144col`, y = `6144row`, col = nearSick, size = coef))
   
     alldat$mca <- alldat$average
+    ### NORM 1
     # alldat$mca[alldat$nearBig != 'N'] <- alldat$average[alldat$nearBig != 'N']/alldat$coef[alldat$nearBig != 'N']
+    ### NORM 2
     alldat$mca[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
                      alldat$nearSick != 'N' & alldat$nearSick != 'S2'] <- alldat$average[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
-             alldat$nearSick != 'N' & alldat$nearSick != 'S2']/alldat$coef[alldat$nearBig != 'N' & alldat$nearBig != 'B2' &
-                                                                                alldat$nearSick != 'N' & alldat$nearSick != 'S2']
+                                                                                           alldat$nearSick != 'N' & alldat$nearSick != 'S2']/
+      alldat$coef[alldat$nearBig != 'N' & alldat$nearBig != 'B2' & alldat$nearSick != 'N' & alldat$nearSick != 'S2']
+    ### NORM 3
+    # alldat$mca[alldat$nearBig == 'B' | alldat$nearBig == 'B1' |
+    #              alldat$nearSick == 'S' | alldat$nearSick == 'S1'] <- alldat$average[alldat$nearBig == 'B' | alldat$nearBig == 'B1' |
+    #                                                                                    alldat$nearSick == 'S' | alldat$nearSick == 'S1']/
+    #   alldat$coef[alldat$nearBig == 'B' | alldat$nearBig == 'B1' | alldat$nearSick == 'S' | alldat$nearSick == 'S1']
     
-    # ggplot() +
-    #   # geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
-    #   geom_line(data = alldat, aes(x = average, col = nearBig), stat = 'density') +
-    #   geom_line(data = alldat, aes(x = mca, col = nearBig), stat = 'density', lwd = 1.2)
-    # 
+    ggplot() +
+      # geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
+      geom_line(data = alldat, aes(x = average, col = nearBig), stat = 'density') +
+      geom_line(data = alldat, aes(x = mca, col = nearBig), stat = 'density', lwd = 1.2)
+
     # ggplot(alldat) +
     #   geom_line(aes(x = mca), stat = 'density', col = 'Red') +
     #   geom_line(aes(x = average), stat = 'density', col = 'Blue') +
     #   coord_cartesian(xlim = c(200, 600))
-      
+    #   
     
     jpegdat <- rbind(jpegdat, alldat)
   }
