@@ -22,7 +22,7 @@ tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
 tablename_jpeg_mcg = sprintf('%s_MCG_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
 tablename_fit_mcg = sprintf('%s_MCG_%d_FITNESS',expt_name,density);
-tablename_p2o = '4C3_pos2orf_name4';
+tablename_p2o = '4C3_96R_pos2orf_name';
 tablename_bpos = '4C3_borderpos';
 
 p2c_info = NULL

@@ -32,13 +32,13 @@ es.pix <- mean(alldat$average[alldat$hours == hr & alldat$colony == 'Query'], na
   mean(alldat$average[alldat$hours == hr & alldat$colony == 'Reference'], na.rm = T)
 
 f <- ggplot(alldat[alldat$hours == hr,]) +
-  geom_histogram(aes(x = fitness, fill = colony), bins = 40, alpha = 0.7) +
-  # geom_line(aes(x = fitness, col = colony), stat = 'bin', bins = 40, lwd = 1.2) +
+  # geom_histogram(aes(x = fitness, fill = colony), bins = 40, alpha = 0.7) +
+  geom_line(aes(x = fitness, col = colony), stat = 'density', lwd = 1.2) +
   coord_cartesian(xlim = c(0.7,1.3)) +
   labs(subtitle = sprintf('ES = %0.3f', es.fit),
        x = 'Fitness',
-       y = 'Count') +
-  scale_fill_manual(name = 'Strain',
+       y = 'Density') +
+  scale_color_manual(name = 'Strain',
                      breaks = c('Reference', 'Query'),
                      values = c('Reference' = '#303F9F',
                                 'Query' = '#FF5252'),
@@ -47,13 +47,13 @@ f <- ggplot(alldat[alldat$hours == hr,]) +
   theme_linedraw()
 
 cs <- ggplot(alldat[alldat$hours == hr,]) +
-  geom_histogram(aes(x = average, fill = colony), bins = 30, alpha = 0.7) +
-  # geom_line(aes(x = average, col = colony), stat = 'density', lwd = 1.2) +
+  # geom_histogram(aes(x = average, fill = colony), bins = 30, alpha = 0.7) +
+  geom_line(aes(x = average, col = colony), stat = 'density', lwd = 1.2) +
   coord_cartesian(xlim = c(lim.low,lim.hig)) +
   labs(subtitle = sprintf('ES = %0.3f', es.pix),
        x = 'Colony Size (pix)',
-       y = 'Count') +
-  scale_fill_manual(name = 'Strain',
+       y = 'Density') +
+  scale_color_manual(name = 'Strain',
                      breaks = c('Reference', 'Query'),
                      values = c('Reference' = '#303F9F',
                                 'Query' = '#FF5252'),
