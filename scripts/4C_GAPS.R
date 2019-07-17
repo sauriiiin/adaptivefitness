@@ -136,6 +136,10 @@ for (hr in hours$hours) {
   }
 }
 
+ggplot(jpegdat[jpegdat$hours == 18,]) +
+  geom_line(aes(x = average, col = gap), stat = 'density') +
+  geom_line(aes(x = average_mgc, col = gap), stat = 'density', lwd = 1.2)
+
 jpegdat <- data.frame(jpegdat$pos, jpegdat$hours, jpegdat$average_mgc)
 colnames(jpegdat) <- c('pos','hours','average')
 dbWriteTable(conn, tablename_jpeg_mcg, jpegdat, overwrite = T)

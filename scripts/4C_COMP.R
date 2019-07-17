@@ -267,6 +267,11 @@ for (hr in hours$hours) {
   }
 }
 
+ggplot(jpegdat[jpegdat$hours == 18,]) +
+  # geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
+  geom_line(aes(x = average, col = nearBig), stat = 'density') +
+  geom_line(aes(x = mca, col = nearBig), stat = 'density', lwd = 1.2)
+
 jpegdat <- data.frame(jpegdat$pos, jpegdat$hours, jpegdat$mca)
 colnames(jpegdat) <- c('pos','hours','average')
 dbWriteTable(conn, tablename_jpeg_mca, jpegdat, overwrite = T)
