@@ -67,3 +67,6 @@ annotate_figure(ggarrange(cs, f,
                 top = expt)
 ggsave(sprintf('%s%s_REFVQ_DIS.png',out_path,expt_name),
        height = 7, width = 14)
+
+#####
+dbDisconnect(conn)
