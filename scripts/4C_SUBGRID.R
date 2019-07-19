@@ -89,22 +89,25 @@ alldat <- alldat[alldat$hours == hr,]
 alldat$neigh[is.na(alldat$average) & !is.na(alldat$orf_name)] <- NA
 alldat$diff <- alldat$average - alldat$neigh
 
-ggplot(alldat) +
-  # geom_line(aes(x = average, col = 'Pix'), stat = 'density') +
-  # geom_line(aes(x = neigh, col = 'Neigh'), stat = 'density')
-  geom_abline() +
-  geom_point(aes(x = average, y = neigh, col = colony, shape = outlier), alpha =0.5)
-  # geom_histogram(aes(x = diff), fill = 'Blue') +
-  # coord_cartesian(ylim = c(0, 10))
-
 quantile(alldat$diff, c(0.05,0.95), na.rm = T)
 
 m <- mean(alldat$diff, na.rm = T)
 s <- sd(alldat$diff, na.rm = T)
 
+ggplot(alldat[alldat$`6144plate` == 1,]) +
+  # geom_line(aes(x = average, col = 'Pix'), stat = 'density') +
+  # geom_line(aes(x = neigh, col = 'Neigh'), stat = 'density')
+  # geom_abline() +
+  # geom_point(aes(x = average, y = neigh, shape = colony, col = outlier), alpha =0.5)
+  geom_histogram(aes(x = diff), fill = 'Blue', alpha = 0.5) +
+  geom_histogram(data = alldat[alldat$`6144plate` == 2,], aes(x = diff), fill = 'Red', alpha = 0.5)#+
+  # coord_cartesian(ylim = c(0, 10))
 
-alldat$outlier[alldat$diff > m + 2*s] = 'Big'
-alldat$outlier[alldat$diff < m - 2*s] = 'Small'
+alldat$outlier <- NULL
+alldat$outlier[alldat$diff > 100] = 'Big'
+# alldat$outlier[alldat$diff < m - 2*s] = 'Small'
 
 ggplot(alldat[alldat$`6144plate` == 1,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, col = outlier, shape = colony))
+
+
