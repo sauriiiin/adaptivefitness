@@ -34,12 +34,12 @@ p2c <- dbGetQuery(conn, sprintf('select * from %s
                                 order by %s, %s, %s',
                   p2c_info[1], p2c_info[2], p2c_info[3], p2c_info[4]))
 
-p2c$source[p2c$`6144row`%%2==1 & p2c$`6144col`%%2==1] = '1TL'
-p2c$source[p2c$`6144row`%%2==0 & p2c$`6144col`%%2==1] = '3BL'
-p2c$source[p2c$`6144row`%%2==1 & p2c$`6144col`%%2==0] = '2TR'
-p2c$source[p2c$`6144row`%%2==0 & p2c$`6144col`%%2==0] = '4BR'
+# p2c$source[p2c$`6144row`%%2==1 & p2c$`6144col`%%2==1] = '1TL'
+# p2c$source[p2c$`6144row`%%2==0 & p2c$`6144col`%%2==1] = '3BL'
+# p2c$source[p2c$`6144row`%%2==1 & p2c$`6144col`%%2==0] = '2TR'
+# p2c$source[p2c$`6144row`%%2==0 & p2c$`6144col`%%2==0] = '4BR'
 
-
+p2c$source = 'ALL'
 
 pos <- NULL
 neigh <- matrix(ncol = 24, nrow = 6144*2)
@@ -50,16 +50,16 @@ for (pl in sort(unique(p2c$`6144plate`))) {
     for (c in sort(unique(temp$`6144col`))) {
       for (r in sort(unique(temp$`6144row`[temp$`6144col` == c]))) {
         pos <- rbind(pos, temp$pos[temp$`6144col` == c & temp$`6144row` == r])
-        len <- length(temp$pos[temp$`6144col` == c - 4 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4) |
-                                 temp$`6144col` == c - 2 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4) |
-                                 temp$`6144col` == c & temp$`6144row` %in% c(r - 4, r - 2, r + 2, r + 4) |
-                                 temp$`6144col` == c + 2 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4) |
-                                 temp$`6144col` == c + 4 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4)])
-        neigh[i,1:len] <- temp$pos[temp$`6144col` == c - 4 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4) |
-                                     temp$`6144col` == c - 2 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4) |
-                                     temp$`6144col` == c & temp$`6144row` %in% c(r - 4, r - 2, r + 2, r + 4) |
-                                     temp$`6144col` == c + 2 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4) |
-                                     temp$`6144col` == c + 4 & temp$`6144row` %in% c(r - 4, r - 2, r, r + 2, r + 4)]
+        len <- length(temp$pos[temp$`6144col` == c - 2 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2) |
+                                 temp$`6144col` == c - 1 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2) |
+                                 temp$`6144col` == c & temp$`6144row` %in% c(r - 2, r - 1, r + 1, r + 2) |
+                                 temp$`6144col` == c + 1 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2) |
+                                 temp$`6144col` == c + 2 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2)])
+        neigh[i,1:len] <- temp$pos[temp$`6144col` == c - 2 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2) |
+                                     temp$`6144col` == c - 1 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2) |
+                                     temp$`6144col` == c & temp$`6144row` %in% c(r - 2, r - 1, r + 1, r + 2) |
+                                     temp$`6144col` == c + 1 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2) |
+                                     temp$`6144col` == c + 2 & temp$`6144row` %in% c(r - 2, r - 1, r, r + 1, r + 2)]
         i <- i + 1
       }
     } 
@@ -75,10 +75,14 @@ alldat <- dbGetQuery(conn, sprintf('select a.*, b.*
                                   p2c_info[1],p2c_info[2],
                                   p2c_info[3],p2c_info[4]))
 
+alldat$colony[alldat$orf_name == 'BF_control'] = 'Reference'
+alldat$colony[alldat$orf_name != 'BF_control'] = 'Query'
+alldat$colony[is.na(alldat$orf_name)] = 'Gap'
+
 alldat <- alldat[alldat$hours == hr,]
 # for (hr in sort(unique(alldat$hours))) {
   for (i in seq(1,dim(grids)[1])) {
-   alldat$neigh[alldat$hours == hr & alldat$pos == grids[i]] <- median(alldat$average[alldat$hours == hr & alldat$pos %in% grids[i,]], na.rm = T)
+   alldat$neigh[alldat$hours == hr & alldat$pos == grids[i]] <- median(alldat$average[alldat$hours == hr & alldat$pos %in% grids[i,2:25]], na.rm = T)
   }
 # }
 
@@ -88,8 +92,10 @@ alldat$diff <- alldat$average - alldat$neigh
 ggplot(alldat) +
   # geom_line(aes(x = average, col = 'Pix'), stat = 'density') +
   # geom_line(aes(x = neigh, col = 'Neigh'), stat = 'density')
-  geom_histogram(aes(x = diff), fill = 'Blue') +
-  coord_cartesian(ylim = c(0, 10))
+  geom_abline() +
+  geom_point(aes(x = average, y = neigh, col = colony, shape = outlier), alpha =0.5)
+  # geom_histogram(aes(x = diff), fill = 'Blue') +
+  # coord_cartesian(ylim = c(0, 10))
 
 quantile(alldat$diff, c(0.05,0.95), na.rm = T)
 
@@ -101,4 +107,4 @@ alldat$outlier[alldat$diff > m + 2*s] = 'Big'
 alldat$outlier[alldat$diff < m - 2*s] = 'Small'
 
 ggplot(alldat[alldat$`6144plate` == 1,]) +
-  geom_point(aes(x = `6144col`, y = `6144row`, col = outlier))
+  geom_point(aes(x = `6144col`, y = `6144row`, col = outlier, shape = colony))
