@@ -8,7 +8,7 @@ source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
 expt_name = '4C3_96R'
-expt = 'FS1-96'
+expt = 'FS1-96R'
 out_path = 'figs/';
 density = 6144;
 
