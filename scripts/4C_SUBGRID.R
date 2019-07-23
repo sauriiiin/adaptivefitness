@@ -11,8 +11,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1'
-expt = 'FS1-GA1'
+expt_name = '4C3_GA3'
+expt = 'FS1-GA3'
 out_path = 'figs/comp/';
 density = 6144;
 
@@ -22,8 +22,8 @@ conn <- initialize.sql("saurin_test")
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
 tablename_jpeg_cc = sprintf('%s_CC_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-tablename_p2o = '4C3_pos2orf_name1';
-tablename_bpos = '4C3_borderpos';
+# tablename_p2o = '4C3_pos2orf_name1';
+# tablename_bpos = '4C3_borderpos';
 
 p2c_info = NULL
 p2c_info[1] = '4C3_pos2coor6144'
@@ -117,9 +117,12 @@ tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
 
 tempdat$score <- tempdat$average/(tempdat$neigh + tempdat$neigh_sr)
 
+ggplot(tempdat) +
+  geom_line(aes(x = score), stat = 'density')
+
 md <- mad(tempdat$score, na.rm =T)
-ll <- median(tempdat$score, na.rm =T) - 3*md
-ul <- median(tempdat$score, na.rm =T) + 3*md
+ll <- median(tempdat$score, na.rm =T) - 2*md
+ul <- median(tempdat$score, na.rm =T) + 2*md
 
 # for (hr in sort(unique(alldat$hours))) {
 for (i in seq(1,dim(grids)[1])) {
@@ -128,10 +131,12 @@ for (i in seq(1,dim(grids)[1])) {
   # tempdat$score_ll[tempdat$hours == hr & tempdat$pos == grids[i]] <-
   #   quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.05, na.rm = T)[[1]]
   tempdat$score_neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-    quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.5, na.rm = T)[[1]]
+    (quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.5, na.rm = T)[[1]] +
+       quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids_sr[i,2:25]], 0.5, na.rm = T)[[1]])/2
 }
 # }
 
+# score.med <- median(tempdat$score, na.rm = T)
 ggplot(tempdat) +
   # geom_line(aes(x = score), stat = 'density', binwidth = 30) +
   # geom_vline(xintercept = c(ll, ul)) +
@@ -141,9 +146,15 @@ ggplot(tempdat) +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
              aes(x = average, y = 0), col = 'Red') +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
-             aes(x = average * score_neigh/score, y = 0.0001), col = 'Blue')
+             aes(x = average * score_neigh/score, y = 0.0001), col = 'Blue') +
+  geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score < ll,],
+             aes(x = average, y = 0.0002), col = 'Green') +
+  geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score < ll,],
+             aes(x = average * score_neigh/score, y = 0.0003), col = 'Orange')
+  # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score < ul,],
+  #            aes(x = average, y = score), col = 'Red') + #average * score_neigh/score
   # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
-  #          aes(x = average, y = average * score_neigh/score), col = 'Blue')
+  #            aes(x = average, y = score), col = 'Blue') #average * score_neigh/score
 
 ggplot(tempdat[tempdat$`6144plate` == 1,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='Red') +
@@ -153,6 +164,23 @@ ggplot(tempdat[tempdat$`6144plate` == 1,]) +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 &
                             tempdat$score > ul,],
            aes(x = `6144col`, y = `6144row`, shape = colony))
+
+tempdat$average_cc <- tempdat$average
+tempdat$average_cc[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul] <-
+  tempdat$average[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul] *
+  tempdat$score_neigh[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul]/
+  tempdat$score[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul]
+# tempdat$average_cc[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score < ll] <-
+#   tempdat$average[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score < ll] *
+#   tempdat$score_neigh[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score < ll]/
+#   tempdat$score[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score < ll]
+
+ggplot(tempdat) +
+  # geom_line(aes(x = average, col = colony), stat = 'density', lwd = 1.2) +
+  geom_line(aes(x = average_cc, col = colony), stat = 'density', lwd = 1.2) +
+  coord_cartesian(xlim = c(200,600),
+                  ylim = c(0, 0.01))
+
 
 ##### PUTTING IT ALL TOGETHER
 compdat <- data.frame()
