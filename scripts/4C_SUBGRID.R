@@ -117,24 +117,24 @@ tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
 
 tempdat$score <- tempdat$average/(tempdat$neigh + tempdat$neigh_sr)
 
-ggplot(tempdat) +
-  geom_line(aes(x = score), stat = 'density')
-
-md <- mad(tempdat$score, na.rm =T)
-ll <- median(tempdat$score, na.rm =T) - 2*md
-ul <- median(tempdat$score, na.rm =T) + 2*md
-
-# for (hr in sort(unique(alldat$hours))) {
 for (i in seq(1,dim(grids)[1])) {
-  # tempdat$score_ul[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-  #   quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.95, na.rm = T)[[1]]
-  # tempdat$score_ll[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-  #   quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.05, na.rm = T)[[1]]
   tempdat$score_neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
     (quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.5, na.rm = T)[[1]] +
        quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids_sr[i,2:25]], 0.5, na.rm = T)[[1]])/2
 }
-# }
+
+ggplot(tempdat) +
+  geom_histogram(aes(x = score), binwidth = .02) +
+  labs(title = sprintf('%s: Competition', expt),
+       x = 'Competition Score',
+       y = 'Frequency') +
+  theme_linedraw()
+ggsave(sprintf('%s%s_COMP_SCORE.png',out_path,expt_name),
+       height = 7, width = 7)
+
+md <- mad(tempdat$score, na.rm =T)
+ll <- median(tempdat$score, na.rm =T) - 2*md
+ul <- median(tempdat$score, na.rm =T) + 2*md
 
 # score.med <- median(tempdat$score, na.rm = T)
 ggplot(tempdat) +
@@ -148,7 +148,7 @@ ggplot(tempdat) +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
              aes(x = average * score_neigh/score, y = 0.0001), col = 'Blue') +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score < ll,],
-             aes(x = average, y = 0.0002), col = 'Green') +
+             aes(x = average, y = 0.0002), col = 'darkgreen') +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score < ll,],
              aes(x = average * score_neigh/score, y = 0.0003), col = 'Orange')
   # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score < ul,],
@@ -157,13 +157,16 @@ ggplot(tempdat) +
   #            aes(x = average, y = score), col = 'Blue') #average * score_neigh/score
 
 ggplot(tempdat[tempdat$`6144plate` == 1,]) +
-  geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='Red') +
-  geom_point(data = tempdat[tempdat$`6144plate` == 1 &
-                           tempdat$colony == 'Gap',],
-           aes(x = `6144col`, y = `6144row`, shape = colony), col = 'Blue') +
+  geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='lightblue') +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 &
                             tempdat$score > ul,],
-           aes(x = `6144col`, y = `6144row`, shape = colony))
+           aes(x = `6144col`, y = `6144row`, shape = colony), col = 'Red') +
+  geom_point(data = tempdat[tempdat$`6144plate` == 1 &
+                              tempdat$score < ll,],
+             aes(x = `6144col`, y = `6144row`, shape = colony), col = 'darkgreen') +
+  geom_point(data = tempdat[tempdat$`6144plate` == 1 &
+                              tempdat$colony == 'Gap',],
+             aes(x = `6144col`, y = `6144row`, shape = colony), col = 'Black')
 
 tempdat$average_cc <- tempdat$average
 tempdat$average_cc[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul] <-
