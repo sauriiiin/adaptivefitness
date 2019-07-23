@@ -120,24 +120,31 @@ md <- mad(tempdat$score, na.rm =T)
 ll <- median(tempdat$score, na.rm =T) - 3*md
 ul <- median(tempdat$score, na.rm =T) + 3*md
 
+# for (hr in sort(unique(alldat$hours))) {
+for (i in seq(1,dim(grids)[1])) {
+  # tempdat$score_ul[tempdat$hours == hr & tempdat$pos == grids[i]] <-
+  #   quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.95, na.rm = T)[[1]]
+  # tempdat$score_ll[tempdat$hours == hr & tempdat$pos == grids[i]] <-
+  #   quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.05, na.rm = T)[[1]]
+  tempdat$score_neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
+    quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.5, na.rm = T)[[1]]
+}
+# }
+
 ggplot(tempdat) +
   # geom_histogram(aes(x = score), alpha = 0.5, binwidth = 30) +
   # geom_histogram(aes(x = neigh), fill = 'Blue', alpha = 0.5, binwidth = 30) +
   # geom_histogram(aes(x = neigh_sr), fill = 'Red', alpha = 0.5, binwidth = 30)
-  geom_line(aes(x = score), stat = 'density', binwidth = 30) +
-  geom_vline(xintercept = c(ll, ul))
+  # geom_line(aes(x = score), stat = 'density', binwidth = 30) +
+  # geom_vline(xintercept = c(ll, ul)) +
+  # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+  #            aes(x = score, y = 0), col = 'Red')
+  geom_line(aes(x = average), stat = 'density', lwd = 1.2) +
+  geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+             aes(x = average, y = 0), col = 'Red') +
+  geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+             aes(x = average * score_neigh/score, y = 0.0001), col = 'Blue')
   # geom_point(aes(x = average, y = score, col = source))
-
-# # for (hr in sort(unique(alldat$hours))) {
-# for (i in seq(1,dim(grids)[1])) {
-#   # tempdat$score_ul[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-#   #   quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.95, na.rm = T)[[1]]
-#   # tempdat$score_ll[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-#   #   quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.05, na.rm = T)[[1]]
-#   tempdat$score_neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-#     quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids[i,2:25]], 0.5, na.rm = T)[[1]]
-# }
-# # }
 
 ggplot(tempdat[tempdat$`6144plate` == 1,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='Red') +
@@ -150,22 +157,6 @@ ggplot(tempdat[tempdat$`6144plate` == 1,]) +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 &
                             tempdat$score > ul,],
            aes(x = `6144col`, y = `6144row`, shape = colony))
-  # geom_point(aes(x = average, y = neigh2, col = colony)) + 
-  # coord_cartesian(xlim = c(0,600),
-  #                 ylim = c(0,600)) +
-  # geom_abline()
-  # geom_histogram(aes(x = diff))
-  # geom_line(aes(x = average, col = 'Pix'), stat = 'density') +
-  # geom_line(aes(x = neigh, col = 'Neigh'), stat = 'density')
-  # geom_line(aes(x = average/neigh, col = colony), stat = 'density')
-  # geom_point(aes(x = average, y = neigh, shape = colony, col = outlier), alpha =0.5)
-  # geom_point(aes(x = average, y = neigh, shape = colony, col = colony), alpha =0.5) +
-  # coord_cartesian(xlim = c(0,600),
-  #                 ylim = c(0,600)) +
-  # geom_abline()
-  # geom_histogram(aes(x = diff), fill = 'Blue', alpha = 0.5) +
-  # geom_histogram(data = tempdat[tempdat$`6144plate` == 2,], aes(x = diff), fill = 'Red', alpha = 0.5)#+
-  # coord_cartesian(ylim = c(0, 10))
 
 tempdat$outlier <- NULL
 tempdat$outlier[tempdat$diff > 100] = 'Big'
@@ -173,5 +164,8 @@ tempdat$outlier[tempdat$diff > 100] = 'Big'
 
 ggplot(tempdat[tempdat$`6144plate` == 1,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, col = outlier, shape = colony))
+
+##### PUTTING IT ALL TOGETHER
+
 
 
