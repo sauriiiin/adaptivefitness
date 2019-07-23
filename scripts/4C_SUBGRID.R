@@ -20,6 +20,7 @@ density = 6144;
 conn <- initialize.sql("saurin_test")
 
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
+tablename_jpeg_cc = sprintf('%s_CC_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
 tablename_p2o = '4C3_pos2orf_name1';
 tablename_bpos = '4C3_borderpos';
@@ -100,7 +101,7 @@ alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
 
 hr = 18
 pl = 1
-tempdat <- alldat[alldat$hours == hr & tempdat$`6144plate` == pl,]
+tempdat <- alldat[alldat$hours == hr & alldat$`6144plate` == pl,]
 tempdat$average[is.na(tempdat$orf_name)] <- 0
 # for (hr in sort(unique(alldat$hours))) {
   for (i in seq(1,dim(grids)[1])) {
@@ -132,9 +133,6 @@ for (i in seq(1,dim(grids)[1])) {
 # }
 
 ggplot(tempdat) +
-  # geom_histogram(aes(x = score), alpha = 0.5, binwidth = 30) +
-  # geom_histogram(aes(x = neigh), fill = 'Blue', alpha = 0.5, binwidth = 30) +
-  # geom_histogram(aes(x = neigh_sr), fill = 'Red', alpha = 0.5, binwidth = 30)
   # geom_line(aes(x = score), stat = 'density', binwidth = 30) +
   # geom_vline(xintercept = c(ll, ul)) +
   # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
@@ -144,28 +142,83 @@ ggplot(tempdat) +
              aes(x = average, y = 0), col = 'Red') +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
              aes(x = average * score_neigh/score, y = 0.0001), col = 'Blue')
-  # geom_point(aes(x = average, y = score, col = source))
+  # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+  #          aes(x = average, y = average * score_neigh/score), col = 'Blue')
 
 ggplot(tempdat[tempdat$`6144plate` == 1,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='Red') +
   geom_point(data = tempdat[tempdat$`6144plate` == 1 &
                            tempdat$colony == 'Gap',],
            aes(x = `6144col`, y = `6144row`, shape = colony), col = 'Blue') +
-  # geom_point(data = tempdat[tempdat$`6144plate` == 1 &
-  #                           tempdat$score/tempdat$average < 1.6,],
-  #          aes(x = `6144col`, y = `6144row`, shape = colony))
   geom_point(data = tempdat[tempdat$`6144plate` == 1 &
                             tempdat$score > ul,],
            aes(x = `6144col`, y = `6144row`, shape = colony))
 
-tempdat$outlier <- NULL
-tempdat$outlier[tempdat$diff > 100] = 'Big'
-# tempdat$outlier[tempdat$diff < m - 2*s] = 'Small'
-
-ggplot(tempdat[tempdat$`6144plate` == 1,]) +
-  geom_point(aes(x = `6144col`, y = `6144row`, col = outlier, shape = colony))
-
 ##### PUTTING IT ALL TOGETHER
+compdat <- data.frame()
+
+for (hr in sort(unique(alldat$hours))) {
+  for (pl in sort(unique(alldat$`6144plate`[alldat$hours == hr]))) {
+    tempdat <- alldat[alldat$hours == hr & alldat$`6144plate` == pl,]
+    tempdat$average[is.na(tempdat$orf_name)] <- 0
+
+    for (i in seq(1,dim(grids)[1])) {
+      tempdat$neigh[tempdat$pos == grids[i]] <- mean(tempdat$average[tempdat$pos %in% grids[i,2:25]], na.rm = T)
+      tempdat$neigh_sr[tempdat$pos == grids_sr[i]] <- mean(tempdat$average[tempdat$pos %in% grids_sr[i,2:25]], na.rm = T)
+    }
+    
+    tempdat$neigh[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
+    tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
+    tempdat$score <- tempdat$average/(tempdat$neigh + tempdat$neigh_sr)
+    
+    md <- mad(tempdat$score, na.rm =T)
+    ll <- median(tempdat$score, na.rm =T) - 3*md
+    ul <- median(tempdat$score, na.rm =T) + 3*md
+    
+    for (i in seq(1,dim(grids)[1])) {
+      tempdat$score_neigh[tempdat$pos == grids[i]] <-
+        quantile(tempdat$score[tempdat$pos %in% grids[i,2:25]], 0.5, na.rm = T)[[1]]
+    }
+    
+    # ggplot(tempdat) +
+    #   # geom_line(aes(x = score), stat = 'density', binwidth = 30) +
+    #   # geom_vline(xintercept = c(ll, ul)) +
+    #   # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+    #   #            aes(x = score, y = 0), col = 'Red')
+    #   geom_line(aes(x = average), stat = 'density', lwd = 1.2) +
+    #   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+    #              aes(x = average, y = 0), col = 'Red') +
+    #   geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+    #              aes(x = average * score_neigh/score, y = 0.0001), col = 'Blue')
+    # # geom_point(data = tempdat[tempdat$`6144plate` == 1 & tempdat$score > ul,],
+    # #          aes(x = average, y = average * score_neigh/score), col = 'Blue')
+    # 
+    # ggplot(tempdat[tempdat$`6144plate` == 1,]) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='Red') +
+    #   geom_point(data = tempdat[tempdat$`6144plate` == 1 &
+    #                               tempdat$colony == 'Gap',],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony), col = 'Blue') +
+    #   geom_point(data = tempdat[tempdat$`6144plate` == 1 &
+    #                               tempdat$score > ul,],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony))
+    
+    tempdat$average[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul] <-
+      tempdat$average[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul] *
+      tempdat$score_neigh[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul]/
+      tempdat$score[tempdat$`6144plate` == 1 & !is.na(tempdat$score) & tempdat$score > ul]
+    
+    # ggplot(tempdat) +
+    #   geom_line(aes(x = average), stat = 'density')
+    
+    compdat <- rbind(compdat, tempdat)
+  }
+}
+
+compdat$average[is.na(compdat$orf_name)] <- NA
+
+newdat <- data.frame(compdat$pos, compdat$hours, compdat$average)
+colnames(newdat) <- c('pos','hours','average')
+dbWriteTable(conn, tablename_jpeg_cc, newdat, overwrite = T)
 
 
 
