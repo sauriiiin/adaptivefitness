@@ -11,8 +11,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA3'
-expt = 'FS1-GA3'
+expt_name = '4C3_GA1'
+expt = 'FS1-GA1'
 out_path = 'figs/comp/';
 density = 6144;
 
@@ -91,18 +91,19 @@ alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
 hr = 18
 pl = 1
 tempdat <- alldat[alldat$hours == hr & alldat$`6144plate` == pl,]
-tempdat$average[is.na(tempdat$orf_name)] <- 0
+tempdat$bg[tempdat$`6144col` < 5 | tempdat$`6144col` > 92 | tempdat$`6144row` < 5 | tempdat$`6144row` > 60] <- NA
+tempdat$bg[is.na(tempdat$orf_name)] <- 0
 for (i in seq(1,dim(grids)[1])) {
   tempdat$neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-    mean(tempdat$average[tempdat$hours == hr & tempdat$pos %in% grids[i,2:9]], na.rm = T)
+    mean(tempdat$bg[tempdat$hours == hr & tempdat$pos %in% grids[i,2:9]], na.rm = T)
   tempdat$neigh_sr[tempdat$hours == hr & tempdat$pos == grids_sr[i]] <-
-    mean(tempdat$average[tempdat$hours == hr & tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
+    mean(tempdat$bg[tempdat$hours == hr & tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
 }
 
-tempdat$neigh[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
-tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
+tempdat$neigh[is.na(tempdat$bg) & !is.na(tempdat$orf_name)] <- NA
+tempdat$neigh_sr[is.na(tempdat$bg) & !is.na(tempdat$orf_name)] <- NA
 
-tempdat$score <- tempdat$average/(tempdat$neigh + tempdat$neigh_sr)
+tempdat$score <- tempdat$bg/(tempdat$neigh + tempdat$neigh_sr)
 
 for (i in seq(1,dim(grids)[1])) {
   tempdat$score_neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
@@ -111,7 +112,11 @@ for (i in seq(1,dim(grids)[1])) {
 }
 
 ggplot(tempdat) +
-  geom_histogram(aes(x = score), binwidth = .02) +
+  geom_point(aes(x = `6144col`, y = `6144row`, col = score_neigh/score))
+  # geom_point(aes(x = score, y = score_neigh))
+
+ggplot(tempdat) +
+  geom_histogram(aes(x = score_neigh/score), binwidth = .02) +
   labs(title = sprintf('%s: Competition', expt),
        x = 'Competition Score',
        y = 'Frequency') +
@@ -159,8 +164,8 @@ ggplot() +
   #            aes(x = average, y = 0.0002), col = 'darkgreen') +
   # geom_point(data = tempdat[tempdat$outlier == 'Sick',],
   #            aes(x = average * score_neigh/score, y = 0.0003), col = 'Orange')
-  # geom_line(data = tempdat, aes(x = score), stat = 'density', lwd = 1.2) +
-  # geom_point(data = tempdat, aes(x = score, y = score_neigh, col = outlier), alpha = 0.5) +
+  # geom_line(data = tempdat, aes(x = score_neigh/score), stat = 'density', lwd = 1.2)
+  # geom_point(data = tempdat, aes(x = score, y = score_neigh, col = outlier), alpha = 0.5) #+
   # facet_grid(.~nearsick)
   # geom_point(data = tempdat, aes(x = score, y = score_neigh, col = outlier), alpha = 0.5)
   # geom_point(data = tempdat,
@@ -170,10 +175,14 @@ ggplot() +
   # geom_line(data = tempdat[tempdat$colony != 'Gap',], aes(x = average, col = 'RAW'), stat = 'density') +
   # geom_line(data = tempdat[tempdat$colony != 'Gap',], aes(x = average_cc, col = 'CC'), stat = 'density') +
   # facet_grid(.~colony)
-  geom_line(data = tempdat[tempdat$colony != 'Gap',],
-                 aes(x = average_cc2, col = colony), stat = 'density', lwd = 1.2) +
-  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
-  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red')
+  # geom_line(data = tempdat[tempdat$colony != 'Gap',],
+  #                aes(x = average_cc2, col = colony), stat = 'density', lwd = 1.2) +
+  # # geom_histogram(data = tempdat[tempdat$colony != 'Gap',],
+  # #           aes(x = average_cc, fill = colony), binwidth = 15) +
+  # geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
+  # geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red')
+  geom_point(data = tempdat[tempdat$colony != 'Gap',], aes(x = average, y = average_cc2, col = colony)) +
+  geom_abline()
 
 ggplot(tempdat[tempdat$`6144plate` == pl,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='lightblue') +
@@ -187,19 +196,9 @@ ggplot(tempdat[tempdat$`6144plate` == pl,]) +
                               tempdat$score < ll,],
              aes(x = `6144col`, y = `6144row`, shape = colony), col = 'darkgreen')
 
-tempdat$average_cc <- tempdat$average
-tempdat$average_cc[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul] <-
-  tempdat$average[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul] *
-  tempdat$score_neigh[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul]/
-  tempdat$score[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul]
-# tempdat$average_cc[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score < ll] <-
-#   tempdat$average[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score < ll] *
-#   tempdat$score_neigh[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score < ll]/
-#   tempdat$score[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score < ll]
-
 ggplot(tempdat) +
-  # geom_line(aes(x = average, col = colony), stat = 'density', lwd = 1.2) +
-  geom_line(aes(x = average_cc, col = colony), stat = 'density', lwd = 1.2) +
+  # geom_line(aes(x = bg, col = colony), stat = 'density', lwd = 1.2) +
+  geom_line(aes(x = bg_cc, col = colony), stat = 'density', lwd = 1.2) +
   coord_cartesian(xlim = c(200,600),
                   ylim = c(0, 0.01))
 
