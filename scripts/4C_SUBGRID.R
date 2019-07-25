@@ -8,6 +8,7 @@ library(RMariaDB)
 library(ggplot2)
 library(ggExtra)
 library(gridExtra)
+library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
@@ -91,19 +92,19 @@ alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
 hr = 18
 pl = 1
 tempdat <- alldat[alldat$hours == hr & alldat$`6144plate` == pl,]
-tempdat$bg[tempdat$`6144col` < 5 | tempdat$`6144col` > 92 | tempdat$`6144row` < 5 | tempdat$`6144row` > 60] <- NA
-tempdat$bg[is.na(tempdat$orf_name)] <- 0
+# tempdat$bg[tempdat$`6144col` < 5 | tempdat$`6144col` > 92 | tempdat$`6144row` < 5 | tempdat$`6144row` > 60] <- NA
+tempdat$average[is.na(tempdat$orf_name)] <- 0
 for (i in seq(1,dim(grids)[1])) {
   tempdat$neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
-    mean(tempdat$bg[tempdat$hours == hr & tempdat$pos %in% grids[i,2:9]], na.rm = T)
+    mean(tempdat$average[tempdat$hours == hr & tempdat$pos %in% grids[i,2:9]], na.rm = T)
   tempdat$neigh_sr[tempdat$hours == hr & tempdat$pos == grids_sr[i]] <-
-    mean(tempdat$bg[tempdat$hours == hr & tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
+    mean(tempdat$average[tempdat$hours == hr & tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
 }
 
-tempdat$neigh[is.na(tempdat$bg) & !is.na(tempdat$orf_name)] <- NA
-tempdat$neigh_sr[is.na(tempdat$bg) & !is.na(tempdat$orf_name)] <- NA
+tempdat$neigh[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
+tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
 
-tempdat$score <- tempdat$bg/(tempdat$neigh + tempdat$neigh_sr)
+tempdat$score <- tempdat$average/(tempdat$neigh + tempdat$neigh_sr)
 
 for (i in seq(1,dim(grids)[1])) {
   tempdat$score_neigh[tempdat$hours == hr & tempdat$pos == grids[i]] <-
@@ -111,16 +112,27 @@ for (i in seq(1,dim(grids)[1])) {
        quantile(tempdat$score[tempdat$hours == hr & tempdat$pos %in% grids_sr[i,2:9]], 0.5, na.rm = T)[[1]])/2
 }
 
-ggplot(tempdat) +
-  geom_point(aes(x = `6144col`, y = `6144row`, col = score_neigh/score))
-  # geom_point(aes(x = score, y = score_neigh))
+ggplot(tempdat[tempdat$colony != 'Gap',]) +
+  # geom_point(aes(x = `6144col`, y = `6144row`, col = score_neigh/score))
+  # geom_point(aes(x = average, y = average * score))
+  geom_line(aes(x = average*score_neigh, col = colony), stat = 'density')
 
-ggplot(tempdat) +
-  geom_histogram(aes(x = score_neigh/score), binwidth = .02) +
-  labs(title = sprintf('%s: Competition', expt),
-       x = 'Competition Score',
+plt.scr <- ggplot(tempdat[tempdat$colony != 'Gap',]) +
+  geom_histogram(aes(x = score), binwidth = 0.1*median(tempdat$score[tempdat$colony != 'Gap'], na.rm = T)) +
+  facet_grid(.~colony) +
+  labs(x = 'Competition Score',
        y = 'Frequency') +
   theme_linedraw()
+
+plt.pix <- ggplot(tempdat[tempdat$colony != 'Gap',]) +
+  geom_histogram(aes(x = average), binwidth = 0.1*median(tempdat$average[tempdat$colony != 'Gap'], na.rm = T)) +
+  facet_grid(.~colony) +
+  labs(x = 'Colony Size (Pix Count)',
+       y = 'Frequency') +
+  theme_linedraw()
+
+annotate_figure(ggarrange(plt.scr, plt.pix, ncol = 1, nrow = 2),
+                top = sprintf('%s: Competition', expt))
 # ggsave(sprintf('%s%s_COMP_SCORE.png',out_path,expt_name),
 #        height = 7, width = 7)
 
@@ -147,7 +159,8 @@ tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
 tempdat$average_cc <- tempdat$average
 tempdat$average_cc[tempdat$nearsick == 'Y'] <- tempdat$average_cc[tempdat$nearsick == 'Y'] *
   tempdat$score_neigh[tempdat$nearsick == 'Y']/tempdat$score[tempdat$nearsick == 'Y']
-tempdat$average_cc2 <- tempdat$average*tempdat$score_neigh/tempdat$score
+tempdat$average_cc2 <- tempdat$average*tempdat$score_neigh
+# tempdat$fitness_cc2 <- tempdat$fitness*tempdat$score_neigh/tempdat$score
 
 # score.med <- median(tempdat$score, na.rm = T)
 ggplot() +
@@ -176,13 +189,27 @@ ggplot() +
   # geom_line(data = tempdat[tempdat$colony != 'Gap',], aes(x = average_cc, col = 'CC'), stat = 'density') +
   # facet_grid(.~colony)
   # geom_line(data = tempdat[tempdat$colony != 'Gap',],
-  #                aes(x = average_cc2, col = colony), stat = 'density', lwd = 1.2) +
+  #                aes(x = average, col = colony), stat = 'density', lwd = 1.2) +
   # # geom_histogram(data = tempdat[tempdat$colony != 'Gap',],
   # #           aes(x = average_cc, fill = colony), binwidth = 15) +
-  # geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
-  # geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red')
-  geom_point(data = tempdat[tempdat$colony != 'Gap',], aes(x = average, y = average_cc2, col = colony)) +
-  geom_abline()
+  # geom_vline(xintercept = quantile(tempdat$average[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
+  # geom_vline(xintercept = quantile(tempdat$average[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red') +
+  # labs(title = sprintf('ES = %0.3f', mean(tempdat$average[tempdat$colony == 'Query'], na.rm = T)/
+  #                        mean(tempdat$average[tempdat$colony == 'Reference'], na.rm = T)))
+  geom_line(data = tempdat[tempdat$colony != 'Gap',],
+          aes(x = average_cc2, col = colony), stat = 'density', lwd = 1.2) +
+  # geom_histogram(data = tempdat[tempdat$colony != 'Gap',],
+  #           aes(x = average_cc, fill = colony), binwidth = 15) +
+  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
+  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red') +
+  labs(title = sprintf('ES = %0.3f', mean(tempdat$average_cc2[tempdat$colony == 'Query'], na.rm = T)/
+                         mean(tempdat$average_cc2[tempdat$colony == 'Reference'], na.rm = T)))
+  # geom_point(data = tempdat[tempdat$colony != 'Gap',], aes(x = average, y = average_cc2, col = colony)) +
+  # geom_abline()
+
+ggplot(tempdat) +
+  geom_line(aes(x = fitness, col = colony), stat = 'density', lwd = 1.2) +
+  geom_line(aes(x = fitness_cc2, col = colony), stat = 'density', lwd = 1.2)
 
 ggplot(tempdat[tempdat$`6144plate` == pl,]) +
   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='lightblue') +
@@ -196,12 +223,6 @@ ggplot(tempdat[tempdat$`6144plate` == pl,]) +
                               tempdat$score < ll,],
              aes(x = `6144col`, y = `6144row`, shape = colony), col = 'darkgreen')
 
-ggplot(tempdat) +
-  # geom_line(aes(x = bg, col = colony), stat = 'density', lwd = 1.2) +
-  geom_line(aes(x = bg_cc, col = colony), stat = 'density', lwd = 1.2) +
-  coord_cartesian(xlim = c(200,600),
-                  ylim = c(0, 0.01))
-
 
 ##### PUTTING IT ALL TOGETHER
 compdat <- data.frame()
@@ -209,20 +230,22 @@ compdat <- data.frame()
 for (hr in sort(unique(alldat$hours))) {
   for (pl in sort(unique(alldat$`6144plate`[alldat$hours == hr]))) {
     tempdat <- alldat[alldat$hours == hr & alldat$`6144plate` == pl,]
-    tempdat$average[is.na(tempdat$orf_name)] <- 0
+    tempdat$bg[is.na(tempdat$orf_name)] <- 0
+    tempdat$bg[tempdat$`6144col` < 5 | tempdat$`6144col` > 92 | tempdat$`6144row` < 5 | tempdat$`6144row` > 60] <- NA
 
     for (i in seq(1,dim(grids)[1])) {
-      tempdat$neigh[tempdat$pos == grids[i]] <- mean(tempdat$average[tempdat$pos %in% grids[i,2:9]], na.rm = T)
-      tempdat$neigh_sr[tempdat$pos == grids_sr[i]] <- mean(tempdat$average[tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
+      tempdat$neigh[tempdat$pos == grids[i]] <- mean(tempdat$bg[tempdat$pos %in% grids[i,2:9]], na.rm = T)
+      tempdat$neigh_sr[tempdat$pos == grids_sr[i]] <- mean(tempdat$bg[tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
     }
     
     tempdat$neigh[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
     tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
-    tempdat$score <- tempdat$average/(tempdat$neigh + tempdat$neigh_sr)
+    tempdat$score <- tempdat$bg/mean(c(tempdat$neigh, tempdat$neigh_sr), na.rm = T)
     
     for (i in seq(1,dim(grids)[1])) {
       tempdat$score_neigh[tempdat$pos == grids[i]] <-
-        quantile(tempdat$score[tempdat$pos %in% grids[i,2:9]], 0.5, na.rm = T)[[1]]
+        (quantile(tempdat$score[tempdat$pos %in% grids[i,2:9]], 0.5, na.rm = T)[[1]] +
+          quantile(tempdat$score[tempdat$pos %in% grids_sr[i,2:9]], 0.5, na.rm = T)[[1]])/2
     }
     
     md <- mad(tempdat$score, na.rm =T)
@@ -276,7 +299,7 @@ compdat$average_cc[is.na(compdat$orf_name)] <- NA
 compdat$average_cc2[is.na(compdat$orf_name)] <- NA
 
 newdat <- data.frame(compdat$pos, compdat$hours, compdat$average, compdat$average_cc, compdat$average_cc2)
-colnames(newdat) <- c('pos','hours','average', 'average_cc', 'average_cc2')
+colnames(newdat) <- c('pos','hours','average_raw', 'average_cc', 'average')
 dbWriteTable(conn, tablename_jpeg_cc, newdat, overwrite = T)
 
 
