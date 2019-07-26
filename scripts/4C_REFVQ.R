@@ -7,8 +7,8 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA3'
-expt = 'FS1-GA3'
+expt_name = '4C3_GA1_CC'
+expt = 'FS1-GA1-CC'
 out_path = 'figs/';
 density = 6144;
 
@@ -34,6 +34,10 @@ es.pix <- mean(alldat$average[alldat$hours == hr & alldat$colony == 'Query'], na
 f <- ggplot(alldat[alldat$hours == hr,]) +
   # geom_histogram(aes(x = fitness, fill = colony), bins = 40, alpha = 0.7) +
   geom_line(aes(x = fitness, col = colony), stat = 'density', lwd = 1.2) +
+  geom_vline(xintercept = quantile(alldat$fitness[alldat$hours == hr & alldat$colony == 'Reference'],
+                                   c(0.05, 0.95), na.rm = T), col = '#303F9F') +
+  geom_vline(xintercept = quantile(alldat$fitness[alldat$hours == hr & alldat$colony == 'Query'],
+                                   c(0.05, 0.95), na.rm = T), col = '#FF5252') +
   coord_cartesian(xlim = c(0.7,1.3)) +
   labs(subtitle = sprintf('ES = %0.3f', es.fit),
        x = 'Fitness',
@@ -49,6 +53,10 @@ f <- ggplot(alldat[alldat$hours == hr,]) +
 cs <- ggplot(alldat[alldat$hours == hr,]) +
   # geom_histogram(aes(x = average, fill = colony), bins = 30, alpha = 0.7) +
   geom_line(aes(x = average, col = colony), stat = 'density', lwd = 1.2) +
+  geom_vline(xintercept = quantile(alldat$average[alldat$hours == hr & alldat$colony == 'Reference'],
+                                   c(0.05, 0.95), na.rm = T), col = '#303F9F') +
+  geom_vline(xintercept = quantile(alldat$average[alldat$hours == hr & alldat$colony == 'Query'],
+                                   c(0.05, 0.95), na.rm = T), col = '#FF5252') +
   coord_cartesian(xlim = c(lim.low,lim.hig)) +
   labs(subtitle = sprintf('ES = %0.3f', es.pix),
        x = 'Colony Size (pix)',
