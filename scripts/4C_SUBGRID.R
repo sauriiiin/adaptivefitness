@@ -225,41 +225,29 @@ for (hr in sort(unique(alldat$hours))) {
     #                               tempdat$score < ll,],
     #              aes(x = `6144col`, y = `6144row`, shape = colony), col = 'red')
     
-    # tempdat$average[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul] <-
-    #   tempdat$average[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul] *
-    #   tempdat$score_neigh[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul]/
-    #   tempdat$score[tempdat$`6144plate` == pl & !is.na(tempdat$score) & tempdat$score > ul]
-    
-    # tempdat$outlier <- NULL
-    # tempdat$outlier[tempdat$score < ll & !is.na(tempdat$score)] <- 'Sick'
-    # tempdat$outlier[tempdat$score > ul & !is.na(tempdat$score)] <- 'Healthy'
-    # tempdat$outlier[is.na(tempdat$outlier)] <- 'Normal'
-    # 
-    # tempdat$nearsick <- NULL
+    tempdat$outlier <- NULL
+    tempdat$outlier[tempdat$score < ll & !is.na(tempdat$score)] <- 'Sick'
+    tempdat$outlier[tempdat$score > ul & !is.na(tempdat$score)] <- 'Healthy'
+    tempdat$outlier[is.na(tempdat$outlier)] <- 'Normal'
+
+    tempdat$nearsick <- NULL
     # tempdat$nearsick_sr <- NULL
-    # for (p in tempdat$pos[tempdat$outlier == 'Sick']) {
-    #   tempdat$nearsick[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'Y'
-    #   tempdat$nearsick_sr[tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <- 'Y'
-    # }
-    # tempdat$nearsick[is.na(tempdat$orf_name)] <- 'N'
-    # tempdat$nearsick[is.na(tempdat$nearsick)] <- 'N'
+    for (p in tempdat$pos[tempdat$outlier == 'Sick']) {
+      tempdat$nearsick[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <- 'Y'
+      # tempdat$nearsick_sr[tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <- 'Y'
+    }
+    tempdat$nearsick[is.na(tempdat$orf_name)] <- 'N'
+    tempdat$nearsick[is.na(tempdat$nearsick)] <- 'N'
     # tempdat$nearsick_sr[is.na(tempdat$orf_name)] <- 'N'
     # tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
     
-    # tempdat$average_cc <- tempdat$average
-    # tempdat$average_cc[tempdat$nearsick == 'Y'] <- tempdat$average_cc[tempdat$nearsick == 'Y'] *
-    #   tempdat$score_neigh[tempdat$nearsick == 'Y']/tempdat$score[tempdat$nearsick == 'Y']
-    # tempdat$average_cc2 <- tempdat$average * median(tempdat$score[tempdat$colony == 'Reference'], na.rm =T)/tempdat$score
     tempdat$average_cc2 <- tempdat$average
     tempdat$average_cc2[!is.na(tempdat$score) & tempdat$score > ul] <- tempdat$average_cc2[!is.na(tempdat$score) & tempdat$score > ul]/
       sqrt(median(tempdat$score[!is.na(tempdat$score)], na.rm = T) * tempdat$score[!is.na(tempdat$score) & tempdat$score > ul])
-    # tempdat$average_cc2[!is.na(tempdat$score) & tempdat$score < ll] <- tempdat$average_cc2[!is.na(tempdat$score) & tempdat$score < ll] *
-    #   median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T)/tempdat$score[!is.na(tempdat$score) & tempdat$score < ll]
     
     tempdat$fitness_cc2 <- tempdat$fitness
     tempdat$fitness_cc2[!is.na(tempdat$score) & tempdat$score > ul] <- tempdat$fitness_cc2[!is.na(tempdat$score) & tempdat$score > ul]/
       sqrt(median(tempdat$score[!is.na(tempdat$score)], na.rm = T) * tempdat$score[!is.na(tempdat$score) & tempdat$score > ul])
-    
     
     tempdat$modifier <- 1
     tempdat$modifier[!is.na(tempdat$score) & tempdat$score > ul] <- 1/sqrt(median(tempdat$score[!is.na(tempdat$score)], na.rm = T)*
