@@ -7,8 +7,8 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1_CC'
-expt = 'FS1-GA1-CC'
+expt_name = '4C3_GA3_CC'
+expt = 'FS1-GA3-CC'
 out_path = 'figs/';
 density = 6144;
 
@@ -26,10 +26,10 @@ med <- quantile(alldat$average[alldat$hours == hr], 0.5, na.rm = T)[[1]]
 lim.low <- med - 4*sd(alldat$average[alldat$hours == hr], na.rm = T)
 lim.hig <- med + 4*sd(alldat$average[alldat$hours == hr], na.rm = T)
 
-es.fit <- mean(alldat$fitness[alldat$hours == hr & alldat$colony == 'Query'], na.rm = T)/
-  mean(alldat$fitness[alldat$hours == hr & alldat$colony == 'Reference'], na.rm = T)
-es.pix <- mean(alldat$average[alldat$hours == hr & alldat$colony == 'Query'], na.rm = T)/
-  mean(alldat$average[alldat$hours == hr & alldat$colony == 'Reference'], na.rm = T)
+es.fit <- median(alldat$fitness[alldat$hours == hr & alldat$colony == 'Query'], na.rm = T)/
+  median(alldat$fitness[alldat$hours == hr & alldat$colony == 'Reference'], na.rm = T)
+es.pix <- median(alldat$average[alldat$hours == hr & alldat$colony == 'Query'], na.rm = T)/
+  median(alldat$average[alldat$hours == hr & alldat$colony == 'Reference'], na.rm = T)
 
 f <- ggplot(alldat[alldat$hours == hr,]) +
   # geom_histogram(aes(x = fitness, fill = colony), bins = 40, alpha = 0.7) +
