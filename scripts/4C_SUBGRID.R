@@ -12,8 +12,8 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA3'
-expt = 'FS1-GA3'
+expt_name = '4C3_GA1'
+expt = 'FS1-GA1'
 out_path = 'figs/comp/';
 density = 6144;
 
@@ -247,16 +247,13 @@ for (hr in sort(unique(alldat$hours))) {
     }
     tempdat$nearsick[is.na(tempdat$orf_name)] <- 'N'
     tempdat$nearsick[is.na(tempdat$nearsick)] <- 'N'
+    tempdat$nearsick[tempdat$reallysick == 'Y'] <- 'N'
     # # tempdat$nearsick_sr[is.na(tempdat$orf_name)] <- 'N'
     # # tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
     
     tempdat$average_cc2 <- tempdat$average
     tempdat$average_cc2[tempdat$nearsick == 'Y'] <- tempdat$average_cc2[tempdat$nearsick == 'Y'] * 
-      tempdat$score_neigh[tempdat$nearsick == 'Y']/tempdat$score[tempdat$nearsick == 'Y']
-    
-    # tempdat$fitness_cc2 <- tempdat$fitness * median(tempdat$score, na.rm = T)/tempdat$score
-    
-    # tempdat$modifier <- median(tempdat$score, na.rm = T)/tempdat$score
+      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick == 'Y'], na.rm = T)
     
     compdat <- rbind(compdat, tempdat)
   }
@@ -270,11 +267,45 @@ jpegdat <- data.frame(compdat$pos, compdat$hours, compdat$average, compdat$avera
 colnames(jpegdat) <- c('pos','hours','average_raw', 'average')
 dbWriteTable(conn, tablename_jpeg_cc, jpegdat, overwrite = T)
 
-# fitdat <- data.frame(compdat$orf_name, compdat$pos, compdat$hours, compdat$bg, compdat$average, compdat$average_cc2, compdat$fitness_cc2)
-# colnames(fitdat) <- c('orf_name','pos','hours','bg','average','average_cc2','fitness')
-# dbWriteTable(conn, tablename_fit_cc, fitdat, overwrite = T)
-# 
-# mdfrdat <- data.frame(compdat$pos, compdat$hours, compdat$modifier)
-# colnames(mdfrdat) <- c('pos','hours', 'mdfr')
-# dbWriteTable(conn, tablename_mdfr, mdfrdat, overwrite = T)
+#####
+
+plt.scr <- ggplot(tempdat[tempdat$colony != 'Gap',]) +
+  geom_line(aes(x = average, col = colony), stat = 'density', lwd = 1.2) +
+  geom_vline(xintercept = quantile(tempdat$average[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
+  geom_vline(xintercept = quantile(tempdat$average[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red') +
+  labs(title = sprintf('ES = %0.3f', median(tempdat$average[tempdat$colony == 'Query'], na.rm = T)/
+                         median(tempdat$average[tempdat$colony == 'Reference'], na.rm = T)),
+       x = 'Raw Pixel Counts',
+       y = 'Frequency') +
+  theme_linedraw()
+
+plt.pix <- ggplot(tempdat[tempdat$colony != 'Gap',]) +
+  geom_line(aes(x = average_cc2, col = colony), stat = 'density', lwd = 1.2) +
+  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
+  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red') +
+  labs(title = sprintf('ES = %0.3f', median(tempdat$average_cc2[tempdat$colony == 'Query'], na.rm = T)/
+                         median(tempdat$average_cc2[tempdat$colony == 'Reference'], na.rm = T)),
+       x = 'CC Pixel Counts',
+       y = 'Frequency') +
+  theme_linedraw()
+
+annotate_figure(ggarrange(plt.scr, plt.pix, align = "hv",
+                          common.legend = T, legend = 'right',
+                          ncol = 2, nrow = 1),
+                top = sprintf('%s: Competition', expt))
+
+
+
+ggplot(tempdat[tempdat$`6144plate` == pl,]) +
+  geom_point(aes(x = `6144col`, y = `6144row`, shape = colony), col ='yellow') +
+  geom_point(data = tempdat[tempdat$`6144plate` == pl &
+                              tempdat$colony == 'Gap',],
+             aes(x = `6144col`, y = `6144row`, shape = colony), col = 'Blue') +
+  geom_point(data = tempdat[tempdat$`6144plate` == pl &
+                              tempdat$reallysick == 'Y',],
+             aes(x = `6144col`, y = `6144row`, shape = colony), col = 'Green') +
+  geom_point(data = tempdat[tempdat$`6144plate` == pl &
+                              tempdat$nearsick == 'Y',],
+             aes(x = `6144col`, y = `6144row`, shape = colony), col = 'red')
+
 
