@@ -11,8 +11,8 @@ library(gridExtra)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_96R'
-expt = 'FS1-96R'
+expt_name = '4C3_GA3'
+expt = 'FS1-GA3'
 out_path = 'figs/comp/';
 density = 6144;
 
