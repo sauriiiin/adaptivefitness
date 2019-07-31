@@ -12,8 +12,8 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1'
-expt = 'FS1-GA1'
+expt_name = '4C3_GA1_1PER'
+expt = 'FS1-GA1-1PER'
 out_path = 'figs/comp/';
 density = 6144;
 
@@ -119,42 +119,42 @@ for (hr in sort(unique(alldat$hours))) {
     ll <- median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T) - 3*md
     ul <- median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T) + 3*md
     
-    ggplot(tempdat) +
-      geom_line(aes(x = score, col = colony), stat = 'density', lwd = 1.2) +
-      # geom_histogram(aes(x = score, fill = colony)) +
-      geom_vline(xintercept = c(ll,ul), col = 'Red', linetype = 'dashed') +
-      labs(title = expt,
-           subtitle = sprintf('Competition Scores of Plate #%d at %d Hrs', pl, hr),
-           x = 'Competition Score',
-           y = 'Density') +
-      scale_color_discrete(name = 'Colony Type') +
-      theme_linedraw()
-    ggsave(sprintf("%scomp_score_%d_%d.jpg",out_path,hr,pl),
-           width = 8, height = 6,
-           dpi = 300)
+    # ggplot(tempdat) +
+    #   geom_line(aes(x = score, col = colony), stat = 'density', lwd = 1.2) +
+    #   # geom_histogram(aes(x = score, fill = colony)) +
+    #   geom_vline(xintercept = c(ll,ul), col = 'Red', linetype = 'dashed') +
+    #   labs(title = expt,
+    #        subtitle = sprintf('Competition Scores of Plate #%d at %d Hrs', pl, hr),
+    #        x = 'Competition Score',
+    #        y = 'Density') +
+    #   scale_color_discrete(name = 'Colony Type') +
+    #   theme_linedraw()
+    # ggsave(sprintf("%scomp_score_%d_%d.jpg",out_path,hr,pl),
+    #        width = 8, height = 6,
+    #        dpi = 300)
     
-    ggplot(tempdat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
-      geom_point(data = tempdat[tempdat$colony == 'Gap',],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
-      geom_point(data = tempdat[tempdat$score > ul,],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Healthy')) +
-      geom_point(data = tempdat[tempdat$score < ll,],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Sick')) +
-      scale_x_continuous(breaks = seq(0,96,4)) +
-      scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
-      labs(title = expt,
-           subtitle = sprintf('Colony Health Layout of Plate #%d at %d Hrs', pl, hr),
-           x = 'Columns',
-           y = 'Rows') +
-      scale_color_manual(name = 'Health',
-                         breaks = c('Normal','Sick','Healthy','Gap'),
-                         values = c('Normal'='#9E9E9E','Sick'='#673AB7','Healthy'='#FFC107','Gap'='#FF5252')) +
-      scale_shape_discrete(name = 'Colony Type') +
-      theme_linedraw()
-    ggsave(sprintf("%shealth_dis_%d_%d.jpg",out_path,hr,pl),
-           width = 8, height = 5,
-           dpi = 300)
+    # ggplot(tempdat) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
+    #   geom_point(data = tempdat[tempdat$colony == 'Gap',],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+    #   geom_point(data = tempdat[tempdat$score > ul,],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Healthy')) +
+    #   geom_point(data = tempdat[tempdat$score < ll,],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Sick')) +
+    #   scale_x_continuous(breaks = seq(0,96,4)) +
+    #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+    #   labs(title = expt,
+    #        subtitle = sprintf('Colony Health Layout of Plate #%d at %d Hrs', pl, hr),
+    #        x = 'Columns',
+    #        y = 'Rows') +
+    #   scale_color_manual(name = 'Health',
+    #                      breaks = c('Normal','Sick','Healthy','Gap'),
+    #                      values = c('Normal'='#9E9E9E','Sick'='#673AB7','Healthy'='#FFC107','Gap'='#FF5252')) +
+    #   scale_shape_discrete(name = 'Colony Type') +
+    #   theme_linedraw()
+    # ggsave(sprintf("%shealth_dis_%d_%d.jpg",out_path,hr,pl),
+    #        width = 8, height = 5,
+    #        dpi = 300)
       
     tempdat$outlier <- NULL
     tempdat$outlier[tempdat$score < ll & !is.na(tempdat$score)] <- 'Sick'
@@ -182,34 +182,34 @@ for (hr in sort(unique(alldat$hours))) {
     # # tempdat$nearsick_sr[is.na(tempdat$orf_name)] <- 'N'
     # # tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
     
-    ggplot(tempdat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
-      geom_point(data = tempdat[tempdat$colony == 'Gap',],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
-      geom_point(data = tempdat[tempdat$nearsick == 'N1',],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = nearsick)) +
-      geom_point(data = tempdat[tempdat$reallysick == 'Y',],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = reallysick)) +
-      # geom_point(data = tempdat[tempdat$colony == 'Gap',],
-      #            aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
-      scale_x_continuous(breaks = seq(0,96,4)) +
-      scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
-      labs(title = expt,
-           subtitle = sprintf('Corrected Positions of Plate #%d at %d Hrs', pl, hr),
-           x = 'Columns',
-           y = 'Rows') +
-      scale_color_manual(name = 'Health',
-                         breaks = c('Normal','Y','N1','Gap'),
-                         values = c('Normal'='#9E9E9E','Y'='#673AB7','N1'='#FFC107','Gap'='#FF5252'),
-                         labels = c('Normal','Sick','NearSick','Gap')) +
-      scale_shape_discrete(name = 'Colony Type') +
-      theme_linedraw()
-    ggsave(sprintf("%snearsick_%d_%d.jpg",out_path,hr,pl),
-           width = 8, height = 5,
-           dpi = 300)
+    # ggplot(tempdat) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
+    #   geom_point(data = tempdat[tempdat$colony == 'Gap',],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+    #   geom_point(data = tempdat[tempdat$nearsick == 'N1',],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = nearsick)) +
+    #   geom_point(data = tempdat[tempdat$reallysick == 'Y',],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = reallysick)) +
+    #   # geom_point(data = tempdat[tempdat$colony == 'Gap',],
+    #   #            aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+    #   scale_x_continuous(breaks = seq(0,96,4)) +
+    #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+    #   labs(title = expt,
+    #        subtitle = sprintf('Corrected Positions of Plate #%d at %d Hrs', pl, hr),
+    #        x = 'Columns',
+    #        y = 'Rows') +
+    #   scale_color_manual(name = 'Health',
+    #                      breaks = c('Normal','Y','N1','Gap'),
+    #                      values = c('Normal'='#9E9E9E','Y'='#673AB7','N1'='#FFC107','Gap'='#FF5252'),
+    #                      labels = c('Normal','Sick','NearSick','Gap')) +
+    #   scale_shape_discrete(name = 'Colony Type') +
+    #   theme_linedraw()
+    # ggsave(sprintf("%snearsick_%d_%d.jpg",out_path,hr,pl),
+    #        width = 8, height = 5,
+    #        dpi = 300)
     
-    ggplot(tempdat) +
-      geom_line(aes(x = average, col = outlier), stat = 'density')
+    # ggplot(tempdat) +
+    #   geom_line(aes(x = average, col = outlier), stat = 'density')
     
     tempdat$average_cc2 <- tempdat$average
     tempdat$average_cc2[tempdat$nearsick == 'Y'] <- tempdat$average_cc2[tempdat$nearsick == 'Y'] * 
