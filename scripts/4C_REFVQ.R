@@ -7,8 +7,8 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1_CC'
-expt = 'FS1-GA1-CC'
+expt_name = '4C3_GA1_1PER_CC'
+expt = 'FS1-GA1-1PER-CC'
 out_path = 'figs/';
 density = 6144;
 
