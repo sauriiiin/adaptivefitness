@@ -12,8 +12,8 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = '4C3_GA1_1PER'
-expt = 'FS1-GA1-1PER'
+expt_name = '4C3_GA3'
+expt = 'FS1-GA3'
 out_path = 'figs/comp/';
 density = 6144;
 
@@ -23,8 +23,8 @@ conn <- initialize.sql("saurin_test")
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
 tablename_jpeg_cc = sprintf('%s_CC_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-tablename_fit_cc = sprintf('%s_CC_%d_FITNESS',expt_name,density);
-tablename_mdfr = sprintf('%s_CC_%d_MDFR',expt_name,density);
+# tablename_fit_cc = sprintf('%s_CC_%d_FITNESS',expt_name,density);
+# tablename_mdfr = sprintf('%s_CC_%d_MDFR',expt_name,density);
 
 p2c_info = NULL
 p2c_info[1] = '4C3_pos2coor6144'
@@ -109,11 +109,11 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
     tempdat$score <- tempdat$average/((tempdat$neigh + tempdat$neigh_sr)/2)
     
-    # for (i in seq(1,dim(grids)[1])) {
-    #   tempdat$score_neigh[tempdat$pos == grids[i]] <-
-    #     (mean(tempdat$score[tempdat$pos %in% grids[i,2:9]], na.rm = T) +
-    #       mean(tempdat$score[tempdat$pos %in% grids_sr[i,2:9]], na.rm = T))/2
-    # }
+    for (i in seq(1,dim(grids)[1])) {
+      tempdat$score_neigh[tempdat$pos == grids[i]] <-
+        (mean(tempdat$score[tempdat$pos %in% grids[i,2:9]], na.rm = T) +
+          mean(tempdat$score[tempdat$pos %in% grids_sr[i,2:9]], na.rm = T))/2
+    }
     
     md <- mad(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T)
     ll <- median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T) - 3*md
@@ -171,21 +171,25 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$reallysick[is.na(tempdat$reallysick)] <- 'Normal'
     
     tempdat$nearsick <- NULL
-    # tempdat$nearsick_sr <- NULL
+    tempdat$nearsick_sr <- NULL
     for (p in tempdat$pos[tempdat$reallysick == 'Y']) {
-      tempdat$nearsick[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'Y'
-      # tempdat$nearsick_sr[tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <- 'Y'
+      tempdat$nearsick[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'N1'
+      tempdat$nearsick_sr[tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <- 'N2'
     }
     tempdat$nearsick[is.na(tempdat$orf_name)] <- 'N'
     tempdat$nearsick[is.na(tempdat$nearsick)] <- 'N'
     tempdat$nearsick[tempdat$reallysick == 'Y'] <- 'N'
-    # # tempdat$nearsick_sr[is.na(tempdat$orf_name)] <- 'N'
-    # # tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
+    tempdat$nearsick_sr[is.na(tempdat$orf_name)] <- 'N'
+    tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
+    tempdat$nearsick_sr[tempdat$nearsick == 'N1'] <- 'N'
+    tempdat$nearsick_sr[tempdat$reallysick == 'Y'] <- 'N'
     
     # ggplot(tempdat) +
     #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
     #   geom_point(data = tempdat[tempdat$colony == 'Gap',],
     #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+    #   geom_point(data = tempdat[tempdat$nearsick_sr == 'N2',],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = nearsick_sr)) +
     #   geom_point(data = tempdat[tempdat$nearsick == 'N1',],
     #              aes(x = `6144col`, y = `6144row`, shape = colony, col = nearsick)) +
     #   geom_point(data = tempdat[tempdat$reallysick == 'Y',],
@@ -199,21 +203,44 @@ for (hr in sort(unique(alldat$hours))) {
     #        x = 'Columns',
     #        y = 'Rows') +
     #   scale_color_manual(name = 'Health',
-    #                      breaks = c('Normal','Y','N1','Gap'),
-    #                      values = c('Normal'='#9E9E9E','Y'='#673AB7','N1'='#FFC107','Gap'='#FF5252'),
-    #                      labels = c('Normal','Sick','NearSick','Gap')) +
+    #                      breaks = c('Normal','Y','N1','N2','Gap'),
+    #                      values = c('Normal'='#9E9E9E','Y'='#2196F3','N1'='#FFC107','N2'='#673AB7','Gap'='#FF5252'),
+    #                      labels = c('Normal','Sick','Pres Neigh','Past Neigh','Gap')) +
     #   scale_shape_discrete(name = 'Colony Type') +
     #   theme_linedraw()
     # ggsave(sprintf("%snearsick_%d_%d.jpg",out_path,hr,pl),
     #        width = 8, height = 5,
     #        dpi = 300)
     
-    # ggplot(tempdat) +
-    #   geom_line(aes(x = average, col = outlier), stat = 'density')
-    
     tempdat$average_cc2 <- tempdat$average
-    tempdat$average_cc2[tempdat$nearsick == 'Y'] <- tempdat$average_cc2[tempdat$nearsick == 'Y'] * 
-      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick == 'Y'], na.rm = T)
+    tempdat$average_cc2[tempdat$nearsick == 'N1'] <- tempdat$average_cc2[tempdat$nearsick == 'N1'] *
+      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick == 'N1'], na.rm = T)
+    tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] <- tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] *
+      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick_sr == 'N2'], na.rm = T)
+    # tempdat$average_cc2[tempdat$nearsick == 'N1' & !is.na(tempdat$score)] <- tempdat$average_cc2[tempdat$nearsick == 'N1' & !is.na(tempdat$score)] *
+    #   median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm = T)/tempdat$score[tempdat$nearsick == 'N1' & !is.na(tempdat$score)]
+    # tempdat$average_cc2[tempdat$nearsick_sr == 'N2' & !is.na(tempdat$score)] <- tempdat$average_cc2[tempdat$nearsick_sr == 'N2' & !is.na(tempdat$score)] *
+    #   median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm = T)/tempdat$score[tempdat$nearsick_sr == 'N2' & !is.na(tempdat$score)]
+    
+    # ggplot() +
+    #   geom_line(data = tempdat[tempdat$colony != 'Gap',],
+    #             aes(x = average, col = 'RAW'), stat = 'density') +
+    #   geom_line(data = tempdat[tempdat$colony != 'Gap',],
+    #             aes(x = average_cc2, col = 'CC'), stat = 'density') +
+    #   geom_vline(xintercept = quantile(tempdat$average, c(0.025, 0.5, 0.975), na.rm = T), col = 'Blue') +
+    #   geom_vline(xintercept = quantile(tempdat$average_cc2, c(0.025, 0.5,  0.975), na.rm = T), col = 'Red') +
+    #   facet_grid(.~colony)
+    #   geom_line(data = tempdat[tempdat$nearsick == 'N1',],
+    #             aes(x = average_cc2, col = 'Pres Neigh'), stat = 'density') +
+    #   geom_line(data = tempdat[tempdat$nearsick_sr == 'N2',],
+    #             aes(x = average_cc2, col = 'Past Neigh'), stat = 'density')
+    # 
+    # ggplot() +
+    #   geom_point(data = tempdat[tempdat$nearsick == 'N1',],
+    #             aes(x = average, y = average/score * median(score, na.rm = T), col = 'Pres Neigh')) +
+    #   geom_point(data = tempdat[tempdat$nearsick_sr == 'N2',],
+    #             aes(x = average, y = average/score * median(score, na.rm = T), col = 'Past Neigh')) +
+    #   geom_abline()
     
     compdat <- rbind(compdat, tempdat)
   }
