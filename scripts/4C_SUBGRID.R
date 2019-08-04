@@ -23,7 +23,7 @@ conn <- initialize.sql("saurin_test")
 tablename_jpeg = sprintf('%s_%d_JPEG',expt_name,density);
 tablename_jpeg_cc = sprintf('%s_CC_%d_JPEG',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
-# tablename_fit_cc = sprintf('%s_CC_%d_FITNESS',expt_name,density);
+tablename_fit_cc = sprintf('%s_CC_%d_FITNESS',expt_name,density);
 # tablename_mdfr = sprintf('%s_CC_%d_MDFR',expt_name,density);
 
 p2c_info = NULL
@@ -90,6 +90,23 @@ alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==1] = '1TL'
 alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==1] = '3BL'
 alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==0] = '2TR'
 alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
+
+# alldat.cc <- dbGetQuery(conn, sprintf('select a.*, b.*
+#                                   from %s a, %s b
+#                                   where a.pos = b.pos
+#                                   order by a.hours, b.%s, b.%s, b.%s',
+#                                    tablename_fit_cc,
+#                                    p2c_info[1],p2c_info[2],
+#                                    p2c_info[3],p2c_info[4]))
+# 
+# alldat.cc$colony[alldat.cc$orf_name == 'BF_control'] = 'Reference'
+# alldat.cc$colony[alldat.cc$orf_name != 'BF_control'] = 'Query'
+# alldat.cc$colony[is.na(alldat.cc$orf_name)] = 'Gap'
+# 
+# alldat.cc$source[alldat.cc$`6144row`%%2==1 & alldat.cc$`6144col`%%2==1] = '1TL'
+# alldat.cc$source[alldat.cc$`6144row`%%2==0 & alldat.cc$`6144col`%%2==1] = '3BL'
+# alldat.cc$source[alldat.cc$`6144row`%%2==1 & alldat.cc$`6144col`%%2==0] = '2TR'
+# alldat.cc$source[alldat.cc$`6144row`%%2==0 & alldat.cc$`6144col`%%2==0] = '4BR'
 
 ##### COMPETITION CORRECTION
 compdat <- data.frame()
@@ -287,4 +304,19 @@ annotate_figure(ggarrange(plt.scr, plt.pix, align = "hv",
 ggsave(sprintf("%scorrected_%d_%d.jpg",out_path,hr,pl),
        width = 10, height = 5,
        dpi = 300)
+
+# ggplot() +
+#   geom_line(data = alldat[alldat$hours == 18 & alldat$`6144plate` == 1 & alldat$pos %in% tempdat$pos[tempdat$nearsick == 'N1'],],
+#             aes(x = fitness, col = 'W/O CC'), stat = 'density', lwd = 1.2) +
+#   geom_line(data = alldat.cc[alldat.cc$hours == 18 & alldat.cc$`6144plate` == 1 & alldat.cc$pos %in% tempdat$pos[tempdat$nearsick == 'N1'],],
+#             aes(x = fitness, col = 'W CC'), stat = 'density', lwd = 1.2) +
+#   labs(title = 'Impact of Competition Correction (CC)',
+#        subtitle = 'On fitness of colonies growing near small colonies or gaps',
+#        x = 'Fitness',
+#        y = 'Density') +
+#   scale_color_discrete(name = '') +
+#   theme_linedraw()
+# ggsave(sprintf("%s%s_COMP_CORR.png",
+#                out_path,expt_name),
+#        width = 6, height = 5)
 
