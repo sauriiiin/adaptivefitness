@@ -14,16 +14,16 @@ source("R/functions/initialize.sql.R")
 ##### GET/SET DATA
 conn <- initialize.sql("saurin_test")
 
-expt_name = '4C3_GA1'
-expt = 'FS1-GA1'
+expt_name = '4C3_GA3'
+expt = 'FS1-GA3'
 out_path = 'figs/sym/';
 density = 6144;
 
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_LID/"
-dat.dir_cc <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_CC_LID/"
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_LID/"
+dat.dir_cc <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_CC_LID/"
 
 cont.name = 'BF_control'
-tablename_p2o  = '4C3_pos2orf_name1'
+tablename_p2o  = '4C3_pos2orf_name3'
 tablename_bpos = '4C3_borderpos'
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density)
 tablename_fits = sprintf('%s_%d_FITNESS_STATS',expt_name,density)
@@ -41,7 +41,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[3]))
+  hours <- c(hours, as.numeric(s[4]))
 }
 reps <- unique(reps)
 hours <- sort(unique(hours))
@@ -54,12 +54,12 @@ for (ii in 1:length(reps)) {
   for (i in 1:length(hours)) {
     hr <- hours[i]
     
-    # dat.stats <- read.csv(paste0(dat.dir,
-    #                              sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
-    #                       na.strings = "NaN")
     dat.stats <- read.csv(paste0(dat.dir,
-                                 sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+                                 sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
                           na.strings = "NaN")
+    # dat.stats <- read.csv(paste0(dat.dir,
+    #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+    #                       na.strings = "NaN")
     dat.stats <- dat.stats[dat.stats$hours != 0,]
     dat.stats$cont_hrs <- hr
     dat.stats$rep <- rep
@@ -96,8 +96,8 @@ for (i in c(110000,120000,130000,140000,210000,220000,230000,240000)) {
   quepos <- cbind(quepos, restpos + i)
 }
 
-hr.r <- 18
-hr.q <- 18
+hr.r <- 14
+hr.q <- 14
 
 contfit <- NULL
 contfit_cc <- NULL
