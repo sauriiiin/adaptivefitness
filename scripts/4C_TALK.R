@@ -10,7 +10,7 @@ library(gridExtra)
 library(ggpubr)
 library(grid)
 library(tidyverse)
-library(egg)
+# library(egg)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
@@ -33,7 +33,7 @@ alldat.b = dbGetQuery(conn, 'select c.*, b.*
                           from 4C3_GA3_BEAN_6144_FITNESS b, 4C3_pos2coor6144 c
                           where b.pos = c.pos
                           order by b.hours, 6144plate, 6144col, 6144row')
-
+dbDisconnect(conn)
 
 ##### ERROR
 rmse.dat <- NULL
@@ -48,7 +48,7 @@ for (hr in sort(unique(alldat$hours))) {
 rmse.dat <- data.frame(rmse.dat)
 colnames(rmse.dat) <- c('hours','LID','BEAN','RND')
 
-my_comparisons <- list( c("BEAN", "LID"), c("BEAN", "RND"), c("LID", "BEAN") )
+# my_comparisons <- list( c("BEAN", "LID"), c("BEAN", "RND"), c("LID", "BEAN") )
 
 ggplot(rmse.dat[rmse.dat$hours > 10,]) +
   geom_boxplot(aes(x = 'LID', y = LID, fill = 'LID')) +
@@ -61,8 +61,8 @@ ggplot(rmse.dat[rmse.dat$hours > 10,]) +
        x = 'Method',
        y = 'RMSE %') +
   theme_linedraw()
-ggsave(sprintf("%s%s_ERROR_BOX.png",
-               out_path,expt_name),
-       width = 6, height = 5)
+# ggsave(sprintf("%s%s_ERROR_BOX.png",
+#                out_path,expt_name),
+#        width = 6, height = 5)
 
-
+# t.test(rmse.dat$LID, rmse.dat$RND)

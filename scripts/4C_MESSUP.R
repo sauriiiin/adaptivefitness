@@ -404,20 +404,26 @@ sig.lid <- sig.dat
 load("figs/mess/sig_bean.RData")
 sig.bean <- sig.dat
 
-dis.dat <- cbind(sig.lid$hours, sig.lid$con_ben, sig.lid$con_del, sig.lid$pre_ben, sig.lid$pre_del, sig.bean$pre_ben, sig.bean$pre_del)
+dis.dat <- cbind(sig.lid$hours, sig.lid$con_ben, sig.lid$con_del, sig.lid$pre_ben, sig.lid$pre_del, 100 -  sig.lid$pre_ben - sig.lid$pre_del,
+                 sig.bean$pre_ben, sig.bean$pre_del, 100 - sig.bean$pre_ben - sig.bean$pre_del)
 colnames(dis.dat) <- c('hours', 'con_ben', 'con_del',
-                       'lid_ben', 'lid_del',
-                       'bean_ben', 'bean_del')
+                       'lid_ben', 'lid_del', 'lid_neu',
+                       'bean_ben', 'bean_del', 'bean_neu')
 dis.dat <- data.frame(dis.dat)
+
+rmse.lid.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$lid_ben)^2, na.rm = T))
+rmse.lid.del <- sqrt(mean((dis.dat$con_del - dis.dat$lid_del)^2, na.rm = T))
+rmse.bean.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$bean_ben)^2, na.rm = T))
+rmse.bean.del <- sqrt(mean((dis.dat$con_del - dis.dat$bean_del)^2, na.rm = T))
 
 pre.ben <- ggplot(dis.dat) +
   geom_abline() +
   geom_point(aes(x = con_ben, y = lid_ben, col = 'LID'), size = 5) +
   geom_point(aes(x = con_ben, y = bean_ben, col = 'BEAN'), size = 5) +
   labs(title = 'How good are the predictions?',
-       subtitle = 'Beneficial Predictions',
-       x = 'Condition Positive',
-       y = 'Predicted Positive') +
+       subtitle = sprintf('Beneficial | LID RMSE = %.2f | BEAN RMSE = %.2f', rmse.lid.ben, rmse.bean.ben),
+       x = 'Condition Positive (%)',
+       y = 'Predicted Positive (%)') +
   scale_color_discrete(name = 'Method') +
   theme_linedraw() +
   coord_cartesian(xlim = c(0, 100),
@@ -428,8 +434,8 @@ pre.del <- ggplot(dis.dat) +
   geom_point(aes(x = con_del, y = lid_del, col = 'LID'), size = 5) +
   geom_point(aes(x = con_del, y = bean_del, col = 'BEAN'), size = 5) +
   labs(title = '',
-       subtitle = 'Deleterious Predictions',
-       x = 'Condition Positive',
+       subtitle = sprintf('Deleterious | LID RMSE = %.2f | BEAN RMSE = %.2f', rmse.lid.del, rmse.bean.del),
+       x = 'Condition Positive (%)',
        y = '') +
   scale_color_discrete(name = 'Method') +
   theme_linedraw() +
@@ -442,4 +448,21 @@ ggsave(sprintf("%s%s_PREDICTIONS.png",
                out_path,expt_name),
        width = 10, height = 6)
 
+ggplot(dis.dat) +
+  geom_point(aes(x = hours, y = con_ben, col = 'BEN', shape = 'DATA'), size = 5) +
+  # geom_line(aes(x = hours, y = con_ben, col = 'BEN')) +
+  geom_point(aes(x = hours, y = con_del, col = 'DEL', shape = 'DATA'), size = 5) +
+  # geom_line(aes(x = hours, y = con_del, col = 'DEL')) +
+  geom_point(aes(x = hours, y = lid_ben, col = 'BEN', shape = 'LID'), size = 5) +
+  # geom_line(aes(x = hours, y = lid_ben, col = 'BEN')) +
+  geom_point(aes(x = hours, y = lid_del, col = 'DEL', shape = 'LID'), size = 5) +
+  # geom_line(aes(x = hours, y = lid_del, col = 'DEL')) +
+  geom_point(aes(x = hours, y = lid_neu, col = 'NEU', shape = 'LID'), size = 5) +
+  # geom_line(aes(x = hours, y = lid_neu, col = 'NEU'))+
+  geom_point(aes(x = hours, y = bean_ben, col = 'BEN', shape = 'BEAN'), size = 5) +
+  # geom_line(aes(x = hours, y = bean_ben, col = 'BEN')) +
+  geom_point(aes(x = hours, y = bean_del, col = 'DEL', shape = 'BEAN'), size = 5) +
+  # geom_line(aes(x = hours, y = bean_del, col = 'DEL')) +
+  geom_point(aes(x = hours, y = bean_neu, col = 'NEU', shape = 'BEAN'), size = 5)
+  # geom_line(aes(x = hours, y = bean_neu, col = 'NEU'))
 

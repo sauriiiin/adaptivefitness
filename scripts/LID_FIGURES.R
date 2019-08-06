@@ -10,7 +10,7 @@ library(gridExtra)
 library(ggpubr)
 library(grid)
 library(tidyverse)
-library(egg)
+# library(egg)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
@@ -60,10 +60,10 @@ fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.aver
                                   pl,p2c_info[3],p2c_info[4]))
 fitdat$bg[is.na(fitdat$average)] = NA
 
-fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = 'TL'
-fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = 'BL'
-fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = 'TR'
-fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = 'BR'
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==1] = '1TL'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==1] = '3BL'
+fitdat$source[fitdat$`6144row`%%2==1 & fitdat$`6144col`%%2==0] = '2TR'
+fitdat$source[fitdat$`6144row`%%2==0 & fitdat$`6144col`%%2==0] = '4BR'
 
 fitdat$colony[fitdat$orf_name == 'BF_control'] = 'Reference'
 fitdat$colony[fitdat$orf_name != 'BF_control'] = 'Query'
