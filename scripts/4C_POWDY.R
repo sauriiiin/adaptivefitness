@@ -66,7 +66,11 @@ for (ii in 1:length(reps)) {
     dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
     for (h in unique(dat.stats$hours)) {
       cont.mean <- mean(dat.fit$fitness[dat.fit$hours == h & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
-      dat.stats$es[dat.stats$hours == h] <- round(dat.stats$cs_mean[dat.stats$hours == h]/cont.mean,4)
+      # dat.stats$es[dat.stats$hours == h] <- round(dat.stats$cs_mean[dat.stats$hours == h]/cont.mean,4)
+      
+      ref.pix.m <- mean(dat.fit$average[dat.fit$hours == h & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
+      que.pix.m <- mean(dat.fit$average[dat.fit$hours == h & dat.fit$orf_name != 'BF_control' & !is.na(dat.fit$fitness)])
+      dat.stats$es[dat.stats$hours == h] <- que.pix.m/ref.pix.m
       
       dat.stats$cen[dat.stats$hours == h] <- mean(dat.stats$es[dat.stats$hours == h])
       
@@ -326,26 +330,25 @@ for (rep in unique(reps)) {
   dat.cnt2$hours <- dat.cnt$hours
   dat.cnt2$cont_hrs <- dat.cnt$cont_hrs
   dat.cnt2$cen <- dat.cnt$cen
-  dat.cnt2$Neutral <- dat.cnt$Neutral
-  dat.cnt2$Deleterious <- dat.cnt2$Neutral + dat.cnt$Deleterious
+  dat.cnt2$Deleterious <- dat.cnt$Deleterious
   dat.cnt2$Beneficial <- dat.cnt2$Deleterious + dat.cnt$Beneficial
-  dat.cnt2$Neutral_p <- dat.cnt$Neutral_p
-  dat.cnt2$Deleterious_p <- dat.cnt2$Neutral_p + dat.cnt$Deleterious_p
+  dat.cnt2$Neutral <- dat.cnt2$Beneficial + dat.cnt$Neutral
+  dat.cnt2$Deleterious_p <- dat.cnt$Deleterious_p
   dat.cnt2$Beneficial_p <- dat.cnt2$Deleterious_p + dat.cnt$Beneficial_p
+  dat.cnt2$Neutral_p <- dat.cnt2$Beneficial_p + dat.cnt$Neutral_p
   dat.cnt2 <- data.frame(dat.cnt2)
   t <- dat.cnt2$Beneficial[1]
   
   plt.pow.fdr <- ggplot(dat.cnt2) +
-    geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 0.6) +
-    # geom_point(aes(x = cen, y = Beneficial, fill = 'Beneficial'), shape = 21, col = 'black') +
-    geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 0.6) +
-    # geom_point(aes(x = cen, y = Deleterious, fill = 'Deleterious'), shape = 21, col = 'black') +
-    geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 0.6) +
-    # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
+    geom_area(aes(x = cen, y = Neutral, fill = 'Neutral'), alpha = 1) +
+    geom_area(aes(x = cen, y = Beneficial, fill = 'Beneficial'), alpha = 1) +
+    geom_area(aes(x = cen, y = Deleterious, fill = 'Deleterious'), alpha = 1) +
+    geom_vline(xintercept = seq(0,2,0.025), col = '#757575', lwd = 0.5, alpha =0.5) +
+    geom_hline(yintercept = c(t * seq(0,1,0.05)), col = '#757575', lwd = 0.5, alpha =0.5) +
     labs(title = "Which effects are detected?",
          subtitle = sprintf('with %d technical replicate (FDR = 0.05)',rep),
-         x = 'Mean Relative Fitness',
-         y = 'Effect Distribution') +
+         x = 'Effect Size',
+         y = 'Sensitivity') +
     scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
                        minor_breaks = c(t * seq(0,1,0.05)),
                        labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
@@ -353,12 +356,12 @@ for (rep in unique(reps)) {
                        minor_breaks = seq(0,2,0.025)) +
     scale_color_manual(name = 'Effects',
                        breaks = c('Beneficial','Neutral','Deleterious'),
-                       values = c('Deleterious'='#D32F2F',
+                       values = c('Deleterious'='#F44336',
                                   'Neutral'='#303F9F',
                                   'Beneficial'='#4CAF50')) +
     scale_fill_manual(name = 'Effects',
                       breaks = c('Beneficial','Neutral','Deleterious'),
-                      values = c('Deleterious'='#D32F2F',
+                      values = c('Deleterious'='#F44336',
                                  'Neutral'='#303F9F',
                                  'Beneficial'='#4CAF50')) +
     theme_linedraw() +
@@ -376,20 +379,17 @@ for (rep in unique(reps)) {
            shape = guide_legend(override.aes = list(size=2))) +
     coord_cartesian(xlim = c(0.8,1.2),
                     ylim = c(0,t))
-  # ggsave(sprintf("%s%s_EffectDis%d.png",out_path,expt_name,rep),
-  #        width = 10,height = 10) 
   
   plt.pow.p <- ggplot(dat.cnt2) +
-    geom_area(aes(x = cen, y = Beneficial_p, fill = 'Beneficial'), alpha = 0.6) +
-    # geom_point(aes(x = cen, y = Beneficial, fill = 'Beneficial'), shape = 21, col = 'black') +
-    geom_area(aes(x = cen, y = Deleterious_p, fill = 'Deleterious'), alpha = 0.6) +
-    # geom_point(aes(x = cen, y = Deleterious, fill = 'Deleterious'), shape = 21, col = 'black') +
-    geom_area(aes(x = cen, y = Neutral_p, fill = 'Neutral'), alpha = 0.6) +
-    # geom_point(aes(x = cen, y = Neutral, fill = 'Neutral'), shape = 21, col = 'black') +
+    geom_area(aes(x = cen, y = Neutral_p, fill = 'Neutral'), alpha = 1) +
+    geom_area(aes(x = cen, y = Beneficial_p, fill = 'Beneficial'), alpha = 1) +
+    geom_area(aes(x = cen, y = Deleterious_p, fill = 'Deleterious'), alpha = 1) +
+    geom_vline(xintercept = seq(0,2,0.025), col = '#757575', lwd = 0.5, alpha =0.5) +
+    geom_hline(yintercept = c(t * seq(0,1,0.05)), col = '#757575', lwd = 0.5, alpha =0.5) +
     labs(title = "",
          subtitle = sprintf('with %d technical replicate (p = 0.05)',rep),
-         x = 'Mean Relative Fitness',
-         y = 'Effect Distribution') +
+         x = 'Effect Size',
+         y = 'Sensitivity') +
     scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
                        minor_breaks = c(t * seq(0,1,0.05)),
                        labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
@@ -397,12 +397,12 @@ for (rep in unique(reps)) {
                        minor_breaks = seq(0,2,0.025)) +
     scale_color_manual(name = 'Effects',
                        breaks = c('Beneficial','Neutral','Deleterious'),
-                       values = c('Deleterious'='#D32F2F',
+                       values = c('Deleterious'='#F44336',
                                   'Neutral'='#303F9F',
                                   'Beneficial'='#4CAF50')) +
     scale_fill_manual(name = 'Effects',
                       breaks = c('Beneficial','Neutral','Deleterious'),
-                      values = c('Deleterious'='#D32F2F',
+                      values = c('Deleterious'='#F44336',
                                  'Neutral'='#303F9F',
                                  'Beneficial'='#4CAF50')) +
     theme_linedraw() +

@@ -167,25 +167,25 @@ for (hr in sort(unique(alldat$hours))) {
     #        width = 8, height = 6,
     #        dpi = 300)
     
-    # ggplot(tempdat) +
-    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
-    #   geom_point(data = tempdat[tempdat$colony == 'Gap',],
-    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
-    #   geom_point(data = tempdat[tempdat$score > ul,],
-    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Healthy')) +
-    #   geom_point(data = tempdat[tempdat$score < ll,],
-    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Sick')) +
-    #   scale_x_continuous(breaks = seq(0,96,4)) +
-    #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
-    #   labs(title = expt,
-    #        subtitle = sprintf('Colony Health Layout of Plate #%d at %d Hrs', pl, hr),
-    #        x = 'Columns',
-    #        y = 'Rows') +
-    #   scale_color_manual(name = 'Health',
-    #                      breaks = c('Normal','Sick','Healthy','Gap'),
-    #                      values = c('Normal'='#9E9E9E','Sick'='#673AB7','Healthy'='#FFC107','Gap'='#FF5252')) +
-    #   scale_shape_discrete(name = 'Colony Type') +
-    #   theme_linedraw()
+    ggplot(tempdat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
+      geom_point(data = tempdat[tempdat$colony == 'Gap',],
+                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+      geom_point(data = tempdat[tempdat$score > ul,],
+                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Healthy')) +
+      geom_point(data = tempdat[tempdat$score < ll,],
+                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Sick')) +
+      scale_x_continuous(breaks = seq(0,96,4)) +
+      scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+      labs(title = expt,
+           subtitle = sprintf('Colony Health Layout of Plate #%d at %d Hrs', pl, hr),
+           x = 'Columns',
+           y = 'Rows') +
+      scale_color_manual(name = 'Health',
+                         breaks = c('Normal','Sick','Healthy','Gap'),
+                         values = c('Normal'='#9E9E9E','Sick'='#673AB7','Healthy'='#FFC107','Gap'='#FF5252')) +
+      scale_shape_discrete(name = 'Colony Type') +
+      theme_linedraw()
     # ggsave(sprintf("%shealth_dis_%d_%d.jpg",out_path,hr,pl),
     #        width = 8, height = 5,
     #        dpi = 300)
@@ -196,13 +196,35 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$outlier[is.na(tempdat$outlier)] <- 'Normal'
     
     tempdat$reallysick <- NULL
+    tempdat$healthy.neigh <- NULL
     for (p in tempdat$pos[tempdat$outlier == 'Sick']) {
-      if (sum(tempdat$outlier[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] == 'Healthy', na.rm = T) > 0) {
+      healthy.neigh <- sum(tempdat$outlier[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] == 'Healthy', na.rm = T)
+      if (healthy.neigh > 0) {
         tempdat$reallysick[tempdat$pos == p] <- 'Y'
+        tempdat$healthy.neigh[tempdat$pos == p] <- healthy.neigh
       }
     }
     tempdat$reallysick[is.na(tempdat$reallysick) & tempdat$outlier == 'Sick'] <- 'N'
     tempdat$reallysick[is.na(tempdat$reallysick)] <- 'Normal'
+    
+    tempdat$reallyhealthy <- NULL
+    tempdat$sick.neigh <- NULL
+    for (p in tempdat$pos[tempdat$outlier == 'Healthy']) {
+      sick.neigh <- sum(tempdat$outlier[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] == 'Sick', na.rm = T)
+      if (sick.neigh > 0) {
+        tempdat$reallyhealthy[tempdat$pos == p] <- 'Y'
+        tempdat$sick.neigh[tempdat$pos == p] <- sick.neigh
+      }
+    }
+    tempdat$reallyhealthy[is.na(tempdat$reallyhealthy) & tempdat$outlier == 'Healthy'] <- 'N'
+    tempdat$reallyhealthy[is.na(tempdat$reallyhealthy)] <- 'Normal'
+    
+    ggplot() +
+      geom_point(data = tempdat[tempdat$healthy.neigh > 0 & !is.na(tempdat$healthy.neigh),],
+                 aes(x = `6144col`, y = `6144row`, col = 'sick')) +
+      geom_point(data = tempdat[tempdat$sick.neigh > 0 & !is.na(tempdat$sick.neigh),],
+                 aes(x = `6144col`, y = `6144row`, col = 'healthy'))
+    
     
     tempdat$nearsick <- NULL
     tempdat$nearsick_sr <- NULL
