@@ -142,12 +142,6 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$neigh_sr[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA
     tempdat$score <- tempdat$average/((tempdat$neigh + tempdat$neigh_sr)/2)
     
-    # for (i in seq(1,dim(grids)[1])) {
-    #   tempdat$score_neigh[tempdat$pos == grids[i]] <-
-    #     (mean(tempdat$score[tempdat$pos %in% grids[i,2:9]], na.rm = T) +
-    #       mean(tempdat$score[tempdat$pos %in% grids_sr[i,2:9]], na.rm = T))/2
-    # }
-    
     md <- mad(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T)
     ll <- median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T) - 3*md
     ul <- median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm =T) + 3*md
@@ -166,25 +160,25 @@ for (hr in sort(unique(alldat$hours))) {
     #        width = 8, height = 6,
     #        dpi = 300)
     
-    ggplot(tempdat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
-      geom_point(data = tempdat[tempdat$colony == 'Gap',],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
-      geom_point(data = tempdat[tempdat$score > ul,],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Big')) +
-      geom_point(data = tempdat[tempdat$score < ll,],
-                 aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Small')) +
-      scale_x_continuous(breaks = seq(0,96,4)) +
-      scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
-      labs(title = expt,
-           subtitle = sprintf('Colony Health Layout of Plate #%d at %d Hrs', pl, hr),
-           x = 'Columns',
-           y = 'Rows') +
-      scale_color_manual(name = 'Health',
-                         breaks = c('Normal','Small','Big','Gap'),
-                         values = c('Normal'='#9E9E9E','Small'='#673AB7','Big'='#FFC107','Gap'='#FF5252')) +
-      scale_shape_discrete(name = 'Colony Type') +
-      theme_linedraw()
+    # ggplot(tempdat) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
+    #   geom_point(data = tempdat[tempdat$colony == 'Gap',],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+    #   geom_point(data = tempdat[tempdat$score > ul,],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Big')) +
+    #   geom_point(data = tempdat[tempdat$score < ll,],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Small')) +
+    #   scale_x_continuous(breaks = seq(0,96,4)) +
+    #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+    #   labs(title = expt,
+    #        subtitle = sprintf('Colony Health Layout of Plate #%d at %d Hrs', pl, hr),
+    #        x = 'Columns',
+    #        y = 'Rows') +
+    #   scale_color_manual(name = 'Health',
+    #                      breaks = c('Normal','Small','Big','Gap'),
+    #                      values = c('Normal'='#9E9E9E','Small'='#673AB7','Big'='#FFC107','Gap'='#FF5252')) +
+    #   scale_shape_discrete(name = 'Colony Type') +
+    #   theme_linedraw()
     # ggsave(sprintf("%shealth_dis_%d_%d.jpg",out_path,hr,pl),
     #        width = 8, height = 5,
     #        dpi = 300)
@@ -218,13 +212,17 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$healthy[is.na(tempdat$healthy) & tempdat$size == 'Big'] <- 'N'
     tempdat$healthy[is.na(tempdat$healthy)] <- 'Normal'
     
-    ggplot() +
-      geom_point(data = tempdat[tempdat$healthy_neigh > 0 & !is.na(tempdat$healthy_neigh),],
-                 aes(x = `6144col`, y = `6144row`, col = 'Small')) +
-      geom_point(data = tempdat[tempdat$sick_neigh > 0 & !is.na(tempdat$sick_neigh),],
-                 aes(x = `6144col`, y = `6144row`, col = 'Big'))
-    
-    hello <- tempdat[tempdat$sick == 'Y' | tempdat$healthy == 'Y',]
+    # ggplot() +
+    #   geom_point(data = tempdat[tempdat$healthy_neigh > 0 & !is.na(tempdat$healthy_neigh),],
+    #              aes(x = `6144col`, y = `6144row`, col = 'Small')) +
+    #   geom_point(data = tempdat[tempdat$sick_neigh > 0 & !is.na(tempdat$sick_neigh),],
+    #              aes(x = `6144col`, y = `6144row`, col = 'Big')) +
+    #   scale_x_continuous(breaks = seq(0,96,4)) +
+    #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+    #   coord_cartesian(xlim = c(0,96),
+    #                   ylim = c(0,64))
+    # 
+    # hello <- tempdat[tempdat$sick == 'Y' | tempdat$healthy == 'Y',]
     
     tempdat$comp <- NULL
     for (p in tempdat$pos[tempdat$sick == 'Y' | tempdat$healthy == 'Y']){
@@ -249,11 +247,12 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$comp[tempdat$healthy == 'Y' & tempdat$comp == 'CH'] = NA
     tempdat$comp[is.na(tempdat$comp)] = 'No'
     
-    ggplot(tempdat) +
-      geom_point(aes(x = `6144col`, y = `6144row`, col = comp)) +
-      scale_x_continuous(breaks = seq(0,96,4)) +
-      scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse')
-    
+    # ggplot(tempdat) +
+    #   geom_point(aes(x = `6144col`, y = `6144row`, col = comp)) +
+    #   scale_x_continuous(breaks = seq(0,96,4)) +
+    #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+    #   coord_cartesian(xlim = c(0,96),
+    #                   ylim = c(0,64))
     
     # tempdat$nearsick <- NULL
     # tempdat$nearsick_sr <- NULL
@@ -297,29 +296,29 @@ for (hr in sort(unique(alldat$hours))) {
     #        width = 8, height = 5,
     #        dpi = 300)
     
-    tempdat$average_cc2 <- tempdat$average
-    # tempdat$average_cc2[tempdat$nearsick == 'N1'] <- tempdat$average_cc2[tempdat$nearsick == 'N1'] *
-    #   median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick == 'N1'], na.rm = T)
-    # tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] <- tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] *
-    #   median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick_sr == 'N2'], na.rm = T)
-    tempdat$average_cc2[tempdat$comp == 'CS'] <- tempdat$average_cc2[tempdat$comp == 'CS'] *
-      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$comp == 'CS'], na.rm = T)
-    tempdat$average_cc2[tempdat$comp == 'CH'] <- tempdat$average_cc2[tempdat$comp == 'CH'] *
-      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$comp == 'CH'], na.rm = T)
+    tempdat$average_cc <- tempdat$average
+    # tempdat$average_cc[tempdat$nearsick == 'N1'] <- tempdat$average_cc[tempdat$nearsick == 'N1'] *
+    #   median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$nearsick == 'N1'], na.rm = T)
+    # tempdat$average_cc[tempdat$nearsick_sr == 'N2'] <- tempdat$average_cc[tempdat$nearsick_sr == 'N2'] *
+    #   median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$nearsick_sr == 'N2'], na.rm = T)
+    tempdat$average_cc[tempdat$comp == 'CS'] <- tempdat$average_cc[tempdat$comp == 'CS'] *
+      median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$comp == 'CS'], na.rm = T)
+    tempdat$average_cc[tempdat$comp == 'CH'] <- tempdat$average_cc[tempdat$comp == 'CH'] *
+      median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$comp == 'CH'], na.rm = T)
 
     
     # ggplot() +
     #   geom_line(data = tempdat[tempdat$colony != 'Gap',],
     #             aes(x = average, col = 'RAW'), stat = 'density') +
     #   geom_line(data = tempdat[tempdat$colony != 'Gap',],
-    #             aes(x = average_cc2, col = 'CC'), stat = 'density') +
+    #             aes(x = average_cc, col = 'CC'), stat = 'density') +
     #   geom_vline(xintercept = quantile(tempdat$average, c(0.025, 0.5, 0.975), na.rm = T), col = 'Blue') +
-    #   geom_vline(xintercept = quantile(tempdat$average_cc2, c(0.025, 0.5,  0.975), na.rm = T), col = 'Red') +
+    #   geom_vline(xintercept = quantile(tempdat$average_cc, c(0.025, 0.5,  0.975), na.rm = T), col = 'Red') +
     #   facet_grid(.~colony)
     #   geom_line(data = tempdat[tempdat$nearsick == 'N1',],
-    #             aes(x = average_cc2, col = 'Pres Neigh'), stat = 'density') +
+    #             aes(x = average_cc, col = 'Pres Neigh'), stat = 'density') +
     #   geom_line(data = tempdat[tempdat$nearsick_sr == 'N2',],
-    #             aes(x = average_cc2, col = 'Past Neigh'), stat = 'density')
+    #             aes(x = average_cc, col = 'Past Neigh'), stat = 'density')
     # 
     # ggplot() +
     #   geom_point(data = tempdat[tempdat$nearsick == 'N1',],
@@ -333,10 +332,9 @@ for (hr in sort(unique(alldat$hours))) {
 }
 
 compdat$average[is.na(compdat$orf_name)] <- NA
-compdat$average_cc2[is.na(compdat$orf_name)] <- NA
-compdat$modifier[is.na(compdat$orf_name)] <- NA
+compdat$average_cc[is.na(compdat$orf_name)] <- NA
 
-jpegdat <- data.frame(compdat$pos, compdat$hours, compdat$average, compdat$average_cc2)
+jpegdat <- data.frame(compdat$pos, compdat$hours, compdat$average, compdat$average_cc)
 colnames(jpegdat) <- c('pos','hours','average_raw', 'average')
 dbWriteTable(conn, tablename_jpeg_cc, jpegdat, overwrite = T)
 
@@ -354,11 +352,11 @@ plt.scr <- ggplot(tempdat[tempdat$colony != 'Gap',]) +
   coord_cartesian(xlim = c(200,600))
 
 plt.pix <- ggplot(tempdat[tempdat$colony != 'Gap',]) +
-  geom_line(aes(x = average_cc2, col = colony), stat = 'density', lwd = 1.2) +
-  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
-  geom_vline(xintercept = quantile(tempdat$average_cc2[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red') +
-  labs(title = sprintf('ES = %0.3f', median(tempdat$average_cc2[tempdat$colony == 'Query'], na.rm = T)/
-                         median(tempdat$average_cc2[tempdat$colony == 'Reference'], na.rm = T)),
+  geom_line(aes(x = average_cc, col = colony), stat = 'density', lwd = 1.2) +
+  geom_vline(xintercept = quantile(tempdat$average_cc[tempdat$colony == 'Reference'], c(0.05,0.95), na.rm = T), col = 'blue') +
+  geom_vline(xintercept = quantile(tempdat$average_cc[tempdat$colony == 'Query'], c(0.05,0.95), na.rm = T), col = 'red') +
+  labs(title = sprintf('ES = %0.3f', median(tempdat$average_cc[tempdat$colony == 'Query'], na.rm = T)/
+                         median(tempdat$average_cc[tempdat$colony == 'Reference'], na.rm = T)),
        x = 'CC Pixel Counts',
        y = 'Frequency') +
   theme_linedraw() +
