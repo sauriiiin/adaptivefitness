@@ -226,48 +226,48 @@ for (hr in sort(unique(alldat$hours))) {
     
     hello <- tempdat[tempdat$sick == 'Y' | tempdat$healthy == 'Y',]
     
-    tempdat$comp.sick <- NULL
-    tempdat$comp.healthy <- NULL
+    tempdat$comp <- NULL
     for (p in tempdat$pos[tempdat$sick == 'Y' | tempdat$healthy == 'Y']){
-      if (tempdat$sick[tempdat$pos == p] == 'Y') {
-        N <- sum(tempdat$sick_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <= 
-              tempdat$healthy_neigh[tempdat$pos == p], na.rm = T)
-        # if a sick colony has more healthy neighbors than the number of sick neighbors that its healthy neighbors do then it is the 
-        # sick colony that is causing the competition effect
-        if (N > 0) {
-          tempdat$comp.sick[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CS'
+      if (tempdat$healthy[tempdat$pos == p] == 'Y') {
+        N <- sum(tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] + 1 > 
+                   tempdat$sick_neigh[tempdat$pos == p], na.rm = T)
+        # a healthy colony should have no sick neighbors which have more or equal number of healthy neighbors than it has sick ones
+        if (N == 0) {
+          tempdat$comp[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CH'
         }
       } else {
-        N <- sum(tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] < 
-                   tempdat$sick_neigh[tempdat$pos == p], na.rm = T)
+        N <- sum(tempdat$sick_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <= 
+                   tempdat$healthy_neigh[tempdat$pos == p], na.rm = T)
+        # a sick colony should have atleast one healthy neighbor that has less sick nieghbors than it has healthy ones
         if (N > 0) {
-          tempdat$comp.healthy[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CH'
+          tempdat$comp[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CS'
         }
       }
     }
-    tempdat$comp.sick[tempdat$sick == 'Y'] = NA
-    tempdat$comp.healthy[tempdat$healthy == 'Y'] = NA
-    tempdat$comp.healthy[tempdat$comp.sick == 'CS'] = NA
+    tempdat$comp[is.na(tempdat$orf_name)] = NA
+    tempdat$comp[tempdat$sick == 'Y'] = NA
+    tempdat$comp[tempdat$healthy == 'Y' & tempdat$comp == 'CH'] = NA
+    tempdat$comp[is.na(tempdat$comp)] = 'No'
     
-    ggplot() +
-      geom_point(data = tempdat[tempdat$comp.sick == 'CS',], aes(x = `6144col`, y = `6144row`, col = comp.sick)) +
-      geom_point(data = tempdat[tempdat$comp.healthy == 'CH',], aes(x = `6144col`, y = `6144row`, col = comp.healthy))
+    ggplot(tempdat) +
+      geom_point(aes(x = `6144col`, y = `6144row`, col = comp)) +
+      scale_x_continuous(breaks = seq(0,96,4)) +
+      scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse')
     
     
-    
-    tempdat$nearsick <- NULL
-    tempdat$nearsick_sr <- NULL
-    for (p in tempdat$pos[tempdat$sick == 'Y']) {
-      tempdat$nearsick[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'N1'
-      tempdat$nearsick_sr[tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <- 'N2'
-    }
-    tempdat$nearsick[is.na(tempdat$orf_name)] <- 'N'
-    tempdat$nearsick[is.na(tempdat$nearsick)] <- 'N'
-    tempdat$nearsick[tempdat$sick == 'Y'] <- 'N'
-    tempdat$nearsick_sr[is.na(tempdat$orf_name)] <- 'N'
-    tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
-    tempdat$nearsick_sr[tempdat$nearsick == 'N1'] <- 'N'
-    tempdat$nearsick_sr[tempdat$sick == 'Y'] <- 'N'
+    # tempdat$nearsick <- NULL
+    # tempdat$nearsick_sr <- NULL
+    # for (p in tempdat$pos[tempdat$sick == 'Y']) {
+    #   tempdat$nearsick[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'N1'
+    #   tempdat$nearsick_sr[tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <- 'N2'
+    # }
+    # tempdat$nearsick[is.na(tempdat$orf_name)] <- 'N'
+    # tempdat$nearsick[is.na(tempdat$nearsick)] <- 'N'
+    # tempdat$nearsick[tempdat$sick == 'Y'] <- 'N'
+    # tempdat$nearsick_sr[is.na(tempdat$orf_name)] <- 'N'
+    # tempdat$nearsick_sr[is.na(tempdat$nearsick_sr)] <- 'N'
+    # tempdat$nearsick_sr[tempdat$nearsick == 'N1'] <- 'N'
+    # tempdat$nearsick_sr[tempdat$sick == 'Y'] <- 'N'
     
     # ggplot(tempdat) +
     #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
@@ -298,14 +298,15 @@ for (hr in sort(unique(alldat$hours))) {
     #        dpi = 300)
     
     tempdat$average_cc2 <- tempdat$average
-    tempdat$average_cc2[tempdat$nearsick == 'N1'] <- tempdat$average_cc2[tempdat$nearsick == 'N1'] *
-      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick == 'N1'], na.rm = T)
-    tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] <- tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] *
-      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick_sr == 'N2'], na.rm = T)
-    # tempdat$average_cc2[tempdat$nearsick == 'N1' & !is.na(tempdat$score)] <- tempdat$average_cc2[tempdat$nearsick == 'N1' & !is.na(tempdat$score)] *
-    #   median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm = T)/tempdat$score[tempdat$nearsick == 'N1' & !is.na(tempdat$score)]
-    # tempdat$average_cc2[tempdat$nearsick_sr == 'N2' & !is.na(tempdat$score)] <- tempdat$average_cc2[tempdat$nearsick_sr == 'N2' & !is.na(tempdat$score)] *
-    #   median(tempdat$score[tempdat$orf_name == 'BF_control'], na.rm = T)/tempdat$score[tempdat$nearsick_sr == 'N2' & !is.na(tempdat$score)]
+    # tempdat$average_cc2[tempdat$nearsick == 'N1'] <- tempdat$average_cc2[tempdat$nearsick == 'N1'] *
+    #   median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick == 'N1'], na.rm = T)
+    # tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] <- tempdat$average_cc2[tempdat$nearsick_sr == 'N2'] *
+    #   median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$nearsick_sr == 'N2'], na.rm = T)
+    tempdat$average_cc2[tempdat$comp == 'CS'] <- tempdat$average_cc2[tempdat$comp == 'CS'] *
+      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$comp == 'CS'], na.rm = T)
+    tempdat$average_cc2[tempdat$comp == 'CH'] <- tempdat$average_cc2[tempdat$comp == 'CH'] *
+      median(tempdat$average_cc2[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc2[tempdat$comp == 'CH'], na.rm = T)
+
     
     # ggplot() +
     #   geom_line(data = tempdat[tempdat$colony != 'Gap',],
