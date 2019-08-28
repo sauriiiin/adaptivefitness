@@ -91,23 +91,23 @@ alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==1] = '3BL'
 alldat$source[alldat$`6144row`%%2==1 & alldat$`6144col`%%2==0] = '2TR'
 alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
 
-# alldat.cc <- dbGetQuery(conn, sprintf('select a.*, b.*
-#                                   from %s a, %s b
-#                                   where a.pos = b.pos and a.hours = 18
-#                                   order by a.hours, b.%s, b.%s, b.%s',
-#                                   tablename_fit_cc,
-#                                   p2c_info[1],p2c_info[2],
-#                                   p2c_info[3],p2c_info[4]))
-# 
-# alldat.cc$colony[alldat.cc$orf_name == 'BF_control'] = 'Reference'
-# alldat.cc$colony[alldat.cc$orf_name != 'BF_control'] = 'Query'
-# alldat.cc$colony[is.na(alldat.cc$orf_name)] = 'Gap'
-# 
-# alldat.cc$source[alldat.cc$`6144row`%%2==1 & alldat.cc$`6144col`%%2==1] = '1TL'
-# alldat.cc$source[alldat.cc$`6144row`%%2==0 & alldat.cc$`6144col`%%2==1] = '3BL'
-# alldat.cc$source[alldat.cc$`6144row`%%2==1 & alldat.cc$`6144col`%%2==0] = '2TR'
-# alldat.cc$source[alldat.cc$`6144row`%%2==0 & alldat.cc$`6144col`%%2==0] = '4BR'
-# 
+alldat.cc <- dbGetQuery(conn, sprintf('select a.*, b.*
+                                  from %s a, %s b
+                                  where a.pos = b.pos
+                                  order by a.hours, b.%s, b.%s, b.%s',
+                                  tablename_fit_cc,
+                                  p2c_info[1],p2c_info[2],
+                                  p2c_info[3],p2c_info[4]))
+
+alldat.cc$colony[alldat.cc$orf_name == 'BF_control'] = 'Reference'
+alldat.cc$colony[alldat.cc$orf_name != 'BF_control'] = 'Query'
+alldat.cc$colony[is.na(alldat.cc$orf_name)] = 'Gap'
+
+alldat.cc$source[alldat.cc$`6144row`%%2==1 & alldat.cc$`6144col`%%2==1] = '1TL'
+alldat.cc$source[alldat.cc$`6144row`%%2==0 & alldat.cc$`6144col`%%2==1] = '3BL'
+alldat.cc$source[alldat.cc$`6144row`%%2==1 & alldat.cc$`6144col`%%2==0] = '2TR'
+alldat.cc$source[alldat.cc$`6144row`%%2==0 & alldat.cc$`6144col`%%2==0] = '4BR'
+
 # alldat.b <- dbGetQuery(conn, sprintf('select a.*, b.*
 #                                   from %s a, %s b
 #                                   where a.pos = b.pos and a.hours = 17 and b.6144plate = 1
@@ -127,6 +127,8 @@ alldat$source[alldat$`6144row`%%2==0 & alldat$`6144col`%%2==0] = '4BR'
 
 ##### COMPETITION CORRECTION
 compdat <- data.frame()
+sick_N <- NULL
+healthy_N <- NULL
 
 for (hr in sort(unique(alldat$hours))) {
   for (pl in sort(unique(alldat$`6144plate`[alldat$hours == hr]))) {
@@ -162,24 +164,25 @@ for (hr in sort(unique(alldat$hours))) {
     
     # ggplot(tempdat) +
     #   geom_point(aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
-    #   geom_point(data = tempdat[tempdat$colony == 'Gap',],
-    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
     #   geom_point(data = tempdat[tempdat$score > ul,],
     #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Big')) +
     #   geom_point(data = tempdat[tempdat$score < ll,],
     #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Small')) +
+    #   # geom_point(data = tempdat[tempdat$colony == 'Gap',],
+    #   #            aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+    #   geom_text(data = tempdat, aes(x = `6144col`, y = `6144row`, label = average), check_overlap = TRUE, size = 0.83) +
     #   scale_x_continuous(breaks = seq(0,96,4)) +
     #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
-    #   labs(title = expt,
-    #        subtitle = sprintf('Colony Health Layout of Plate #%d at %d Hrs', pl, hr),
+    #   labs(title = sprintf('%s: Potential Drivers of Competition',expt),
+    #        subtitle = sprintf('Plate #%d at %d Hrs', pl, hr),
     #        x = 'Columns',
     #        y = 'Rows') +
-    #   scale_color_manual(name = 'Health',
+    #   scale_color_manual(name = 'Size',
     #                      breaks = c('Normal','Small','Big','Gap'),
     #                      values = c('Normal'='#9E9E9E','Small'='#673AB7','Big'='#FFC107','Gap'='#FF5252')) +
     #   scale_shape_discrete(name = 'Colony Type') +
     #   theme_linedraw()
-    # ggsave(sprintf("%shealth_dis_%d_%d.jpg",out_path,hr,pl),
+    # ggsave(sprintf("%spotentialdrivers_%d_%d.jpg",out_path,hr,pl),
     #        width = 8, height = 5,
     #        dpi = 300)
       
@@ -191,10 +194,12 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$sick <- NULL
     tempdat$healthy_neigh <- NULL
     for (p in tempdat$pos[tempdat$size == 'Small']) {
-      N <- sum(tempdat$size[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] == 'Big', na.rm = T)
+      # N <- sum(tempdat$size[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] == 'Big', na.rm = T)
+      N <- sum(tempdat$size[tempdat$pos %in% grids[grids[,1] == p, 2:9]] == 'Big', na.rm = T)
       if (N > 0) {
         tempdat$sick[tempdat$pos == p] <- 'Y'
         tempdat$healthy_neigh[tempdat$pos == p] <- N
+        healthy_N <- rbind(healthy_N, N)
       }
     }
     tempdat$sick[is.na(tempdat$sick) & tempdat$size == 'Small'] <- 'N'
@@ -203,56 +208,128 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$healthy <- NULL
     tempdat$sick_neigh <- NULL
     for (p in tempdat$pos[tempdat$size == 'Big']) {
-      N <- sum(tempdat$size[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] == 'Small', na.rm = T)
+      # N <- sum(tempdat$size[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] == 'Small', na.rm = T)
+      N <- sum(tempdat$size[tempdat$pos %in% grids[grids[,1] == p, 2:9]] == 'Small', na.rm = T)
       if (N > 0) {
         tempdat$healthy[tempdat$pos == p] <- 'Y'
         tempdat$sick_neigh[tempdat$pos == p] <- N
+        sick_N <- rbind(sick_N, N)
       }
     }
     tempdat$healthy[is.na(tempdat$healthy) & tempdat$size == 'Big'] <- 'N'
     tempdat$healthy[is.na(tempdat$healthy)] <- 'Normal'
     
     # ggplot() +
+    #   geom_point(data = tempdat,
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
+    #   # geom_point(data = tempdat[tempdat$colony == 'Gap',],
+    #   #             aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
     #   geom_point(data = tempdat[tempdat$healthy_neigh > 0 & !is.na(tempdat$healthy_neigh),],
-    #              aes(x = `6144col`, y = `6144row`, col = 'Small')) +
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Small')) +
     #   geom_point(data = tempdat[tempdat$sick_neigh > 0 & !is.na(tempdat$sick_neigh),],
-    #              aes(x = `6144col`, y = `6144row`, col = 'Big')) +
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Big')) +
+    #   geom_text(data = tempdat, aes(x = `6144col`, y = `6144row`, label = average), check_overlap = TRUE, size = 0.83) +
     #   scale_x_continuous(breaks = seq(0,96,4)) +
     #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
-    #   coord_cartesian(xlim = c(0,96),
-    #                   ylim = c(0,64))
-    # 
-    # hello <- tempdat[tempdat$sick == 'Y' | tempdat$healthy == 'Y',]
+    #   labs(title = sprintf('%s: Drivers of Competition',expt),
+    #        subtitle = sprintf('Plate #%d at %d Hrs', pl, hr),
+    #        x = 'Columns',
+    #        y = 'Rows') +
+    #   scale_color_manual(name = 'Size',
+    #                      breaks = c('Normal','Small','Big','Gap'),
+    #                      values = c('Normal'='#9E9E9E','Small'='#673AB7','Big'='#FFC107','Gap'='#FF5252')) +
+    #   scale_shape_discrete(name = 'Colony Type') +
+    #   theme_linedraw()
+    # ggsave(sprintf("%sdrivers_%d_%d.jpg",out_path,hr,pl),
+    #        width = 8, height = 5,
+    #        dpi = 300)
     
+    # ggplot() +
+    #   geom_point(data = tempdat,
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Normal'), size = 1) +
+    #   # geom_point(data = tempdat[tempdat$colony == 'Gap',],
+    #   #             aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Gap')) +
+    #   geom_point(data = tempdat[tempdat$healthy_neigh > 0 & !is.na(tempdat$healthy_neigh),],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Small')) +
+    #   geom_point(data = tempdat[tempdat$sick_neigh > 0 & !is.na(tempdat$sick_neigh),],
+    #              aes(x = `6144col`, y = `6144row`, shape = colony, col = 'Big')) +
+    #   geom_text(data = tempdat, aes(x = `6144col`, y = `6144row`, label = round(score, 2)), check_overlap = TRUE, size = 0.83) +
+    #   scale_x_continuous(breaks = seq(0,96,4)) +
+    #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+    #   labs(title = sprintf('%s: Drivers of Competition',expt),
+    #        subtitle = sprintf('Plate #%d at %d Hrs', pl, hr),
+    #        x = 'Columns',
+    #        y = 'Rows') +
+    #   scale_color_manual(name = 'Size',
+    #                      breaks = c('Normal','Small','Big','Gap'),
+    #                      values = c('Normal'='#9E9E9E','Small'='#673AB7','Big'='#FFC107','Gap'='#FF5252')) +
+    #   scale_shape_discrete(name = 'Colony Type') +
+    #   theme_linedraw()
+    # ggsave(sprintf("%sdrivers_score_%d_%d.jpg",out_path,hr,pl),
+    #        width = 8, height = 5,
+    #        dpi = 300)
+    
+    tempdat$comp.b <- NULL
+    tempdat$comp.s <- NULL
     tempdat$comp <- NULL
+    tempdat$driver <- NULL
     for (p in tempdat$pos[tempdat$sick == 'Y' | tempdat$healthy == 'Y']){
       if (tempdat$healthy[tempdat$pos == p] == 'Y') {
-        N <- sum(tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] + 1 > 
-                   tempdat$sick_neigh[tempdat$pos == p], na.rm = T)
-        # a healthy colony should have no sick neighbors which have more or equal number of healthy neighbors than it has sick ones
+        # N <- sum(tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] + 1 >
+        #            tempdat$sick_neigh[tempdat$pos == p], na.rm = T)
+        N <- sum(tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9]] + 1 > tempdat$sick_neigh[tempdat$pos == p], na.rm = T)
+        # a healthy colony should have no sick neighbors which have more healthy neighbors than it has sick ones
         if (N == 0) {
-          tempdat$comp[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CH'
+          tempdat$comp[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CB'
+          tempdat$comp.b[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CB'
+          tempdat$driver[tempdat$pos == p] <- 'Big'
         }
       } else {
-        N <- sum(tempdat$sick_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <= 
-                   tempdat$healthy_neigh[tempdat$pos == p], na.rm = T)
+        # N <- sum(tempdat$sick_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] <
+        #            tempdat$healthy_neigh[tempdat$pos == p], na.rm = T)
+        N <- sum(tempdat$sick_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9]] < tempdat$healthy_neigh[tempdat$pos == p], na.rm = T)
         # a sick colony should have atleast one healthy neighbor that has less sick nieghbors than it has healthy ones
         if (N > 0) {
           tempdat$comp[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CS'
+          tempdat$comp.s[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CS'
+          tempdat$driver[tempdat$pos == p] <- 'Small'
         }
       }
     }
-    tempdat$comp[is.na(tempdat$orf_name)] = NA
-    tempdat$comp[tempdat$sick == 'Y'] = NA
-    tempdat$comp[tempdat$healthy == 'Y' & tempdat$comp == 'CH'] = NA
+    # tempdat$comp[is.na(tempdat$orf_name)] = NA
+    if (sum(!is.na(tempdat$comp.b)) > 0) {
+      tempdat$comp[!is.na(tempdat$comp.b) & !is.na(tempdat$comp.s)] = NA
+    } else {
+      tempdat$comp.b <- 'NA'
+    }
+    tempdat$comp[tempdat$sick == 'Y' & tempdat$comp == 'CS'] = NA
+    tempdat$comp[tempdat$healthy == 'Y' & tempdat$comp == 'CB'] = NA
     tempdat$comp[is.na(tempdat$comp)] = 'No'
     
-    # ggplot(tempdat) +
-    #   geom_point(aes(x = `6144col`, y = `6144row`, col = comp)) +
+    # ggplot() +
+    #   geom_point(data = tempdat[tempdat$comp == 'No',],aes(x = `6144col`, y = `6144row`, col = comp, shape = colony), size = 1) +
+    #   geom_point(data = tempdat[tempdat$comp != 'No',],aes(x = `6144col`, y = `6144row`, col = comp, shape = colony)) +
+    #   geom_point(data = tempdat[!is.na(tempdat$driver),],
+    #              aes(x = `6144col`, y = `6144row`, col = driver, shape = colony)) +
+    #   geom_text(data = tempdat, aes(x = `6144col`, y = `6144row`, label = average), check_overlap = TRUE, size = 0.83) +
     #   scale_x_continuous(breaks = seq(0,96,4)) +
     #   scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
-    #   coord_cartesian(xlim = c(0,96),
-    #                   ylim = c(0,64))
+    #   labs(title = sprintf('%s: Competition Correction',expt),
+    #        subtitle = sprintf('Plate #%d at %d Hrs', pl, hr),
+    #        x = 'Columns',
+    #        y = 'Rows') +
+    #   scale_color_manual(name = 'Comp Pos',
+    #                      breaks = c('No','Small','Big','CS','CB'),
+    #                      values = c('No'='#9E9E9E','Small'='#673AB7','Big'='#FFC107','CS'='#8BC34A','CB'='#536DFE'),
+    #                      labels = c('Normal','Small','Big','Next2S','Next2B')) +
+    #   scale_shape_discrete(name = 'Colony Type') +
+    #   theme_linedraw()
+    # ggsave(sprintf("%scompcorr_%d_%d.jpg",out_path,hr,pl),
+    #        width = 8, height = 5,
+    #        dpi = 300)
+    
+    # ggplot(tempdat[tempdat$colony != 'Gap',]) +
+    #   geom_histogram(aes(x = average, fill = comp), position = 'stack')
     
     # tempdat$nearsick <- NULL
     # tempdat$nearsick_sr <- NULL
@@ -303,8 +380,8 @@ for (hr in sort(unique(alldat$hours))) {
     #   median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$nearsick_sr == 'N2'], na.rm = T)
     tempdat$average_cc[tempdat$comp == 'CS'] <- tempdat$average_cc[tempdat$comp == 'CS'] *
       median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$comp == 'CS'], na.rm = T)
-    tempdat$average_cc[tempdat$comp == 'CH'] <- tempdat$average_cc[tempdat$comp == 'CH'] *
-      median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$comp == 'CH'], na.rm = T)
+    tempdat$average_cc[tempdat$comp == 'CB'] <- tempdat$average_cc[tempdat$comp == 'CB'] *
+      median(tempdat$average_cc[tempdat$orf_name == 'BF_control'], na.rm = T)/median(tempdat$average_cc[tempdat$comp == 'CB'], na.rm = T)
 
     
     # ggplot() +
@@ -373,11 +450,11 @@ ggsave(sprintf("%scorrected_%d_%d.jpg",out_path,hr,pl),
        dpi = 300)
 
 ggplot() +
-  geom_line(data = alldat.b[alldat.b$hours == 18 & alldat.b$`6144plate` == 1 & alldat.b$pos %in% tempdat$pos[tempdat$nearsick == 'N1'],],
-            aes(x = fitness, col = 'BEAN'), stat = 'density', lwd = 1.2) +
-  geom_line(data = alldat[alldat$hours == 18 & alldat$`6144plate` == 1 & alldat$pos %in% tempdat$pos[tempdat$nearsick == 'N1'],],
+  geom_line(data = alldat[alldat$hours == hr & alldat$`6144plate` == pl & alldat$pos %in%
+                            compdat$pos[compdat$hours == hr & compdat$`6144plate` == pl & compdat$comp == 'CS'],],
             aes(x = fitness, col = 'LID W/O CC'), stat = 'density', lwd = 1.2) +
-  geom_line(data = alldat.cc[alldat.cc$hours == 18 & alldat.cc$`6144plate` == 1 & alldat.cc$pos %in% tempdat$pos[tempdat$nearsick == 'N1'],],
+  geom_line(data = alldat.cc[alldat.cc$hours == hr & alldat.cc$`6144plate` == pl & alldat.cc$pos %in%
+                               compdat$pos[compdat$hours == hr & compdat$`6144plate` == pl & compdat$comp == 'CS'],],
             aes(x = fitness, col = 'LID W CC'), stat = 'density', lwd = 1.2) +
   labs(title = 'Impact of Competition Correction (CC)',
        subtitle = 'On fitness of colonies growing near small colonies or gaps',
@@ -393,3 +470,29 @@ ggsave(sprintf("%s%s_COMP_CORR.png",
                out_path,expt_name),
        width = 6, height = 5)
 
+
+ggplot() +
+  geom_abline(col = 'red') +
+  geom_point(data = alldat[alldat$hours == hr & alldat$`6144plate` == pl & alldat$pos %in%
+                            compdat$pos[compdat$hours == hr & compdat$`6144plate` == pl & compdat$comp == 'CS'],],
+            aes(x = fitness, 
+                y = alldat.cc$fitness[alldat.cc$hours == hr & alldat.cc$`6144plate` == pl & alldat.cc$pos %in%
+                                compdat$pos[compdat$hours == hr & compdat$`6144plate` == pl & compdat$comp == 'CS']],
+                col = 'Next2S')) +
+  geom_point(data = alldat[alldat$hours == hr & alldat$`6144plate` == pl & alldat$pos %in%
+                             compdat$pos[compdat$hours == hr & compdat$`6144plate` == pl & compdat$comp == 'CB'],],
+             aes(x = fitness, 
+                 y = alldat.cc$fitness[alldat.cc$hours == hr & alldat.cc$`6144plate` == pl & alldat.cc$pos %in%
+                                         compdat$pos[compdat$hours == hr & compdat$`6144plate` == pl & compdat$comp == 'CB']],
+                 col = 'Next2B')) +
+  coord_cartesian(xlim = c(0.7,1.3),
+                  ylim = c(0.7,1.3))
+
+ggplot() +
+  geom_histogram(data = data.frame(sick_N),
+                 aes(x = sick_N, fill = 'Small Neigh'), alpha = 0.8) +
+  geom_histogram(data = data.frame(healthy_N),
+                 aes(x = healthy_N, fill = 'Big Neigh'), alpha = 0.8)
+  
+  
+  
