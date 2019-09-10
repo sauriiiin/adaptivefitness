@@ -273,12 +273,16 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$comp.s <- NULL
     tempdat$comp <- NULL
     tempdat$driver <- NULL
+    
+    b2s <- NULL
+    s2b <- NULL
     for (p in tempdat$pos[tempdat$sick == 'Y' | tempdat$healthy == 'Y']){
       if (tempdat$healthy[tempdat$pos == p] == 'Y') {
         # N <- sum(tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9] | tempdat$pos %in% grids_sr[grids_sr[,1] == p, 2:9]] + 1 >
         #            tempdat$sick_neigh[tempdat$pos == p], na.rm = T)
         N <- sum(tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9]] + 1 > tempdat$sick_neigh[tempdat$pos == p], na.rm = T)
         # a healthy colony should have no sick neighbors which have more healthy neighbors than it has sick ones
+        b2s <- rbind(b2s, c(tempdat$sick_neigh[tempdat$pos == p], tempdat$healthy_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9]]))
         if (N == 0) {
           tempdat$comp[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CB'
           tempdat$comp.b[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CB'
@@ -289,6 +293,7 @@ for (hr in sort(unique(alldat$hours))) {
         #            tempdat$healthy_neigh[tempdat$pos == p], na.rm = T)
         N <- sum(tempdat$sick_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9]] < tempdat$healthy_neigh[tempdat$pos == p], na.rm = T)
         # a sick colony should have atleast one healthy neighbor that has less sick nieghbors than it has healthy ones
+        s2b <- rbind(s2b, c(tempdat$healthy_neigh[tempdat$pos == p], tempdat$sick_neigh[tempdat$pos %in% grids[grids[,1] == p, 2:9]]))
         if (N > 0) {
           tempdat$comp[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CS'
           tempdat$comp.s[tempdat$pos %in% grids[grids[,1] == p, 2:9]] <- 'CS'

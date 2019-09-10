@@ -6,12 +6,13 @@ and a.orf_name = b.orf_name and c.orf_name = b.orf_name and d.orf_name = c.orf_n
 
 ggplot(hello) +
   geom_abline(col = 'red') +
-  geom_point(aes(x = mean, y = mean..9)) +
+  geom_point(aes(x = median, y = median..10)) +
   labs(title = 'Archaeology Folder Set1 Vs Set2',
-       subtitle = 'Comparing ORFwise Mean Fitness',
+       subtitle = sprintf('Comparing ORFwise Fitness | r = %0.3f',cor.test(hello$median[], hello$median..10[], method="pearson")[[4]]),
        x = 'Set1',
        y = 'Set2') +
   theme_linedraw()
+
 
 ggplot(hello) +
   geom_vline(xintercept = 0.01, col = 'red') +
