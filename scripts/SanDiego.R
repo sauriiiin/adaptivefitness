@@ -194,19 +194,28 @@ sd(pin3$average[pin3$colony == 'BFC'], na.rm = T)
 sd(pin4$average[pin4$colony == 'BFC'], na.rm = T)
 
 ##### QC FOR ANOVA USING 4C3 DATA
-fourC3 <- dbGetQuery(conn, 'select b.*, a.average
-          from 4C3_GA_1536_JPEG a, 4C3_pos2coor1536 b
-          where a.pos = b.pos and average is not NULL')
+# fourC3 <- dbGetQuery(conn, 'select b.*, a.average
+#           from 4C3_GA_1536_JPEG a, 4C3_pos2coor1536 b
+#           where a.pos = b.pos and average is not NULL')
+# colnames(fourC3) <- c('pos','plate','row','col','average')
 
-colnames(fourC3) <- c('pos','plate','row','col','average')
+all.data <- dbGetQuery(conn, 'select b.*, a.hours, a.average, a.csS, a.csM
+                     from 4C3_GA1_BEAN_6144_SPATIAL a, 4C3_pos2coor6144 b
+                     where a.pos = b.pos
+                     and average is not NULL')
+
+fourC3 <- all.data[all.data$hours %in% c(17,18),]
+colnames(fourC3) <- c('pos','plate','row','col','hours','average','csS','csM')
 fourC3$plate <- as.character(fourC3$plate)
 
 ggplot(fourC3) +
-  geom_line(aes(x = average, col = plate), stat = 'density')
+  geom_line(aes(x = csM, col = plate), stat = 'density') +
+  facet_wrap(~hours)
 
-anova(lm(average ~ plate, fourC3))
-lm(plate ~ average, fourC3)
+anova(lm(csM ~ hours, fourC3))
+abs(1 - median(fourC3$csM[fourC3$hours == '17'])/median(fourC3$csM[fourC3$hours == '18'])) * 100
+pwr.anova.test(k = 2, f = 0.05, power = 0.95, sig.level = 0.05)
+# lm(plate ~ csS, fourC3)
 
-wilcox.test(average ~ plate, data = fourC3,
-            subset = plate %in% c('1','2'))
+wilcox.test(csM ~ hours, data = fourC3)
 
