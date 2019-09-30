@@ -11,8 +11,8 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_CC2_LID/"
-expt_name <- '4C3_GA3_CC2'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_CC2_TR_LID/"
+expt_name <- '4C3_GA3_CC2_TR'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -27,11 +27,14 @@ fit.files <- list.files(path = dat.dir,
                         pattern = "S.csv", recursive = TRUE)
 hours <- NULL
 reps <- NULL
+# refs <- NULL
 for (s in strsplit(stats.files,'_')) {
-  # reps <- c(reps, as.numeric(s[4]))
-  reps <- 8
-  hours <- c(hours, as.numeric(s[5]))
+  # refs <- c(refs, as.numeric(s[4]))
+  reps <- c(reps, as.numeric(s[5]))
+  # reps <- 8
+  hours <- c(hours, as.numeric(s[6]))
 }
+# refs <- unique(refs)
 reps <- unique(reps)
 hours <- sort(unique(hours))
 
@@ -50,6 +53,7 @@ for (ii in 1:length(reps)) {
     # dat.stats <- read.csv(paste0(dat.dir,
     #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
     #                       na.strings = "NaN")
+    # dat.stats <- dat.stats[!dat.stats$orf_name %in% sprintf('MASK%d',1:1000),]
     dat.stats <- dat.stats[dat.stats$hours != 0,]
     dat.stats$cont_hrs <- hr
     dat.stats$rep <- rep
@@ -59,6 +63,7 @@ for (ii in 1:length(reps)) {
     # dat.fit <- read.csv(paste0(dat.dir,
     #                            sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
     #                     na.strings = "NaN")
+    # dat.fit <- dat.fit[!dat.fit$orf_name %in% sprintf('MASK%d',1:1000),]
     dat.fit$cont_hrs <- hr
     dat.fit$rep <- rep
     dat.fit$se <- dat.fit$average - dat.fit$bg
@@ -88,6 +93,8 @@ for (ii in 1:length(reps)) {
   }
 }
 
+stats.all <- stats.all[!stats.all$orf_name %in% sprintf('MASK%d',1:1000),]
+fit.all <- fit.all[!fit.all$orf_name %in% sprintf('MASK%d',1:1000),]
 ##### THE STATS DATA ANALYSIS
 # save(stats.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_STATS.RData")
 # save(fit.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FITNESS.RData")
@@ -505,6 +512,19 @@ for (rep in unique(reps)) {
          height = 22, width = 20, units = "cm",
          dpi = 300)
 }
+
+dat.cnt$Deleterious <- dat.cnt$Deleterious/912 * 100
+dat.cnt$Beneficial <- dat.cnt$Beneficial/912 * 100
+dat.cnt$Neutral <- dat.cnt$Neutral/912 * 100
+dat.cnt$Sensitivity <- dat.cnt$Beneficial + dat.cnt$Deleterious
+
+dat.cnt$Deleterious_p <- dat.cnt$Deleterious_p/912 * 100
+dat.cnt$Beneficial_p <- dat.cnt$Beneficial_p/912 * 100
+dat.cnt$Neutral_p <- dat.cnt$Neutral_p/912 * 100
+dat.cnt$Sensitivity_p <- dat.cnt$Beneficial_p + dat.cnt$Deleterious_p
+
+fit.nonorm.p <- approx(dat.cnt$Sensitivity_p, dat.cnt$cen, method = 'linear')
+predict(fit.nonorm.p, data.frame(cen = 0.95))
 
 # save(stats.tmp, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FDR.RData")
 

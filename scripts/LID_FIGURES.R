@@ -15,8 +15,8 @@ source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
 ##### INITIALIZE
-expt_name = '4C3_GA1'
-expt = 'FS1-1'
+expt_name = '4C3_GA3_CC2'
+expt = 'VAL'
 out_path = 'figs/lid_paper/';
 density = 6144;
 
@@ -27,7 +27,7 @@ pvals = seq(0,1,0.01)
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
 tablename_rfit = sprintf('%s_RAW_%d_FITNESS',expt_name,density);
 tablename_nfit = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,6),density);
-tablename_p2o = '4C3_pos2orf_name1';
+tablename_p2o = '4C3_pos2orf_name3';
 tablename_bpos = '4C3_borderpos';
 
 p2c_info = NULL
@@ -46,7 +46,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
                                     p2c_info[2],
                                     p2c_info[1],
                                     p2c_info[2]))
-hr = hours[[1]][9]
+hr = hours[[1]][10]
 pl = n_plates[[1]][1]
 
 fitdat = dbGetQuery(conn, sprintf('select c.*, a.orf_name, a.hours, a.bg, a.average, a.fitness,

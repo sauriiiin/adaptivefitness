@@ -16,14 +16,14 @@ library(ggpubr)
 library(stringr)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
-out_path = 'figs/mess/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND/"
+out_path = 'figs/lid_paper/';
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND_LID/"
 expt_name <- '4C3_GA3_RND'
 pvals = seq(0,1,0.005)
 
 ##### MAKING THE MESS
 # alldat = dbGetQuery(conn, 'select b.*, a.orf_name, a.hours, a.average
-#               from 4C3_GA3_RAW_6144_FITNESS a, 4C3_pos2coor6144 b
+#               from 4C3_GA3_CC2_6144_FITNESS a, 4C3_pos2coor6144 b
 #               where a.pos = b.pos
 #               order by hours, 6144plate, 6144col, 6144row')
 # alldat$rnd_hrs <- alldat$hours
@@ -39,16 +39,16 @@ pvals = seq(0,1,0.005)
 # }
 # 
 # # dbWriteTable(conn, "4C3_GA3_RND_6144_DATA", alldat, overwrite = T)
-# dbWriteTable(conn, "4C3_GA3_RND_BEAN_6144_DATA", alldat, overwrite = T)
-# 
-# # dbExecute(conn, 'update 4C3_GA3_RND_6144_DATA
-# #     set average = NULL
-# #     where pos in
-# #     (select pos from 4C3_borderpos)')
+# dbWriteTable(conn, "4C3_GA3_CC2_RND_6144_DATA", alldat, overwrite = T)
 # # 
-# dbExecute(conn, 'create table 4C3_GA3_RND_6144_JPEG
+# # # dbExecute(conn, 'update 4C3_GA3_RND_6144_DATA
+# # #     set average = NULL
+# # #     where pos in
+# # #     (select pos from 4C3_borderpos)')
+# # # 
+# dbExecute(conn, 'create table 4C3_GA3_CC2_RND_6144_JPEG
 #     select pos, hours, rnd_hrs, average
-#     from 4C3_GA3_RND_6144_DATA')
+#     from 4C3_GA3_CC2_RND_6144_DATA')
 # 
 # dbExecute(conn, 'create table 4C3_GA3_RND_BEAN_6144_JPEG
 #     select pos, hours, rnd_hrs, average
@@ -64,7 +64,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[6]))
+  hours <- c(hours, as.numeric(s[5]))
 }
 reps <- unique(reps)
 hours <- unique(hours)
@@ -235,38 +235,38 @@ for (hr in sort(unique(ref.all$hours))) {
 #                out_path,expt_name,hr),
 #        width = 18,height = 4.5)
 
-# csVf.all <- ggplot() +
-#   geom_point(data = ref.all,
-#              aes(x = pix_mean, y = cs_mean, col = "Reference"), alpha = 1) +
-#   geom_smooth(data = ref.all,
-#               aes(x = pix_mean, y = cs_mean),
-#               col = "black",
-#               method = lm, se = F) +
-#   geom_point(data = stats.all,
-#              aes(x = pix_mean, y = cs_mean, col = effect_p), alpha = 0.5) +
-#   facet_wrap(.~hours, nrow = 3, ncol = 3) +
-#   scale_color_manual(name = "",
-#                      breaks = c("Reference", "Beneficial", "Neutral", "Deleterious"),
-#                      values = c("Reference" = "#607D8B",
-#                                 "Beneficial" = "#388E3C",
-#                                 "Neutral" = "#303F9F",
-#                                 "Deleterious" = "#D32F2F")) +
-#   scale_x_continuous(breaks = seq(0,1000,100), minor_breaks = seq(0,1000,25)) +
-#   scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
-#   # labs(title = "LIDetector",
-#   labs(title = "BEAN Method",
-#        subtitle = "CS and Fitness Correlation by Hour",
-#        x = "Colony Size (pix)",
-#        y = "Fitness") +
-#   theme_linedraw() +
-#   theme(legend.position = "right") +
-#   coord_cartesian(xlim = c(0,500),
-#                   ylim = c(0,2))
-# 
-# ggsave(sprintf("%s%s_CSVFIT_ALL.png",
-#                out_path,expt_name),
-#        csVf.all,
-#        width = 10, height = 10)
+csVf.all <- ggplot() +
+  geom_point(data = ref.all,
+             aes(x = pix_mean, y = cs_mean, col = "Reference"), alpha = 1) +
+  geom_smooth(data = ref.all,
+              aes(x = pix_mean, y = cs_mean),
+              col = "black",
+              method = lm, se = F) +
+  geom_point(data = stats.all,
+             aes(x = pix_mean, y = cs_mean, col = effect_p), alpha = 0.5) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
+  scale_color_manual(name = "",
+                     breaks = c("Reference", "Beneficial", "Neutral", "Deleterious"),
+                     values = c("Reference" = "#607D8B",
+                                "Beneficial" = "#388E3C",
+                                "Neutral" = "#303F9F",
+                                "Deleterious" = "#D32F2F")) +
+  scale_x_continuous(breaks = seq(0,1000,100), minor_breaks = seq(0,1000,25)) +
+  scale_y_continuous(breaks = seq(-10,10,0.2), minor_breaks = seq(-10,10,0.05)) +
+  labs(title = "LID",
+  # labs(title = "MCAT",
+       subtitle = "CS and Fitness Correlation by Hour",
+       x = "Colony Size (pix)",
+       y = "Fitness") +
+  theme_linedraw() +
+  theme(legend.position = "right") +
+  coord_cartesian(xlim = c(0,500),
+                  ylim = c(0,2))
+
+ggsave(sprintf("%s%s_CSVFIT_ALL.png",
+               out_path,expt_name),
+       csVf.all,
+       width = 10, height = 10)
 
 # csden.all <- ggplot() +
 #   geom_line(data = ref.all,
@@ -324,58 +324,58 @@ for (hr in sort(unique(ref.all$hours))) {
 #        fden.all,
 #        width = 15,height = 15)
 
-# edis.all <- ggplot() + 
-#   geom_bar(data = stats.all,
-#            aes(x=effect_p, y=(..count..)/913*100, fill = effect_p)) +
-#   facet_wrap(.~hours, nrow = 3, ncol = 3) +
-#   scale_fill_manual(name = "Effect",
-#                      breaks = c("Beneficial", "Neutral", "Deleterious"),
-#                      values = c("Beneficial" = "#388E3C",
-#                                 "Neutral" = "#303F9F",
-#                                 "Deleterious" = "#D32F2F"),
-#                     guide = F) +
-#   scale_y_continuous(breaks = seq(-20,110,20), minor_breaks = seq(-20,110,5)) +
-#   scale_x_discrete(limits=c("Deleterious","Neutral","Beneficial")) +
-#   # labs(title = "LIDetector",
-#   labs(title = "BEAN Method",
-#        subtitle = "Effect Distribution by Hour",
-#        x = "Effect",
-#        y = "Perc. (%)") +
-#   theme_linedraw() +
-#   theme(legend.position = "right") +
-#   coord_cartesian(ylim = c(0,100))
-# 
-# ggsave(sprintf("%s%s_EDIS_ALL.png",
-#                out_path,expt_name),
-#        edis.all,
-#        width = 10, height = 10)
+edis.all <- ggplot() +
+  geom_bar(data = stats.all,
+           aes(x=effect_p, y=(..count..)/913*100, fill = effect_p)) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
+  scale_fill_manual(name = "Effect",
+                     breaks = c("Beneficial", "Neutral", "Deleterious"),
+                     values = c("Beneficial" = "#388E3C",
+                                "Neutral" = "#303F9F",
+                                "Deleterious" = "#D32F2F"),
+                    guide = F) +
+  scale_y_continuous(breaks = seq(-20,110,20), minor_breaks = seq(-20,110,5)) +
+  scale_x_discrete(limits=c("Deleterious","Neutral","Beneficial")) +
+  labs(title = "LID",
+  # labs(title = "MCAT",
+       subtitle = "Effect Distribution by Hour",
+       x = "Effect",
+       y = "Perc. (%)") +
+  theme_linedraw() +
+  theme(legend.position = "right") +
+  coord_cartesian(ylim = c(0,100))
+
+ggsave(sprintf("%s%s_EDIS_ALL.png",
+               out_path,expt_name),
+       edis.all,
+       width = 10, height = 10)
 
 ##### LOOKING AT THE ORIGINAL DATA
-# oridata <- dbGetQuery(conn, "select * from 4C3_GA3_RND_6144_DATA")
-# oridata <- oridata[oridata$orf_name != 'BF_control' & !is.na(oridata$orf_name) & oridata$hours != 0,]
-# oridata$from <- NULL
-# oridata$from[oridata$hours > oridata$rnd_hrs] <- 'less'
-# oridata$from[oridata$hours < oridata$rnd_hrs] <- 'more'
-# 
-# ggplot(oridata) +
-#   geom_bar(aes(x = from, y = (..count..)/9128*100, fill = from)) +
-#   facet_wrap(.~hours, nrow = 3, ncol = 3) +
-#   scale_fill_manual(name = "Colony Size",
-#                     breaks = c("less", "more"),
-#                     values = c("more" = "#388E3C",
-#                                "less" = "#D32F2F"),
-#                     labels = c("Less","More"),
-#                     guide = F) +
-#   scale_y_continuous(breaks = seq(-20,110,20), minor_breaks = seq(-20,110,5)) +
-#   scale_x_discrete(limits=c("less","more"),
-#                    labels = c("Less","More")) +
-#   labs(title = "Original Data",
-#        subtitle = "Is the query hour more or less than ref hour?",
-#        x = "Query Hour",
-#        y = "Perc. (%)") +
-#   theme_linedraw() +
-#   theme(legend.position = "right") +
-#   coord_cartesian(ylim = c(0,100))
+oridata <- dbGetQuery(conn, "select * from 4C3_GA3_RND_6144_DATA")
+oridata <- oridata[oridata$orf_name != 'BF_control' & !is.na(oridata$orf_name) & oridata$hours != 0,]
+oridata$from <- NULL
+oridata$from[oridata$hours > oridata$rnd_hrs] <- 'less'
+oridata$from[oridata$hours < oridata$rnd_hrs] <- 'more'
+
+ggplot(oridata) +
+  geom_bar(aes(x = from, y = (..count..)/9128*100, fill = from)) +
+  facet_wrap(.~hours, nrow = 3, ncol = 3) +
+  scale_fill_manual(name = "Colony Size",
+                    breaks = c("less", "more"),
+                    values = c("more" = "#388E3C",
+                               "less" = "#D32F2F"),
+                    labels = c("Less","More"),
+                    guide = F) +
+  scale_y_continuous(breaks = seq(-20,110,20), minor_breaks = seq(-20,110,5)) +
+  scale_x_discrete(limits=c("less","more"),
+                   labels = c("Less","More")) +
+  labs(title = "Original Data",
+       subtitle = "Is the query hour more or less than ref hour?",
+       x = "Query Hour",
+       y = "Perc. (%)") +
+  theme_linedraw() +
+  theme(legend.position = "right") +
+  coord_cartesian(ylim = c(0,100))
 # ggsave(sprintf("%s%s_OCS_ALL.png",
 #                out_path,expt_name),
 #        width = 10, height = 10)
@@ -394,57 +394,73 @@ for (hr in sort(unique(stats.all$hours))) {
   sig.dat$p_unpaired[i] <- t.test(c(sig.dat$con_ben[i],sig.dat$con_del[i]), c(sig.dat$pre_ben[i],sig.dat$pre_del[i]))$p.value
 }
 sig.dat <- data.frame(sig.dat)
-save(sig.dat, file = "figs/mess/sig_bean.RData")
+save(sig.dat, file = "figs/lid_paper/sig_lid.RData")
 
 ##### LOAD BACK LID AND BEAN DIS DATA
-# load("figs/mess/sig_lid.RData")
-# sig.lid <- sig.dat
-# load("figs/mess/sig_bean.RData")
-# sig.bean <- sig.dat
-# 
-# dis.dat <- cbind(sig.lid$hours, sig.lid$con_ben, sig.lid$con_del, sig.lid$pre_ben, sig.lid$pre_del, 100 -  sig.lid$pre_ben - sig.lid$pre_del,
-#                  sig.bean$pre_ben, sig.bean$pre_del, 100 - sig.bean$pre_ben - sig.bean$pre_del)
-# colnames(dis.dat) <- c('hours', 'con_ben', 'con_del',
-#                        'lid_ben', 'lid_del', 'lid_neu',
-#                        'bean_ben', 'bean_del', 'bean_neu')
-# dis.dat <- data.frame(dis.dat)
-# 
-# rmse.lid.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$lid_ben)^2, na.rm = T))
-# rmse.lid.del <- sqrt(mean((dis.dat$con_del - dis.dat$lid_del)^2, na.rm = T))
-# rmse.bean.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$bean_ben)^2, na.rm = T))
-# rmse.bean.del <- sqrt(mean((dis.dat$con_del - dis.dat$bean_del)^2, na.rm = T))
-# 
-# pre.ben <- ggplot(dis.dat) +
-#   geom_abline() +
-#   geom_point(aes(x = con_ben, y = lid_ben, col = 'LID'), size = 5) +
-#   geom_point(aes(x = con_ben, y = bean_ben, col = 'BEAN'), size = 5) +
-#   labs(title = 'How good are the predictions?',
-#        subtitle = sprintf('Beneficial | LID RMSE = %.2f | BEAN RMSE = %.2f', rmse.lid.ben, rmse.bean.ben),
-#        x = 'Condition Positive (%)',
-#        y = 'Predicted Positive (%)') +
-#   scale_color_discrete(name = 'Method') +
-#   theme_linedraw() +
-#   coord_cartesian(xlim = c(0, 100),
-#                   ylim = c(0, 100))
-# 
-# pre.del <- ggplot(dis.dat) +
-#   geom_abline() +
-#   geom_point(aes(x = con_del, y = lid_del, col = 'LID'), size = 5) +
-#   geom_point(aes(x = con_del, y = bean_del, col = 'BEAN'), size = 5) +
-#   labs(title = '',
-#        subtitle = sprintf('Deleterious | LID RMSE = %.2f | BEAN RMSE = %.2f', rmse.lid.del, rmse.bean.del),
-#        x = 'Condition Positive (%)',
-#        y = '') +
-#   scale_color_discrete(name = 'Method') +
-#   theme_linedraw() +
-#   coord_cartesian(xlim = c(0, 100),
-#                   ylim = c(0, 100))
-# 
-# ggarrange(pre.ben, pre.del, nrow = 1,
-#           common.legend = T, legend = 'bottom')
-# ggsave(sprintf("%s%s_PREDICTIONS.png",
-#                out_path,expt_name),
-#        width = 10, height = 6)
+load("figs/lid_paper/sig_lid.RData")
+sig.lid <- sig.dat
+load("figs/lid_paper/sig_bean.RData")
+sig.bean <- sig.dat
+load("figs/lid_paper/rnd_pred.RData")
+
+dis.dat <- cbind(sig.lid$hours, sig.lid$con_ben, sig.lid$con_del, sig.lid$pre_ben, sig.lid$pre_del, 100 -  sig.lid$pre_ben - sig.lid$pre_del,
+                 sig.bean$pre_ben, sig.bean$pre_del, 100 - sig.bean$pre_ben - sig.bean$pre_del)
+colnames(dis.dat) <- c('hours', 'con_ben', 'con_del',
+                       'lid_ben', 'lid_del', 'lid_neu',
+                       'bean_ben', 'bean_del', 'bean_neu')
+dis.dat <- data.frame(dis.dat)
+
+rmse.lid.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$lid_ben)^2, na.rm = T))
+rmse.lid.del <- sqrt(mean((dis.dat$con_del - dis.dat$lid_del)^2, na.rm = T))
+rmse.bean.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$bean_ben)^2, na.rm = T))
+rmse.bean.del <- sqrt(mean((dis.dat$con_del - dis.dat$bean_del)^2, na.rm = T))
+
+sig.lid$method <- 'lid'
+sig.bean$method <- 'mcat'
+
+sig.dat <- rbind(sig.lid, sig.bean)
+rnd.pred <- sig.dat[c(1:5,8)]
+# save(rnd.pred, file = "figs/lid_paper/rnd_pred.RData")
+
+R2.lid.ben <- summary(lm(con_ben ~ lid_ben, data = dis.dat))[8]
+R2.bean.ben <- summary(lm(con_ben ~ bean_ben, data = dis.dat))[8]
+R2.lid.del <- summary(lm(con_del ~ lid_del, data = dis.dat))[8]
+R2.bean.del <- summary(lm(con_del ~ bean_del, data = dis.dat))[8]
+
+pre.ben <- ggplot(dis.dat) +
+  geom_abline() +
+  geom_point(aes(x = con_ben, y = lid_ben, col = 'LID'), size = 5) +
+  geom_point(aes(x = con_ben, y = bean_ben, col = 'MCAT'), size = 5) +
+  labs(title = 'LID does better than MCAT',
+       subtitle = sprintf('Beneficial Fitness Effects\nLID RMSE = %.2f | MCAT RMSE = %.2f', rmse.lid.ben, rmse.bean.ben),
+       x = 'Condition Positive (%)',
+       y = 'Predicted Positive (%)') +
+  scale_color_discrete(name = 'Method') +
+  theme_linedraw() +
+  coord_cartesian(xlim = c(0, 100),
+                  ylim = c(0, 100))
+
+pre.del <- ggplot(dis.dat) +
+  geom_abline() +
+  geom_point(aes(x = con_del, y = lid_del, col = 'LID'), size = 5) +
+  geom_point(aes(x = con_del, y = bean_del, col = 'MCAT'), size = 5) +
+  labs(title = '',
+       subtitle = sprintf('Deleterious Fitness Effects\nLID RMSE = %.2f | MCAT RMSE = %.2f', rmse.lid.del, rmse.bean.del),
+       x = 'Condition Positive (%)',
+       y = '') +
+  scale_color_discrete(name = 'Method') +
+  theme_linedraw() +
+  coord_cartesian(xlim = c(0, 100),
+                  ylim = c(0, 100))
+
+ggarrange(pre.ben, pre.del, nrow = 1,
+          common.legend = T, legend = 'right')
+ggsave(sprintf("%s%s_PREDICTIONS.png",
+               out_path,expt_name),
+       width = 10, height = 5)
+
+ggplot(rnd.pred) +
+  geom_point(aes(x = con_ben, y = pre_ben, col = method))
 
 ##### DETAILED LOOK AT THE PREDICTIONS
 pred.ref = dbGetQuery(conn, sprintf('select hours, average
@@ -494,8 +510,7 @@ for (hr in sort(unique(pred.ref$hours))) {
 #     median(pred.lid$average[pred.lid$rnd_hrs == rnd_hrs], na.rm = T) 
 # }
 
-for (hr in sort(unique(pred.bean$hours))) {
-  ggplot(pred.bean[pred.bean$hours == hr,]) +
+pred.mcat.box <- ggplot(pred.bean[pred.bean$hours > 16,]) +
     geom_vline(xintercept = pred.bean$ref[pred.bean$hours == hr], lwd = 0.8,
                linetype = 'dashed', col = 'black') +
     geom_histogram(aes(x = que, fill = effect),
@@ -507,21 +522,19 @@ for (hr in sort(unique(pred.bean$hours))) {
                       values = c('Beneficial' = '#388E3C',
                                  'Deleterious' = '#FF5252',
                                  'Neutral' = '#303F9F')) +
-    labs(title = 'Effects Detected by BEAN Method',
-         subtitle = sprintf('Reference Hour = %d', hr),
-         x = 'Median Colony Size (pix count)',
+    labs(title = 'Effects Detected by MCAT',
+         subtitle = 'per median cs (pix) of references',
+         x = 'Median CS (pix)',
          y = 'Count') +
-    # facet_wrap(.~ref, nrow = 3, ncol = 3) +
+    facet_wrap(.~ref, nrow = 1, ncol = 2) +
     theme_linedraw() +
     coord_cartesian(xlim = c(0,400),
                     ylim = c(0, 1000))
-  ggsave(sprintf("%sBOX_PREDS_BEAN_%d.png",
-                 out_path, hr),
-         width = 6, height = 5) 
-}
+  # ggsave(sprintf("%sBOX_PREDS_MCAT.png",
+  #                out_path),
+  #        width = 6, height = 5) 
 
-for (hr in sort(unique(pred.lid$hours))) {
-  ggplot(pred.lid[pred.lid$hours == hr,]) +
+  ggplot(pred.lid[pred.lid$hours > 16,]) +
     geom_vline(xintercept = pred.lid$ref[pred.lid$hours == hr], lwd = 0.8,
                linetype = 'dashed', col = 'black') +
     geom_histogram(aes(x = que, fill = effect),
@@ -533,18 +546,18 @@ for (hr in sort(unique(pred.lid$hours))) {
                       values = c('Beneficial' = '#388E3C',
                                  'Deleterious' = '#FF5252',
                                  'Neutral' = '#303F9F')) +
-    labs(title = 'Effects Detected by LID Method',
-         subtitle = sprintf('Reference Hour = %d', hr),
-         x = 'Median Colony Size (pix count)',
+    labs(title = 'Effects Detected by LID',
+         subtitle = 'per median cs (pix) of references',
+         x = 'Median CS (pix)',
          y = 'Count') +
-    # facet_wrap(.~ref, nrow = 3, ncol = 3) +
+    facet_wrap(.~ref, nrow = 1, ncol = 2) +
     theme_linedraw() +
     coord_cartesian(xlim = c(0,400),
                     ylim = c(0, 1000))
+  
   ggsave(sprintf("%sBOX_PREDS_LID_%d.png",
                  out_path, hr),
          width = 6, height = 5) 
-}
 
 
 
