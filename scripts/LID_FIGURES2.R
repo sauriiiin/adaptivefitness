@@ -126,6 +126,10 @@ for (m in unique(dat.all$method)) {
 }
 rmse <- data.frame(rmse)
 rmse$avg[rmse$method == 'bean'] <- rmse$avg[rmse$method == 'nonorm' & rmse$hour >0]
+rmse$per <- rmse$rmse/rmse$avg * 100
+
+?t.test
+t.test(rmse$rmse[rmse$method == 'lid'], rmse$rmse[rmse$method == 'ncc'], alternative = 'less')
 
 ggplot(rmse) +
   geom_point(aes(x = avg, y = rmse, fill = method),

@@ -17,8 +17,8 @@ library(stringr)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND_LID/"
-expt_name <- '4C3_GA3_RND'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND_BEAN/"
+expt_name <- '4C3_GA3_RND_BEAN'
 pvals = seq(0,1,0.005)
 
 ##### MAKING THE MESS
@@ -64,7 +64,7 @@ reps <- NULL
 for (s in strsplit(stats.files,'_')) {
   # reps <- c(reps, as.numeric(s[4]))
   reps <- 8
-  hours <- c(hours, as.numeric(s[5]))
+  hours <- c(hours, as.numeric(s[6]))
 }
 reps <- unique(reps)
 hours <- unique(hours)
@@ -148,6 +148,95 @@ for (hr in sort(unique(ref.all$hours))) {
   stats.all$from[stats.all$hours == hr & stats.all$pix_mean < pix_mean] = 'less'
   stats.all$from[stats.all$hours == hr & stats.all$pix_mean > pix_mean] = 'more'
 }
+
+fit.all$method <- 'LID'
+ref.all$method <- 'LID'
+stats.all$method <- 'LID'
+
+# fit.data <- NULL
+# ref.data <- NULL
+# sta.data <- NULL
+
+fit.data <- rbind(fit.data, fit.all)
+ref.data <- rbind(ref.data, ref.all)
+sta.data <- rbind(sta.data, stats.all)
+
+save(fit.data, file = "figs/lid_paper/rnd_fit_data.RData")
+save(ref.data, file = "figs/lid_paper/rnd_ref_data.RData")
+save(sta.data, file = "figs/lid_paper/rnd_sta_data.RData")
+
+tp <- sta.data[sta.data$effect_p == 'Beneficial' & sta.data$from == 'more' |
+                             sta.data$effect_p == 'Deleterious' & sta.data$from == 'less',]
+fp <- sta.data[sta.data$effect_p == 'Deleterious' & sta.data$from == 'more' |
+                 sta.data$effect_p == 'Beneficial' & sta.data$from == 'less',]
+
+lid.pow <- dim(tp[tp$method == 'LID',])[1]/dim(sta.data[sta.data$method == 'LID',])[1] * 100
+mcat.pow <- dim(tp[tp$method == 'MCAT',])[1]/dim(sta.data[sta.data$method == 'MCAT',])[1] * 100
+
+lid.fp <- dim(fp[fp$method == 'LID',])[1]/dim(sta.data[sta.data$method == 'LID',])[1] * 100
+mcat.fp <- dim(fp[fp$method == 'MCAT',])[1]/dim(sta.data[sta.data$method == 'MCAT',])[1] * 100
+
+lid.tp <- dim(tp[tp$method == 'LID',])[1]/dim(sta.data[sta.data$method == 'LID' &
+                                                         (sta.data$effect_p == 'Beneficial' | sta.data$effect_p == 'Deleterious'),])[1] * 100
+mcat.tp <- dim(tp[tp$method == 'MCAT',])[1]/dim(sta.data[sta.data$method == 'MCAT' &
+                                                         (sta.data$effect_p == 'Beneficial' | sta.data$effect_p == 'Deleterious'),])[1] * 100
+
+mess.tmp <- NULL
+for (h in sort(hours)) {
+  if (h > 0) {
+    tmp.lid.pow <- dim(tp[tp$method == 'LID' & tp$hours == h,])[1]/
+      dim(sta.data[sta.data$method == 'LID' & sta.data$hours == h,])[1] * 100
+    tmp.mcat.pow <- dim(tp[tp$method == 'MCAT' & tp$hours == h,])[1]/
+      dim(sta.data[sta.data$method == 'MCAT' & sta.data$hours == h,])[1] * 100
+    
+    tmp.lid.fp <- dim(fp[fp$method == 'LID' & fp$hours == h,])[1]/
+      dim(sta.data[sta.data$method == 'LID' & sta.data$hours == h,])[1] * 100
+    tmp.mcat.fp <- dim(fp[fp$method == 'MCAT' & fp$hours == h,])[1]/
+      dim(sta.data[sta.data$method == 'MCAT' & sta.data$hours == h,])[1] * 100
+    
+    tmp.lid.tp <- dim(tp[tp$method == 'LID' & tp$hours == h,])[1]/
+      dim(sta.data[sta.data$method == 'LID' & sta.data$hours == h &
+                     (sta.data$effect_p == 'Beneficial' | sta.data$effect_p == 'Deleterious'),])[1] * 100
+    tmp.mcat.tp <- dim(tp[tp$method == 'MCAT' & tp$hours == h,])[1]/
+      dim(sta.data[sta.data$method == 'MCAT' & sta.data$hours == h &
+                     (sta.data$effect_p == 'Beneficial' | sta.data$effect_p == 'Deleterious'),])[1] * 100
+    
+    mess.tmp <- rbind(mess.tmp,
+                      cbind(h,
+                            tmp.lid.tp, tmp.lid.fp, tmp.lid.pow,
+                            tmp.mcat.tp, tmp.mcat.fp, tmp.mcat.pow))
+  }
+}
+mess.tmp <- data.frame(mess.tmp)
+
+mess.tmp.lid <- mess.tmp[,c(1:4)]
+mess.tmp.lid$method <- 'LID'
+mess.tmp.mcat <- mess.tmp[,c(1,5:7)]
+mess.tmp.mcat$method <- 'MCAT'
+
+colnames(mess.tmp.lid) <- c('hours','TP','FP','POW','method')
+colnames(mess.tmp.mcat) <- c('hours','TP','FP','POW','method')
+
+mess.res <- rbind(mess.tmp.lid,mess.tmp.mcat)
+mess.res <- melt(mess.res, id.vars = c('hours','method'))
+
+ggplot(mess.res) +
+  geom_line(aes(x = hours, y = value, col = variable, linetype = method),
+            lwd = 1.2) +
+  theme_linedraw()
+
+ggplot(sta.data) +
+  geom_bar(aes(x = from, fill = effect_p)) +
+  scale_fill_manual(name = 'Effects',
+                    breaks = c('Beneficial','Neutral','Deleterious'),
+                    values = c('Deleterious'='#F44336',
+                               'Neutral'='#303F9F',
+                               'Beneficial'='#4CAF50')) +
+  theme_linedraw() +
+  labs(title = )
+  
+  facet_grid(~method)
+
 
 # hr = 18
 # cs <- ggplot() +
@@ -351,7 +440,7 @@ ggsave(sprintf("%s%s_EDIS_ALL.png",
        width = 10, height = 10)
 
 ##### LOOKING AT THE ORIGINAL DATA
-oridata <- dbGetQuery(conn, "select * from 4C3_GA3_RND_6144_DATA")
+oridata <- dbGetQuery(conn, "select * from 4C3_GA3_RND_BEAN_6144_DATA")
 oridata <- oridata[oridata$orf_name != 'BF_control' & !is.na(oridata$orf_name) & oridata$hours != 0,]
 oridata$from <- NULL
 oridata$from[oridata$hours > oridata$rnd_hrs] <- 'less'
@@ -394,7 +483,7 @@ for (hr in sort(unique(stats.all$hours))) {
   sig.dat$p_unpaired[i] <- t.test(c(sig.dat$con_ben[i],sig.dat$con_del[i]), c(sig.dat$pre_ben[i],sig.dat$pre_del[i]))$p.value
 }
 sig.dat <- data.frame(sig.dat)
-save(sig.dat, file = "figs/lid_paper/sig_lid.RData")
+save(sig.dat, file = "figs/lid_paper/sig_bean.RData")
 
 ##### LOAD BACK LID AND BEAN DIS DATA
 load("figs/lid_paper/sig_lid.RData")
