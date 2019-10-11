@@ -21,11 +21,11 @@ load("figs/lid_paper/fitness.RData")
 expt_name = '4C3_GA3_CC2'
 expt = 'VAL'
 out_path = 'figs/lid_paper/';
-density = 6144;
 
-tbl_pval = sprintf('%s_%d_PVALUE',expt_name,density)
-hours = dbGetQuery(conn, sprintf('select distinct hours from %s order by hours asc', tbl_pval))
-pvals = seq(0,1,0.01)
+density = 6144;
+# tbl_pval = sprintf('%s_%d_PVALUE',expt_name,density)
+# hours = dbGetQuery(conn, sprintf('select distinct hours from %s order by hours asc', tbl_pval))
+# pvals = seq(0,1,0.01)
 
 # tbl_fit_nonrm = sprintf('%s_NONORM_%d_FITNESS',substr(expt_name,1,7),density);
 # tbl_fit_nil = sprintf('%s_NIL_%d_FITNESS',substr(expt_name,1,7),density);
@@ -34,28 +34,27 @@ pvals = seq(0,1,0.01)
 # tbl_fit_bean = sprintf('%s_BEAN_%d_FITNESS',substr(expt_name,1,7),density);
 # tbl_p2o = '4C3_pos2orf_name3';
 # tbl_bpos = '4C3_borderpos';
-
-p2c_info = NULL
-p2c_info[1] = '4C3_pos2coor6144'
-p2c_info[2] = '6144plate'
-p2c_info[3] = '6144col'
-p2c_info[4] = '6144row'
-
-p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
-                               p2c_info[1],
-                               p2c_info[2],
-                               p2c_info[3],
-                               p2c_info[4]))
-
-n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
-                                    p2c_info[2],
-                                    p2c_info[1],
-                                    p2c_info[2]))
-
-
+# 
+# p2c_info = NULL
+# p2c_info[1] = '4C3_pos2coor6144'
+# p2c_info[2] = '6144plate'
+# p2c_info[3] = '6144col'
+# p2c_info[4] = '6144row'
+# 
+# p2c = dbGetQuery(conn, sprintf('select * from %s a order by a.%s, a.%s, a.%s',
+#                                p2c_info[1],
+#                                p2c_info[2],
+#                                p2c_info[3],
+#                                p2c_info[4]))
+# 
+# n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s asc',
+#                                     p2c_info[2],
+#                                     p2c_info[1],
+#                                     p2c_info[2]))
+# 
 # dat.nonrm <- dbGetQuery(conn, sprintf('select b.*, a.orf_name, a.hours, a.bg, a.average, a.fitness
 #                                     from %s a, %s b
-#                                     where a.pos = b.pos
+#                                     where a.pos = b.pos and average is not NULL and bg is not NULL and orf_name is not NULL
 #                                     order by a.hours, b.%s, b.%s, b.%s',
 #                                     tbl_fit_nonrm,
 #                                     p2c_info[1],
@@ -64,7 +63,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
 # 
 # dat.nil <- dbGetQuery(conn, sprintf('select b.*, a.orf_name, a.hours, a.bg, a.average, a.fitness
 #                                     from %s a, %s b
-#                                     where a.pos = b.pos
+#                                     where a.pos = b.pos and average is not NULL and bg is not NULL and orf_name is not NULL
 #                                     order by a.hours, b.%s, b.%s, b.%s',
 #                                       tbl_fit_nil,
 #                                       p2c_info[1],
@@ -73,7 +72,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
 # 
 # dat.ncc <- dbGetQuery(conn, sprintf('select b.*, a.orf_name, a.hours, a.bg, a.average, a.fitness
 #                                     from %s a, %s b
-#                                     where a.pos = b.pos
+#                                     where a.pos = b.pos and average is not NULL and bg is not NULL and orf_name is not NULL
 #                                     order by a.hours, b.%s, b.%s, b.%s',
 #                                     tbl_fit_ncc,
 #                                     p2c_info[1],
@@ -82,7 +81,7 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
 # 
 # dat.lid <- dbGetQuery(conn, sprintf('select b.*, a.orf_name, a.hours, a.bg, a.average, a.fitness
 #                                     from %s a, %s b
-#                                     where a.pos = b.pos
+#                                     where a.pos = b.pos and average is not NULL and bg is not NULL and orf_name is not NULL
 #                                     order by a.hours, b.%s, b.%s, b.%s',
 #                                     tbl_fit,
 #                                     p2c_info[1],
@@ -91,14 +90,24 @@ n_plates = dbGetQuery(conn, sprintf('select distinct %s from %s a order by %s as
 # 
 # dat.bean <- dbGetQuery(conn, sprintf('select b.*, a.orf_name, a.hours, a.bg, a.average, a.fitness
 #                                     from %s a, %s b
-#                                     where a.pos = b.pos
+#                                     where a.pos = b.pos and average is not NULL and bg is not NULL and orf_name is not NULL
 #                                     order by a.hours, b.%s, b.%s, b.%s',
 #                                    tbl_fit_bean,
 #                                    p2c_info[1],
 #                                    p2c_info[2],p2c_info[3],p2c_info[4]))
 # dat.bean$method <- 'bean'
 # 
-# dat.all <- rbind(dat.nonrm, dat.nil, dat.ncc, dat.lid, dat.bean)
+# dat.all <- rbind(dat.nonrm, dat.bean, dat.nil, dat.ncc, dat.lid)
+# 
+# dat.all$source[dat.all$`6144row`%%2==1 & dat.all$`6144col`%%2==1] = '1TL'
+# dat.all$source[dat.all$`6144row`%%2==0 & dat.all$`6144col`%%2==1] = '3BL'
+# dat.all$source[dat.all$`6144row`%%2==1 & dat.all$`6144col`%%2==0] = '2TR'
+# dat.all$source[dat.all$`6144row`%%2==0 & dat.all$`6144col`%%2==0] = '4BR'
+# 
+# dat.all$colony[dat.all$orf_name == 'BF_control'] = 'Reference'
+# dat.all$colony[dat.all$orf_name != 'BF_control'] = 'Query'
+# dat.all$colony[is.na(dat.all$orf_name)] = 'Gap'
+# save(dat.all, file = "figs/lid_paper/fitness.RData")
 
 ##### RMSE OF PREDICTION
 # dat.all$average[dat.all$average == 0 & !is.na(dat.all$average)] <- NA
@@ -125,67 +134,55 @@ for (m in unique(dat.all$method)) {
   }
 }
 rmse <- data.frame(rmse)
-rmse$avg[rmse$method == 'bean'] <- rmse$avg[rmse$method == 'nonorm' & rmse$hour >0]
 rmse$per <- rmse$rmse/rmse$avg * 100
 
-?t.test
-t.test(rmse$rmse[rmse$method == 'lid'], rmse$rmse[rmse$method == 'ncc'], alternative = 'less')
-
-ggplot(rmse) +
+ggplot(rmse[rmse$hour > 0,]) +
   geom_point(aes(x = avg, y = rmse, fill = method),
-             shape = 21, size = 3, alpha = 0.8, col = 'black') +
+             shape = 21, size = 5, alpha = 0.8, col = 'black') +
   scale_x_continuous(breaks = seq(0,500,50), minor_breaks = seq(0,500,25)) +
   scale_y_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
   scale_fill_manual(name = 'Method',
-                    breaks = c('nonorm','nil','ncc','lid','bean'),
+                    breaks = c('nonorm','bean','nil','ncc','lid'),
                     values = c('nonorm' = '#212121',
                                'nil' = '#448AFF',
                                'ncc' = '#7C4DFF',
                                'lid' = '#388E3C',
                                'bean' = '#FFA000'),
-                    labels = c('RND', 'LID-SN', 'LID-CC', 'LID', 'MCAT')) +
+                    labels = c('RND', 'MCAT', 'LID-SN', 'LID-CC', 'LID')) +
   labs(title = 'Compairing RMSE',
        x = 'Mean Pixel Count',
        y = 'RMSE') +
   theme_linedraw() +
-  coord_cartesian(xlim = c(0, 400),
+  coord_cartesian(xlim = c(150, 400),
                   ylim = c(0, 80))
 ggsave(sprintf("%srmse.jpg",out_path),
        width = 6, height = 5,
        dpi = 300)
 
-ggplot(rmse) +
+ggplot(rmse[rmse$hour > 0,]) +
   geom_point(aes(x = avg, y = rmse/avg * 100, fill = method),
-             shape = 21, size = 3, alpha = 0.8, col = 'black') +
+             shape = 21, size = 5, alpha = 0.8, col = 'black') +
   scale_x_continuous(breaks = seq(0,500,50), minor_breaks = seq(0,500,25)) +
   scale_y_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
   scale_fill_manual(name = 'Method',
-                    breaks = c('nonorm','nil','ncc','lid','bean'),
+                    breaks = c('nonorm','bean','nil','ncc','lid'),
                     values = c('nonorm' = '#212121',
                                'nil' = '#448AFF',
                                'ncc' = '#7C4DFF',
                                'lid' = '#388E3C',
                                'bean' = '#FFA000'),
-                    labels = c('RND', 'LID-SN', 'LID-CC', 'LID', 'MCAT')) +
+                    labels = c('RND', 'MCAT', 'LID-SN', 'LID-CC', 'LID')) +
   labs(title = 'Compairing RMSE',
        x = 'Mean Pixel Count',
        y = 'RMSE %') +
   theme_linedraw() +
-  coord_cartesian(xlim = c(0, 400),
-                  ylim = c(0, 60))
+  coord_cartesian(xlim = c(150, 400),
+                  ylim = c(0, 40))
 ggsave(sprintf("%srmse2.jpg",out_path),
        width = 6, height = 5,
        dpi = 300)
 
 ##### SOURCE NORMALIZATION
-# dat.all$source[dat.all$`6144row`%%2==1 & dat.all$`6144col`%%2==1] = '1TL'
-# dat.all$source[dat.all$`6144row`%%2==0 & dat.all$`6144col`%%2==1] = '3BL'
-# dat.all$source[dat.all$`6144row`%%2==1 & dat.all$`6144col`%%2==0] = '2TR'
-# dat.all$source[dat.all$`6144row`%%2==0 & dat.all$`6144col`%%2==0] = '4BR'
-# 
-# dat.all$colony[dat.all$orf_name == 'BF_control'] = 'Reference'
-# dat.all$colony[dat.all$orf_name != 'BF_control'] = 'Query'
-# dat.all$colony[is.na(dat.all$orf_name)] = 'Gap'
 
 sn.nonorm <- ggplot() +
   geom_line(data = dat.all[dat.all$method == 'nonorm' & dat.all$hours == 18,],
@@ -237,8 +234,6 @@ annotate_figure(ggarrange(sn.nonorm, sn.nil, sn.lid,
 # ggsave(sprintf("%ssn.jpg",out_path),
 #        width = 16, height = 5,
 #        dpi = 300)
-
-# save(dat.all, file = "rawdata/fitness.RData")
 
 ##### CHANGE IN PWR WITH METHOD
 pwr.change <- NULL
@@ -307,18 +302,20 @@ pwr.temp <- aggregate(pwr.change$sen[pwr.change$es %in% c(0.95,1.05)], list(pwr.
 colnames(pwr.temp) <- c('method', 'sen')
 
 ggplot(pwr.temp) +
-  geom_line(aes(x = sen, y = 4:1), lwd = 1.6, col = '#303F9F', alpha = 0.9) +
-  geom_point(aes(x = sen, y = 4:1), size = 3, col = '#FFA000') +
-  scale_x_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
-  scale_y_continuous(labels = c('No. Norm','LID - SN','LID - CC','LID')) +
+  # geom_line(aes(y = sen, x = 4:1), lwd = 2, col = '#303F9F', alpha = 0.9) +
+  geom_point(aes(y = sen, x = 1:4), size = 5, col = '#FFA000') +
+  geom_point(aes(y = sen, x = 1:4), size = 1) +
+  scale_y_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
+  scale_x_continuous(breaks = 1:4,
+                     labels = c('LI Detector','- Comp.\nCorrection','- Source\nNormalization','No.\nNormalization')) +
   labs(title = 'Change in Sensitivity for 5% Fitness Effect',
        subtitle = 'At 5% False Discovery Rate',
-       x = 'Sensitivity',
-       y = '') +
+       x = '',
+       y = 'Sensitivity') +
   theme_linedraw() +
-  theme(axis.title.y = element_blank()) +
-  coord_cartesian(xlim = c(0,80))
-
+  # theme(axis.title.x = element_blank()) +
+  coord_cartesian(xlim = c(0.5,4.5),
+                  ylim = c(0,80))
 ggsave(sprintf("%spwr_chng.jpg",out_path),
        width = 5, height = 5,
        dpi = 300)
@@ -362,9 +359,9 @@ ggplot(stats.tmp[stats.tmp$hours == stats.tmp$cont_hrs,]) +
          shape = guide_legend(override.aes = list(size=4))) +
   coord_cartesian(xlim = c(0, 1), ylim = c(0, 1))
 
-ggsave(sprintf("%sfpr.jpg",out_path),
-       width = 6, height = 5,
-       dpi = 300)
+# ggsave(sprintf("%sfpr.jpg",out_path),
+#        width = 6, height = 5,
+#        dpi = 300)
 
 ##### SENSITIVITY WITH REPLICATE
 pwr.rep <- NULL
@@ -373,16 +370,16 @@ pwr.rep$sen <- c((15+15)/2, (35+37)/2, (45+50)/2, (58+58)/2, (58+58)/2, (65+65)/
 pwr.rep <- data.frame(pwr.rep)
 
 ggplot(pwr.rep) +
-  geom_line(aes(x = sen, y = rep), lwd = 1.6, col = '#303F9F', alpha = 0.9) +
-  geom_point(aes(x = sen, y = rep), size = 3, col = '#FFA000') +
-  scale_x_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
-  scale_y_continuous(breaks = seq(0,10,2), minor_breaks = seq(0,10,1)) +
+  geom_line(aes(y = sen, x = rep), lwd = 2, col = '#303F9F', alpha = 0.9) +
+  geom_point(aes(y = sen, x = rep), size = 5, col = '#FFA000') +
+  scale_y_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
+  scale_x_continuous(breaks = seq(0,10,1), minor_breaks = seq(0,10,1)) +
   labs(title = 'Change in Sensitivity for 5% Fitness Effects',
        subtitle = 'at p <= 0.05 with number of replicates per mutant',
-       x = 'Sensitivity',
-       y = 'No. of Replicates') +
+       x = 'No. of Replicates',
+       y = 'Sensitivity') +
   theme_linedraw() +
-  coord_cartesian(xlim = c(0,80))
+  coord_cartesian(ylim = c(0,80))
 ggsave(sprintf("%spwr_rep.jpg",out_path),
        width = 5, height = 5,
        dpi = 300)
@@ -520,26 +517,27 @@ i = i + 1
 ref.change <- data.frame(ref.change)
 
 ggplot(ref.change) +
-  geom_line(aes(x = sen, y = rep, col = ref),
-            lwd = 1.6, alpha = 0.9) +
-  geom_point(aes(x = sen, y = rep),
-             col = 'black', size = 3) +
+  geom_line(aes(y = sen, x = rep, col = ref),
+            lwd = 2, alpha = 0.9) +
+  geom_point(aes(y = sen, x = rep),
+             col = 'black', size = 4) +
   labs(title = 'Change in Sensitivity for 5% Fitness Effect',
        subtitle = 'at p < 0.05 with change in number of replicates and references',
-       x = 'Sensitivity',
-       y = 'No. of Replicates') +
-  scale_x_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
+       x = 'No. of Replicates',
+       y = 'Sensitivity') +
+  scale_y_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
+  scale_x_continuous(breaks = seq(0,10,1), minor_breaks = seq(0,10,1)) +
   scale_color_manual(name = 'Reference\nProportion',
                      breaks = c('1','2','3','4'),
                      values = c('1'='#D32F2F',
-                                '2'='#303F9F',
+                                '2'='#FFA000',
                                 '3'='#388E3C',
-                                '4'='#FFA000'),
+                                '4'='#303F9F'),
                      labels = c('1'='06.25%','2'='12.50%','3'='18.75%','4'='25.00%')) +
   theme_linedraw() +
   guides(color = guide_legend(override.aes = list(size=4)),
          shape = guide_legend(override.aes = list(size=4))) +
-  coord_cartesian(xlim = c(0,80))
+  coord_cartesian(ylim = c(0,80))
 ggsave(sprintf("%sref_prop.jpg",out_path),
        width = 6, height = 5,
        dpi = 300)

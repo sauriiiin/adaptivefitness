@@ -17,8 +17,8 @@ library(stringr)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND_BEAN/"
-expt_name <- '4C3_GA3_RND_BEAN'
+dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND_LID/"
+expt_name <- '4C3_GA3_RND'
 pvals = seq(0,1,0.005)
 
 ##### MAKING THE MESS
@@ -53,117 +53,139 @@ pvals = seq(0,1,0.005)
 # dbExecute(conn, 'create table 4C3_GA3_RND_BEAN_6144_JPEG
 #     select pos, hours, rnd_hrs, average
 #     from 4C3_GA3_RND_BEAN_6144_DATA')
-
+# 
 ##### ANALYZING THE MESS
-stats.files <- list.files(path = dat.dir,
-                          pattern = "P.csv", recursive = TRUE)
-fit.files <- list.files(path = dat.dir,
-                        pattern = "S.csv", recursive = TRUE)
-hours <- NULL
-reps <- NULL
-for (s in strsplit(stats.files,'_')) {
-  # reps <- c(reps, as.numeric(s[4]))
-  reps <- 8
-  hours <- c(hours, as.numeric(s[6]))
-}
-reps <- unique(reps)
-hours <- unique(hours)
-
-stats.all <- NULL
-fit.all <- NULL
-fpr.all <- NULL
-
-# PUTTING IT TOGETHER
-for (ii in 1:length(reps)) {
-  rep <- reps[ii]
-  for (i in 2:length(hours)) {
-    hr <- hours[i]
-    
-    dat.stats <- read.csv(paste0(dat.dir,
-                                 sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
-                          na.strings = "NaN")
-    # dat.stats <- read.csv(paste0(dat.dir,
-    #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
-    #                       na.strings = "NaN")
-    dat.stats <- dat.stats[dat.stats$hours != 0,]
-    dat.stats$cont_hrs <- hr
-    dat.stats$rep <- rep
-    dat.fit <- read.csv(paste0(dat.dir,
-                               sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
-                        na.strings = "NaN")
-    # dat.fit <- read.csv(paste0(dat.dir,
-    #                            sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
-    #                     na.strings = "NaN")
-    dat.fit$cont_hrs <- hr
-    dat.fit$rep <- rep
-    dat.fit$se <- dat.fit$average - dat.fit$bg
-    
-    dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
-    for (h in unique(dat.stats$hours)) {
-      cont.mean <- mean(dat.fit$fitness[dat.fit$hours == h & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
-      dat.stats$es[dat.stats$hours == h] <- round(dat.stats$cs_mean[dat.stats$hours == h]/cont.mean,4)
-      
-      dat.stats$cen[dat.stats$hours == h] <- mean(dat.stats$es[dat.stats$hours == h])
-      
-      dat.stats$effect[dat.stats$hours == h & dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
-      dat.stats$effect[dat.stats$hours == h & dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
-      dat.stats$effect[dat.stats$hours == h & is.na(dat.stats$effect)] <- 'Neutral'
-      
-      dat.stats$effect_p[dat.stats$hours == h & dat.stats$p <= 0.05 & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
-      dat.stats$effect_p[dat.stats$hours == h & dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
-      dat.stats$effect_p[dat.stats$hours == h & is.na(dat.stats$effect_p)] <- 'Neutral'
-    }
-    
-    stats.all <- rbind(stats.all,dat.stats)
-    fit.all <- rbind(fit.all,dat.fit)
-  }
-}
-
-fit.all$strain[fit.all$orf_name == "BF_control"] = "Reference"
-fit.all$strain[fit.all$orf_name != "BF_control"] = "Query"
-
-for (hr in sort(unique(stats.all$hours))) {
-  for (orf in unique(stats.all$orf_name)) {
-    stats.all$pix_mean[stats.all$hours == hr & stats.all$orf_name == orf] <-
-      mean(fit.all$average[fit.all$hours == hr & fit.all$orf_name == orf], na.rm = T)
-  }
-}
-
-ref.all <- NULL
-i = 0
-for (hr in sort(unique(fit.all$hours))) {
-  for (pos in 385:768) {
-    i <- i + 1
-    ref.all$pix_mean[i] <-
-      mean(fit.all$average[fit.all$pos %in% c(c(110000,120000,130000,140000,210000,220000,230000,240000) + pos) & fit.all$hours == hr], na.rm = T)
-    ref.all$cs_mean[i] <-
-      mean(fit.all$fitness[fit.all$pos %in% c(c(110000,120000,130000,140000,210000,220000,230000,240000) + pos) & fit.all$hours == hr], na.rm = T)
-    ref.all$hours[i] <- hr
-  }
-}
-ref.all <- data.frame(ref.all)
-
-for (hr in sort(unique(ref.all$hours))) {
-  pix_mean <- mean(ref.all$pix_mean[ref.all$hours == hr],na.rm = T)
-  stats.all$from[stats.all$hours == hr & stats.all$pix_mean < pix_mean] = 'less'
-  stats.all$from[stats.all$hours == hr & stats.all$pix_mean > pix_mean] = 'more'
-}
-
-fit.all$method <- 'LID'
-ref.all$method <- 'LID'
-stats.all$method <- 'LID'
-
+# stats.files <- list.files(path = dat.dir,
+#                           pattern = "P.csv", recursive = TRUE)
+# fit.files <- list.files(path = dat.dir,
+#                         pattern = "S.csv", recursive = TRUE)
+# hours <- NULL
+# reps <- NULL
+# for (s in strsplit(stats.files,'_')) {
+#   # reps <- c(reps, as.numeric(s[4]))
+#   reps <- 8
+#   hours <- c(hours, as.numeric(s[5]))
+# }
+# reps <- unique(reps)
+# hours <- unique(hours)
+# 
+# stats.all <- NULL
+# fit.all <- NULL
+# fpr.all <- NULL
+# 
+# # PUTTING IT TOGETHER
+# for (ii in 1:length(reps)) {
+#   rep <- reps[ii]
+#   for (i in 2:length(hours)) {
+#     hr <- hours[i]
+# 
+#     dat.stats <- read.csv(paste0(dat.dir,
+#                                  sprintf('%s_%d_%d_STATS_P.csv',expt_name,rep,hr)),
+#                           na.strings = "NaN")
+#     # dat.stats <- read.csv(paste0(dat.dir,
+#     #                              sprintf('%s_%d_STATS_P.csv',expt_name,hr)),
+#     #                       na.strings = "NaN")
+#     dat.stats <- dat.stats[dat.stats$hours != 0,]
+#     dat.stats$cont_hrs <- hr
+#     dat.stats$rep <- rep
+#     dat.fit <- read.csv(paste0(dat.dir,
+#                                sprintf('%s_%d_%d_FITNESS.csv',expt_name,rep,hr)),
+#                         na.strings = "NaN")
+#     # dat.fit <- read.csv(paste0(dat.dir,
+#     #                            sprintf('%s_%d_FITNESS.csv',expt_name,hr)),
+#     #                     na.strings = "NaN")
+#     dat.fit$cont_hrs <- hr
+#     dat.fit$rep <- rep
+#     dat.fit$se <- dat.fit$average - dat.fit$bg
+# 
+#     dat.stats$pthresh <- quantile(sort(dat.stats$p[dat.stats$hours == hr]),.05)
+#     for (h in unique(dat.stats$hours)) {
+#       cont.mean <- mean(dat.fit$fitness[dat.fit$hours == h & dat.fit$orf_name == 'BF_control' & !is.na(dat.fit$fitness)])
+#       dat.stats$es[dat.stats$hours == h] <- round(dat.stats$cs_mean[dat.stats$hours == h]/cont.mean,4)
+# 
+#       dat.stats$cen[dat.stats$hours == h] <- mean(dat.stats$es[dat.stats$hours == h])
+# 
+#       dat.stats$effect[dat.stats$hours == h & dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+#       dat.stats$effect[dat.stats$hours == h & dat.stats$p <= dat.stats$pthresh & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+#       dat.stats$effect[dat.stats$hours == h & is.na(dat.stats$effect)] <- 'Neutral'
+# 
+#       dat.stats$effect_p[dat.stats$hours == h & dat.stats$p <= 0.05 & dat.stats$cs_mean > cont.mean] <- 'Beneficial'
+#       dat.stats$effect_p[dat.stats$hours == h & dat.stats$p <= 0.05 & dat.stats$cs_mean < cont.mean] <- 'Deleterious'
+#       dat.stats$effect_p[dat.stats$hours == h & is.na(dat.stats$effect_p)] <- 'Neutral'
+#     }
+# 
+#     stats.all <- rbind(stats.all,dat.stats)
+#     fit.all <- rbind(fit.all,dat.fit)
+#   }
+# }
+# 
+# fit.all$strain[fit.all$orf_name == "BF_control"] = "Reference"
+# fit.all$strain[fit.all$orf_name != "BF_control"] = "Query"
+# 
+# for (hr in sort(unique(stats.all$hours))) {
+#   for (orf in unique(stats.all$orf_name)) {
+#     stats.all$pix_mean[stats.all$hours == hr & stats.all$orf_name == orf] <-
+#       mean(fit.all$average[fit.all$hours == hr & fit.all$orf_name == orf], na.rm = T)
+#   }
+# }
+# 
+# ref.all <- NULL
+# i = 0
+# for (hr in sort(unique(fit.all$hours))) {
+#   for (pos in 385:768) {
+#     i <- i + 1
+#     ref.all$pix_mean[i] <-
+#       mean(fit.all$average[fit.all$pos %in% c(c(110000,120000,130000,140000,210000,220000,230000,240000) + pos) & fit.all$hours == hr], na.rm = T)
+#     ref.all$cs_mean[i] <-
+#       mean(fit.all$fitness[fit.all$pos %in% c(c(110000,120000,130000,140000,210000,220000,230000,240000) + pos) & fit.all$hours == hr], na.rm = T)
+#     ref.all$hours[i] <- hr
+#   }
+# }
+# ref.all <- data.frame(ref.all)
+# 
+# for (hr in sort(unique(ref.all$hours))) {
+#   pix_mean <- mean(ref.all$pix_mean[ref.all$hours == hr],na.rm = T)
+#   stats.all$from[stats.all$hours == hr & stats.all$pix_mean < pix_mean] = 'less'
+#   stats.all$from[stats.all$hours == hr & stats.all$pix_mean > pix_mean] = 'more'
+# }
+# 
+# fit.all$method <- 'LID'
+# ref.all$method <- 'LID'
+# stats.all$method <- 'LID'
+# 
 # fit.data <- NULL
 # ref.data <- NULL
 # sta.data <- NULL
+# 
+# fit.data <- rbind(fit.data, fit.all)
+# ref.data <- rbind(ref.data, ref.all)
+# sta.data <- rbind(sta.data, stats.all)
+# 
+# save(fit.data, file = "figs/lid_paper/rnd_fit_data.RData")
+# save(ref.data, file = "figs/lid_paper/rnd_ref_data.RData")
+# save(sta.data, file = "figs/lid_paper/rnd_sta_data.RData")
 
-fit.data <- rbind(fit.data, fit.all)
-ref.data <- rbind(ref.data, ref.all)
-sta.data <- rbind(sta.data, stats.all)
+load("figs/lid_paper/rnd_fit_data.RData")
+load("figs/lid_paper/rnd_ref_data.RData")
+load("figs/lid_paper/rnd_sta_data.RData")
+# rnd_hrs <- dbGetQuery(conn, 'select hours, orf_name, round(avg(rnd_hrs)) rnd_hrs
+#                           from 4C3_GA3_RND_BEAN_6144_DATA
+#                           where orf_name != "BF_control"
+#                           group by hours, orf_name')
+rnd_hrs <- read.csv("figs/lid_paper/rnd_hrs.csv")
 
-save(fit.data, file = "figs/lid_paper/rnd_fit_data.RData")
-save(ref.data, file = "figs/lid_paper/rnd_ref_data.RData")
-save(sta.data, file = "figs/lid_paper/rnd_sta_data.RData")
+rnd_hrs$from[rnd_hrs$rnd_hrs > rnd_hrs$hours] <- 'more'
+rnd_hrs$from[rnd_hrs$rnd_hrs < rnd_hrs$hours] <- 'less'
+
+hours <- c(8,9,10,11,13,14,16,17,18)
+
+for (h in sort(hours)) {
+  for (o in unique(sta.data$orf_name[sta.data$hours == h])) {
+    sta.data$from[sta.data$hours == h & sta.data$orf_name == o] <- rnd_hrs$from[rnd_hrs$hours == h & rnd_hrs$orf_name == o]
+  }
+}
+
+
 
 tp <- sta.data[sta.data$effect_p == 'Beneficial' & sta.data$from == 'more' |
                              sta.data$effect_p == 'Deleterious' & sta.data$from == 'less',]
@@ -181,9 +203,21 @@ lid.tp <- dim(tp[tp$method == 'LID',])[1]/dim(sta.data[sta.data$method == 'LID' 
 mcat.tp <- dim(tp[tp$method == 'MCAT',])[1]/dim(sta.data[sta.data$method == 'MCAT' &
                                                          (sta.data$effect_p == 'Beneficial' | sta.data$effect_p == 'Deleterious'),])[1] * 100
 
+mean(ref.data$pix_mean[ref.data$hours == 18], na.rm = T)
+
 mess.tmp <- NULL
 for (h in sort(hours)) {
   if (h > 0) {
+    
+    tmp.ref.pix <- mean(ref.data$pix_mean[ref.data$hours == h], na.rm = T)
+    
+    if (dim(count(sta.data[sta.data$hours == h,], from))[1] == 2) {
+      tmp.ratio <- count(sta.data[sta.data$hours == h,], from)[[2,2]]/1818 * 100 #count(sta.data[sta.data$hours == h,], from)[[1,2]]
+    } else {
+      tmp.ratio <- 0
+    }
+    
+    
     tmp.lid.pow <- dim(tp[tp$method == 'LID' & tp$hours == h,])[1]/
       dim(sta.data[sta.data$method == 'LID' & sta.data$hours == h,])[1] * 100
     tmp.mcat.pow <- dim(tp[tp$method == 'MCAT' & tp$hours == h,])[1]/
@@ -202,41 +236,64 @@ for (h in sort(hours)) {
                      (sta.data$effect_p == 'Beneficial' | sta.data$effect_p == 'Deleterious'),])[1] * 100
     
     mess.tmp <- rbind(mess.tmp,
-                      cbind(h,
+                      cbind(h, tmp.ref.pix, tmp.ratio,
                             tmp.lid.tp, tmp.lid.fp, tmp.lid.pow,
                             tmp.mcat.tp, tmp.mcat.fp, tmp.mcat.pow))
   }
 }
 mess.tmp <- data.frame(mess.tmp)
 
-mess.tmp.lid <- mess.tmp[,c(1:4)]
+mess.tmp.lid <- mess.tmp[,c(1:6)]
 mess.tmp.lid$method <- 'LID'
-mess.tmp.mcat <- mess.tmp[,c(1,5:7)]
+mess.tmp.mcat <- mess.tmp[,c(1:3,7:9)]
 mess.tmp.mcat$method <- 'MCAT'
 
-colnames(mess.tmp.lid) <- c('hours','TP','FP','POW','method')
-colnames(mess.tmp.mcat) <- c('hours','TP','FP','POW','method')
+colnames(mess.tmp.lid) <- c('hours','REF','BEN','TP','FP','POW','method')
+colnames(mess.tmp.mcat) <- c('hours','REF','BEN','TP','FP','POW','method')
 
 mess.res <- rbind(mess.tmp.lid,mess.tmp.mcat)
-mess.res <- melt(mess.res, id.vars = c('hours','method'))
+mess.res <- melt(mess.res, id.vars = c('hours','method','REF','BEN'))
 
-ggplot(mess.res) +
-  geom_line(aes(x = hours, y = value, col = variable, linetype = method),
-            lwd = 1.2) +
-  theme_linedraw()
 
-ggplot(sta.data) +
+ggplot(mess.res[mess.res$variable != 'TP',]) +
+  geom_line(aes(x = BEN, y = value, col = variable, linetype = method),
+            lwd = 1.4) +
+  scale_color_manual(name = 'Measure',
+                     breaks = c('TP','FP','POW'),
+                     values = c('TP'='#9C27B0','FP'='#009688','POW'='#1976D2'),
+                     labels = c('True\nPos','False Pos.','Sensitivity')) +
+  scale_linetype_discrete(name = 'Method') +
+  scale_x_continuous(breaks = seq(0,100,10)) +
+  scale_y_continuous(breaks = seq(0,100,10)) +
+  labs(title = 'LID & MCAT Performance',
+       subtitle = 'On Randomly Distributed Fitness Effects',
+       x = 'True Beneficial Proportion (%)',
+       y = 'Percentage') +
+  theme_linedraw() +
+  coord_cartesian(xlim = c(0,90)) +
+  guides(color = guide_legend(override.aes = list(size=4)),
+         linetype = guide_legend(override.aes = list(size=1)))
+ggsave(sprintf("%sperf_rnd.jpg",out_path),
+       width = 6, height = 5,
+       dpi = 300)
+
+ggplot(sta.data[sta.data$hours != 9,]) +
   geom_bar(aes(x = from, fill = effect_p)) +
-  scale_fill_manual(name = 'Effects',
+  scale_fill_manual(name = 'Predicted\nEffects',
                     breaks = c('Beneficial','Neutral','Deleterious'),
                     values = c('Deleterious'='#F44336',
                                'Neutral'='#303F9F',
                                'Beneficial'='#4CAF50')) +
+  scale_x_discrete(labels = c('True\nDel.','True\nBen')) +
+  labs(title = 'LID & MCAT Performance',
+       subtitle = 'On Randomly Distributed Fitness Effects',
+       y = 'Count') +
   theme_linedraw() +
-  labs(title = )
-  
-  facet_grid(~method)
-
+  theme(axis.title.x = element_blank()) +
+  facet_wrap(.~hours*method, ncol = 4)
+ggsave(sprintf("%sperf_rnd2.jpg",out_path),
+       width = 10, height = 10,
+       dpi = 300)
 
 # hr = 18
 # cs <- ggplot() +
