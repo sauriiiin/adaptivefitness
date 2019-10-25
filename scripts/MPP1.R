@@ -16,36 +16,14 @@ library(stringr)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
+# conn <- dbConnect(MariaDB(), dbname = '',
+#                   usr = '',
+#                   password = '',
+#                   host = 'paris.csb.pitt.edu')
+
 out_path = 'figs/multipin_pilot/';
 
-##### ZOOM2PIXEL
-
-z2p = readxl::read_xlsx('figs/multipin_pilot/z2p.xlsx')
-z2p$ratio <- z2p$width/z2p$height
-z2p$height <- z2p$width/median(z2p$ratio)
-z2p$pixcount <- z2p$width * z2p$height
-# z2p$pixcount <- z2p$pixcount - z2p$pixcount[39]
-z2p$pixcount <- z2p$pixcount[z2p$focalLength == 55]/z2p$pixcount
-
-pix_cor = NULL
-i = 1
-for (fl in unique(z2p$focalLength)) {
-  pix_cor$focalLength[i] <- fl
-  pix_cor$correction[i] <- mean(z2p$pixcount[z2p$focalLength == fl])
-  i <- i + 1
-}
-pix_cor <- data.frame(pix_cor)
-write.table(pix_cor, file = sprintf('%spix_cor.csv',out_path),
-            sep = ",", row.names = F)
-
-z2p.model <- lm(formula = pixcount ~ focalLength + I(focalLength^2) + I(focalLength^3), data = z2p)
-z2p.model
-ggplot(z2p) +
-  geom_point(aes(x = focalLength, y = pixcount)) +
-  geom_point(data = data.frame(seq(18,55,1)),
-             aes(x = seq(18,55,1), y = predict(z2p.model, data.frame(focalLength = seq(18,55,1)))))
-
-##### PLOTTING DATA
+##### GETTING DATA FROM SQL
 
 data <- dbGetQuery(conn, 'select c.*, b.orf_name, a.hours, a.average
           from Branden.pilot_1_rep1_1_SC_Com_Glu_384_RAW a,
@@ -53,9 +31,11 @@ data <- dbGetQuery(conn, 'select c.*, b.orf_name, a.hours, a.average
           where a.pos = b.pos and a.pos = c.pos
           order by a.hours, c.384plate, c.384col, c.384row')
 
+##### CORRECTING FOR ZOOM LEVEL
+# Don't need to do this once precorrected data is uploaded to SQL
 data$average[data$hours %in% c(46,48,56,59,61)] <- data$average[data$hours %in% c(46,48,56,59,61)] * 1.543034963
-# data$hours[data$hours %in% c(31,32,34,36,38,41)] <- data$hours[data$hours %in% c(31,32,34,36,38,41)] + 12
 
+##### PLOTTING DATA
 ggplot(data[data$hours > 6 & data$hours != 64,]) +
   geom_point(aes(x = hours, y = average, col = orf_name)) +
   geom_smooth(aes(x = hours, y = average, col = orf_name),
@@ -69,6 +49,8 @@ ggsave(sprintf("%sgrowth.jpg",out_path),
 ggplot(data[data$hours == 48,]) +
   geom_line(aes(x = average, col = orf_name), stat = 'density', trim = T)
 
+
+##### REMOVING OUTLIERS USING 2MAD
 for (hr in unique(data$hours)) {
   for (orf in unique(data$orf_name[data$hours == hr])) {
     m <- median(data$average[data$hours == hr & data$orf_name == orf])
@@ -83,7 +65,6 @@ for (hr in unique(data$hours)) {
 
 ggplot(data[data$hours == 48,]) +
   geom_line(aes(x = average, col = orf_name), stat = 'density', trim = T)
-
 
 ggplot(data[data$hours > 6 & data$hours != 64,]) +
   geom_point(aes(x = hours, y = average, col = orf_name)) +
