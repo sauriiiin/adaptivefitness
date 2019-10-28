@@ -4,6 +4,8 @@
 # Establishing relationship between zoom level and pixel counts
 # For Cannon EOS Rebel T6
 
+out_path = 'figs/multipin_pilot/';
+
 z2p = readxl::read_xlsx('figs/multipin_pilot/z2p.xlsx')
 z2p$ratio <- z2p$width/z2p$height
 z2p$height <- z2p$width/median(z2p$ratio)
