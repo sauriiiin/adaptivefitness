@@ -274,7 +274,7 @@ ggplot(jpegdat[jpegdat$hours == 18,]) +
 
 jpegdat <- data.frame(jpegdat$pos, jpegdat$hours, jpegdat$mca)
 colnames(jpegdat) <- c('pos','hours','average')
-dbWriteTable(conn, tablename_jpeg_mca, jpegdat, overwrite = T)
+# dbWriteTable(conn, tablename_jpeg_mca, jpegdat, overwrite = T)
 
 ggplot(alldat[!is.na(alldat$average),]) +
   # geom_point(aes(x = average, y =  neigh, col = nearSick)) +

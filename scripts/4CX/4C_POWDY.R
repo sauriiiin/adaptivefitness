@@ -11,8 +11,8 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_CC2_TR_LID/"
-expt_name <- '4C3_GA3_CC2_TR'
+dat.dir <- "/home/sbp29/R/Projects/adaptivefitness/rawdata/4C3_GA3_CC2_TRBLBR_LID/"
+expt_name <- '4C3_GA3_CC2_TRBLBR'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -27,7 +27,7 @@ fit.files <- list.files(path = dat.dir,
                         pattern = "S.csv", recursive = TRUE)
 hours <- NULL
 reps <- NULL
-# refs <- NULL
+refs <- NULL
 for (s in strsplit(stats.files,'_')) {
   # refs <- c(refs, as.numeric(s[4]))
   reps <- c(reps, as.numeric(s[5]))

@@ -418,7 +418,7 @@ compdat$average_cc[is.na(compdat$orf_name)] <- NA
 
 jpegdat <- data.frame(compdat$pos, compdat$hours, compdat$average, compdat$average_cc)
 colnames(jpegdat) <- c('pos','hours','average_raw', 'average')
-dbWriteTable(conn, tablename_jpeg_cc, jpegdat, overwrite = T)
+# dbWriteTable(conn, tablename_jpeg_cc, jpegdat, overwrite = T)
 
 #####
 
