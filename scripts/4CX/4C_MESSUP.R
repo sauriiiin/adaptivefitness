@@ -185,7 +185,30 @@ for (h in sort(hours)) {
   }
 }
 
-
+ggplot(ref.data) +
+  geom_jitter(data = sta.data,
+              aes(x = hours, y = pix_mean, col = effect_p),
+              size = 0.3, alpha = 0.7) +
+  geom_violin(aes(x = hours, y = pix_mean, group = hours),
+              draw_quantiles = c(0.25, 0.5, 0.75),
+              fill = 'transparent') +
+  labs(x = 'Hours',
+       y = 'Colony Size (pix)') +
+  # geom_jitter(aes(x = hours, y = pix_mean),
+  #             size = 0.2, alpha = 0.7) +
+  facet_wrap(~method, nrow = 2) +
+  scale_color_manual(name = 'Effects',
+                    breaks = c('Beneficial', 'Neutral', 'Deleterious'),
+                    values = c('Beneficial' = '#388E3C',
+                               'Deleterious' = '#FF5252',
+                               'Neutral' = '#303F9F')) +
+  scale_x_continuous(breaks = 1:20) +
+  theme_linedraw() +
+  guides(color = guide_legend(override.aes = list(size=3)),
+         shape = guide_legend(override.aes = list(size=3)))
+ggsave(sprintf("%srnd_jitter.jpg",out_path),
+       width = 6, height = 5,
+       dpi = 300)
 
 tp <- sta.data[sta.data$effect_p == 'Beneficial' & sta.data$from == 'more' |
                              sta.data$effect_p == 'Deleterious' & sta.data$from == 'less',]
@@ -252,9 +275,11 @@ colnames(mess.tmp.lid) <- c('hours','REF','BEN','TP','FP','POW','method')
 colnames(mess.tmp.mcat) <- c('hours','REF','BEN','TP','FP','POW','method')
 
 mess.res <- rbind(mess.tmp.lid,mess.tmp.mcat)
+ggplot(mess.res) +
+  geom_point(aes(x = TP, y = POW, col = method),lwd = 1.4)
+
+
 mess.res <- melt(mess.res, id.vars = c('hours','method','REF','BEN'))
-
-
 ggplot(mess.res[mess.res$variable != 'TP',]) +
   geom_line(aes(x = BEN, y = value, col = variable, linetype = method),
             lwd = 1.4) +

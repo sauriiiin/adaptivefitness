@@ -431,96 +431,14 @@ ggsave(sprintf("%ssml_fit.jpg",out_path),
        dpi = 300)
 
 ##### CHANGE IN SENSITIVITY WITH NO OF REFERENCES & REPLICATES
-ref.change <- NULL
-i = 1
-ref.change$ref[i] <- '4'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 8
-ref.change$sen[i] <- mean(c(70,70))
-i = i + 1
-ref.change$ref[i] <- '4'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 6
-ref.change$sen[i] <- mean(c(65,65))
-i = i + 1
-ref.change$ref[i] <- '4'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 4
-ref.change$sen[i] <- mean(c(58,58))
-i = i + 1
-ref.change$ref[i] <- '4'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 2
-ref.change$sen[i] <- mean(c(35,37))
-i = i + 1
-ref.change$ref[i] <- '3'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 8
-ref.change$sen[i] <- mean(c(63,57))
-i = i + 1
-ref.change$ref[i] <- '3'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 6
-ref.change$sen[i] <- mean(c(55,50))
-i = i + 1
-ref.change$ref[i] <- '3'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 4
-ref.change$sen[i] <- mean(c(54,50))
-i = i + 1
-ref.change$ref[i] <- '3'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 2
-ref.change$sen[i] <- mean(c(35,40))
-i = i + 1
-ref.change$ref[i] <- '2'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 8
-ref.change$sen[i] <- mean(c(30,38))
-i = i + 1
-ref.change$ref[i] <- '2'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 6
-ref.change$sen[i] <- mean(c(25,34))
-i = i + 1
-ref.change$ref[i] <- '2'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 4
-ref.change$sen[i] <- mean(c(17,17))
-i = i + 1
-ref.change$ref[i] <- '2'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 2
-ref.change$sen[i] <- mean(c(7,15))
-i = i + 1
-ref.change$ref[i] <- '1'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 8
-ref.change$sen[i] <- mean(c(32,35))
-i = i + 1
-ref.change$ref[i] <- '1'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 6
-ref.change$sen[i] <- mean(c(30,17))
-i = i + 1
-ref.change$ref[i] <- '1'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 4
-ref.change$sen[i] <- mean(c(19,26))
-i = i + 1
-ref.change$ref[i] <- '1'
-ref.change$es[i] <- 5
-ref.change$rep[i] <- 2
-ref.change$sen[i] <- mean(c(2,2))
-i = i + 1
+load(file = "/home/sbp29/R/Projects/adaptivefitness/figs/lid_paper/ref_rep_sen.RData")
 
-ref.change <- data.frame(ref.change)
-
-ggplot(ref.change) +
-  geom_line(aes(y = sen, x = rep, col = ref),
-            lwd = 2, alpha = 0.9) +
-  geom_point(aes(y = sen, x = rep),
-             col = 'black', size = 4) +
+ggplot(sen[sen$x %in% c(0.95,1.05),]) +
+  geom_line(aes(x = rep, y = y, col = as.character(ref),
+                group = ref), stat = 'summary', lwd = 1.2,
+            linetype = 'dotted') +
+  geom_point(aes(x = rep, y = y, col = as.character(ref),
+                 group = ref), stat = 'summary', size = 4) +
   labs(title = 'Change in Sensitivity for 5% Fitness Effect',
        subtitle = 'at p < 0.05 with change in number of replicates and references',
        x = 'No. of Replicates',
@@ -528,12 +446,15 @@ ggplot(ref.change) +
   scale_y_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
   scale_x_continuous(breaks = seq(0,10,1), minor_breaks = seq(0,10,1)) +
   scale_color_manual(name = 'Reference\nProportion',
-                     breaks = c('1','2','3','4'),
-                     values = c('1'='#D32F2F',
-                                '2'='#FFA000',
-                                '3'='#388E3C',
-                                '4'='#303F9F'),
-                     labels = c('1'='06.25%','2'='12.50%','3'='18.75%','4'='25.00%')) +
+                     breaks = c('6.25','12.5','18.75','25'),
+                     values = c('6.25'  ='#D32F2F',
+                                '12.5'  ='#FFA000',
+                                '18.75' ='#388E3C',
+                                '25'    ='#303F9F'),
+                     labels = c('6.25'  ='06.25 %',
+                                '12.5'  ='12.50 %',
+                                '18.75' ='18.75 %',
+                                '25'    ='25.00 %')) +
   theme_linedraw() +
   guides(color = guide_legend(override.aes = list(size=4)),
          shape = guide_legend(override.aes = list(size=4))) +
@@ -542,3 +463,22 @@ ggsave(sprintf("%sref_prop.jpg",out_path),
        width = 6, height = 5,
        dpi = 300)
 
+pie <- data.frame(
+  group = c("Reference", "Query"),
+  value = cbind(c(25, 75),
+                c(18.75, 100 - 18.75),
+                c(12.5, 100 - 12.5),
+                c(6.25, 100 - 6.25))
+)
+
+ggplot(pie) +
+  geom_bar(aes(x = "", y = value.4, fill = group), stat = 'identity') +
+  coord_polar("y", start = 0) +
+  scale_fill_manual(values = c('Reference' = '#FFC107',
+                                 'Query' = '#3F51B5'),
+                      guide = F) +
+  theme_minimal() +
+  theme(axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        rect = element_rect(fill = "transparent"))
+ggsave(sprintf("%spie625.png",out_path),  bg = "transparent")
