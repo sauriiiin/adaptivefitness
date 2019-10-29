@@ -100,6 +100,7 @@ fit.all <- fit.all[!fit.all$orf_name %in% sprintf('MASK%d',1:1000),]
 # save(fit.all, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FITNESS.RData")
 stats.all$es <- round(stats.all$es,4)
 
+dat.cnt.all <- NULL
 for (rep in unique(reps)) {
   effect_size <- sort(unique(round(stats.all$es[stats.all$rep == rep],2)))
   dat.pow <- NULL
@@ -333,6 +334,9 @@ for (rep in unique(reps)) {
     dat.cnt <- rbind(dat.cnt,temp)
   }
   
+  dat.cnt$rep <- rep
+  dat.cnt.all <- rbind(dat.cnt.all, dat.cnt)
+  
   dat.cnt2 <- NULL
   dat.cnt2$hours <- dat.cnt$hours
   dat.cnt2$cont_hrs <- dat.cnt$cont_hrs
@@ -508,25 +512,22 @@ for (rep in unique(reps)) {
   annotate_figure(edis,
                   top = text_grob(expt_name))
   
-  ggsave(sprintf("%s%s_EDIS_%d.jpg",out_path,expt_name,rep),
-         height = 22, width = 20, units = "cm",
-         dpi = 300)
+  # ggsave(sprintf("%s%s_EDIS_%d.jpg",out_path,expt_name,rep),
+  #        height = 22, width = 20, units = "cm",
+  #        dpi = 300)
 }
 
-dat.cnt$Deleterious <- dat.cnt$Deleterious/912 * 100
-dat.cnt$Beneficial <- dat.cnt$Beneficial/912 * 100
-dat.cnt$Neutral <- dat.cnt$Neutral/912 * 100
-dat.cnt$Sensitivity <- dat.cnt$Beneficial + dat.cnt$Deleterious
+dat.cnt.all[4:9] <- dat.cnt.all[4:9]/912 * 100
+dat.cnt.all$Sensitivity <- dat.cnt.all$Beneficial + dat.cnt.all$Deleterious
+dat.cnt.all$Sensitivity_p <- dat.cnt.all$Beneficial_p + dat.cnt.all$Deleterious_p
 
-dat.cnt$Deleterious_p <- dat.cnt$Deleterious_p/912 * 100
-dat.cnt$Beneficial_p <- dat.cnt$Beneficial_p/912 * 100
-dat.cnt$Neutral_p <- dat.cnt$Neutral_p/912 * 100
-dat.cnt$Sensitivity_p <- dat.cnt$Beneficial_p + dat.cnt$Deleterious_p
-
-fit.nonorm.p <- approx(dat.cnt$Sensitivity_p, dat.cnt$cen, method = 'linear')
-predict(fit.nonorm.p, data.frame(cen = 0.95))
-
-# save(stats.tmp, file = "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA1_FDR.RData")
+# sen <- data.frame(x = NULL, y = NULL)
+for (rep in unique(dat.cnt.all$rep)) {
+  temp <- approx(dat.cnt.all$cen[dat.cnt.all$rep == rep], dat.cnt.all$Sensitivity_p[dat.cnt.all$rep == rep],
+                 xout = seq(0.7,1.3,0.05),
+                 method = 'linear')
+  sen <- rbind(sen, cbind(data.frame(temp), rep, data.frame(ref = 25*0.25)))
+}
 
 ##### NON TECH REP ANALYSIS
 expt_name = '4C3_GA1_TRBLBR'
