@@ -574,17 +574,18 @@ load("figs/lid_paper/sig_bean.RData")
 sig.bean <- sig.dat
 load("figs/lid_paper/rnd_pred.RData")
 
-dis.dat <- cbind(sig.lid$hours, sig.lid$con_ben, sig.lid$con_del, sig.lid$pre_ben, sig.lid$pre_del, 100 -  sig.lid$pre_ben - sig.lid$pre_del,
-                 sig.bean$pre_ben, sig.bean$pre_del, 100 - sig.bean$pre_ben - sig.bean$pre_del)
+dis.dat <- rbind(cbind(sig.lid$hours, sig.lid$con_ben, sig.lid$con_del, sig.lid$pre_ben, sig.lid$pre_del, 100 -  sig.lid$pre_ben - sig.lid$pre_del),
+                 cbind(sig.lid$hours, sig.lid$con_ben, sig.lid$con_del, sig.bean$pre_ben, sig.bean$pre_del, 100 - sig.bean$pre_ben - sig.bean$pre_del))
 colnames(dis.dat) <- c('hours', 'con_ben', 'con_del',
-                       'lid_ben', 'lid_del', 'lid_neu',
-                       'bean_ben', 'bean_del', 'bean_neu')
+                       'ben', 'del', 'neu')
 dis.dat <- data.frame(dis.dat)
+dis.dat$method[1:9] <- 'LID'
+dis.dat$method[10:18] <- 'MCAT'
 
-rmse.lid.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$lid_ben)^2, na.rm = T))
-rmse.lid.del <- sqrt(mean((dis.dat$con_del - dis.dat$lid_del)^2, na.rm = T))
-rmse.bean.ben <- sqrt(mean((dis.dat$con_ben - dis.dat$bean_ben)^2, na.rm = T))
-rmse.bean.del <- sqrt(mean((dis.dat$con_del - dis.dat$bean_del)^2, na.rm = T))
+rmse.lid.ben <- sqrt(mean((dis.dat$con_ben[dis.dat$method == 'LID'] - dis.dat$ben[dis.dat$method == 'LID'])^2, na.rm = T))
+rmse.lid.del <- sqrt(mean((dis.dat$con_del[dis.dat$method == 'LID'] - dis.dat$del[dis.dat$method == 'LID'])^2, na.rm = T))
+rmse.bean.ben <- sqrt(mean((dis.dat$con_ben[dis.dat$method == 'MCAT'] - dis.dat$ben[dis.dat$method == 'MCAT'])^2, na.rm = T))
+rmse.bean.del <- sqrt(mean((dis.dat$con_del[dis.dat$method == 'MCAT'] - dis.dat$del[dis.dat$method == 'MCAT'])^2, na.rm = T))
 
 sig.lid$method <- 'lid'
 sig.bean$method <- 'mcat'
@@ -593,15 +594,14 @@ sig.dat <- rbind(sig.lid, sig.bean)
 rnd.pred <- sig.dat[c(1:5,8)]
 # save(rnd.pred, file = "figs/lid_paper/rnd_pred.RData")
 
-R2.lid.ben <- summary(lm(con_ben ~ lid_ben, data = dis.dat))[8]
-R2.bean.ben <- summary(lm(con_ben ~ bean_ben, data = dis.dat))[8]
-R2.lid.del <- summary(lm(con_del ~ lid_del, data = dis.dat))[8]
-R2.bean.del <- summary(lm(con_del ~ bean_del, data = dis.dat))[8]
+# R2.lid.ben <- summary(lm(con_ben ~ ben, data = dis.dat))[8]
+# R2.bean.ben <- summary(lm(con_ben ~ bean_ben, data = dis.dat))[8]
+# R2.lid.del <- summary(lm(con_del ~ lid_del, data = dis.dat))[8]
+# R2.bean.del <- summary(lm(con_del ~ bean_del, data = dis.dat))[8]
 
 pre.ben <- ggplot(dis.dat) +
   geom_abline() +
-  geom_point(aes(x = con_ben, y = lid_ben, col = 'LID'), size = 5) +
-  geom_point(aes(x = con_ben, y = bean_ben, col = 'MCAT'), size = 5) +
+  geom_point(aes(x = con_ben, y = ben, col = method), size = 5) +
   labs(title = 'LID does better than MCAT',
        subtitle = sprintf('Beneficial Fitness Effects\nLID RMSE = %.2f | MCAT RMSE = %.2f', rmse.lid.ben, rmse.bean.ben),
        x = 'Condition Positive (%)',
@@ -613,8 +613,7 @@ pre.ben <- ggplot(dis.dat) +
 
 pre.del <- ggplot(dis.dat) +
   geom_abline() +
-  geom_point(aes(x = con_del, y = lid_del, col = 'LID'), size = 5) +
-  geom_point(aes(x = con_del, y = bean_del, col = 'MCAT'), size = 5) +
+  geom_point(aes(x = con_del, y = del, col = method), size = 5) +
   labs(title = '',
        subtitle = sprintf('Deleterious Fitness Effects\nLID RMSE = %.2f | MCAT RMSE = %.2f', rmse.lid.del, rmse.bean.del),
        x = 'Condition Positive (%)',
@@ -630,8 +629,8 @@ ggsave(sprintf("%s%s_PREDICTIONS.png",
                out_path,expt_name),
        width = 10, height = 5)
 
-ggplot(rnd.pred) +
-  geom_point(aes(x = con_ben, y = pre_ben, col = method))
+ggplot(dis.dat) +
+  geom_point(aes(x = con_ben, y = ben + del, col = method))
 
 ##### DETAILED LOOK AT THE PREDICTIONS
 pred.ref = dbGetQuery(conn, sprintf('select hours, average
