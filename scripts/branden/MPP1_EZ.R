@@ -41,7 +41,7 @@ ggplot(data) +
               method = 'loess') +
   scale_x_continuous(breaks = seq(0,80,4)) +
   theme_linedraw() 
-ggsave(sprintf("%sgrowth.jpg",out_path),
+ggsave("growth.jpg",
        width = 7, height = 7,
        dpi = 300)
 
@@ -64,7 +64,7 @@ ggplot(data) +
               method = 'loess') +
   scale_x_continuous(breaks = seq(0,80,4)) +
   theme_linedraw() 
-ggsave(sprintf("%sgrowth_clean.jpg",out_path),
+ggsave("growth_clean.jpg",
        width = 7, height = 7,
        dpi = 300)
 
