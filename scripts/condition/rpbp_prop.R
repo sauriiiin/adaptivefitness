@@ -186,6 +186,10 @@ dat.plt$grp_evidence[dat.plt$evidence > 22 & dat.plt$evidence < 45] <- 2
 dat.plt$grp_evidence[dat.plt$evidence > 44 & dat.plt$evidence < 67] <- 3
 dat.plt$grp_evidence[dat.plt$evidence > 66] <- 4
 
+dat.plt$grp_fc <- NULL
+dat.plt$grp_fc[dat.plt$frame_conservation <= 0.6] <- 1
+dat.plt$grp_fc[dat.plt$frame_conservation > 0.8] <- 3
+dat.plt$grp_fc[is.na(dat.plt$grp_fc)] <- 2
 # dat.plt$orf_class <- ordered(dat.plt$orf_class, levels = c('unannotated','dubious','uncharacterized','te','pseudogene','verified'))
 melted <- melt(dat.plt, id.vars = c("id","orf_class","evidence","grp_len_aa","grp_evidence"))
 
@@ -207,9 +211,9 @@ plt <- ggplot(melted,
   theme(legend.position = 'bottom') +
   guides(color = guide_legend(override.aes = list(size=3, alpha = 1)),
          shape = guide_legend(override.aes = list(size=3, alpha = 1)))
-ggsave(sprintf("%srpbp_prop_evi.jpg",out_path),
+ggsave(sprintf("%srpbp_prop.jpg",out_path),
        plt,
-       width = 14, height = 14,
+       width = 15, height = 15,
        dpi = 500)
 
 evi2sgd <- ggplot(melted) +
