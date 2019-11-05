@@ -80,6 +80,7 @@ for (i in 1:length(data$orf_name)) {
 }
 
 melted <- data[c(1,5:20)]
+save(melted,file = sprintf('%spg1.RData',out_path))
 melted <- melt(melted, id.vars = c('orf_name','protogene'))
 
 ggplot(melted, aes(x = protogene, y = value)) +

@@ -1,8 +1,9 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 .Ruserdata
 *.png
 *.csv
 /figs
 /rawdata
+/output
