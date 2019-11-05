@@ -3,6 +3,19 @@
 ##### Author  : Saurin Parikh (dr.saurin.parikh@gmail.com)
 ##### Date    : 11/05/2019
 
+##### INSTALL PACKAGES
+# comment this section out once you have installed them.
+# you do not need to run this section everytime.
+install.packages("RMariaDB")
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("gridExtra")
+install.packages("ggExtra")
+install.packages("grid")
+install.packages("tidyverse")
+install.packages("ggpubr")
+install.packages("stringr")
+
 ##### INITIALIZE
 library(RMariaDB)
 library(dplyr)
