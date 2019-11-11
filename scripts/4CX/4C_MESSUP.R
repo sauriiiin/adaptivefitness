@@ -179,6 +179,8 @@ rnd_hrs$from[rnd_hrs$rnd_hrs < rnd_hrs$hours] <- 'less'
 
 hours <- c(8,9,10,11,13,14,16,17,18)
 
+# sta.data <- sta.data[sort(hours),]
+
 for (h in sort(hours)) {
   for (o in unique(sta.data$orf_name[sta.data$hours == h])) {
     sta.data$from[sta.data$hours == h & sta.data$orf_name == o] <- rnd_hrs$from[rnd_hrs$hours == h & rnd_hrs$orf_name == o]
@@ -210,6 +212,62 @@ ggsave(sprintf("%srnd_jitter.jpg",out_path),
        width = 6, height = 5,
        dpi = 300)
 
+den.dat <- data.frame(rbind(ref.data[ref.data$method == 'MCAT',c(1,3)],
+                            sta.data[sta.data$method == 'MCAT',c(15,2)]))
+i = 1
+for (hr in unique(den.dat$hours)) {
+  den.dat$plate[den.dat$hours == hr] <- sprintf('Plate_%d',i)
+  i = i + 1
+}
+ggplot(den.dat) +
+  geom_line(aes(x = pix_mean),
+              stat = 'density') +
+  labs(title = 'Virtual Plate Colony Size Distribution',
+       y = 'Density',
+       x = 'Colony Size (pix)') +
+  facet_wrap(.~plate) +
+  theme_linedraw()
+ggsave(sprintf("%srnd_den.jpg",out_path),
+       width = 5, height = 5,
+       dpi = 300)
+
+pie.per <- count(pie.dat, vars = c('method','value'))
+pie.per$per <- pie.per$freq/(sum(pie.per$freq)/3) * 100
+
+pie.dat <- data.frame(rbind(cbind(hours = sta.data$hours[sta.data$method == 'MCAT'],
+                                  value = sta.data$from[sta.data$method == 'MCAT'],
+                                  method = '2_RAWDATA'),
+                            cbind(hours = sta.data$hours[sta.data$method == 'MCAT'],
+                                  value = sta.data$effect_p[sta.data$method == 'MCAT'],
+                                  method = '3_MCAT'),
+                            cbind(hours = sta.data$hours[sta.data$method == 'MCAT'],
+                                  value = sta.data$effect_p[sta.data$method == 'LID'],
+                                  method = '1_LID')))
+pie.dat$value.2 <- pie.dat$value
+pie.dat$value[pie.dat$value.2 == 'less'] <- 'Deleterious'
+pie.dat$value[pie.dat$value.2 == 'more'] <- 'Beneficial'
+
+ggplot(pie.dat[pie.dat$hours == hours,]) +
+  geom_bar(aes(x = "", y = "", fill = value), stat = 'identity') +
+  coord_polar("y", start = 0) +
+  # geom_text(aes(y = value/3 + c(0, cumsum(value)[-length(value)]), 
+  #               label = percent(value/100)), size=5) +
+  scale_fill_manual(name = 'Effects',
+                     breaks = c('Beneficial', 'Neutral', 'Deleterious'),
+                     values = c('Beneficial' = '#388E3C',
+                                'Deleterious' = '#FF5252',
+                                'Neutral' = '#303F9F')) +
+  # facet_wrap(.~hours * method)
+  facet_wrap(.~method) +
+  theme_linedraw() +
+  theme(axis.title = element_blank(),
+        legend.position = 'bottom')
+ggsave(sprintf("%srnd_pie.jpg",out_path),
+       width = 6, height = 3,
+       dpi = 300)  
+
+
+
 tp <- sta.data[sta.data$effect_p == 'Beneficial' & sta.data$from == 'more' |
                              sta.data$effect_p == 'Deleterious' & sta.data$from == 'less',]
 fp <- sta.data[sta.data$effect_p == 'Deleterious' & sta.data$from == 'more' |
@@ -234,8 +292,8 @@ for (h in sort(hours)) {
     
     tmp.ref.pix <- mean(ref.data$pix_mean[ref.data$hours == h], na.rm = T)
     
-    if (dim(count(sta.data[sta.data$hours == h,], from))[1] == 2) {
-      tmp.ratio <- count(sta.data[sta.data$hours == h,], from)[[2,2]]/1818 * 100 #count(sta.data[sta.data$hours == h,], from)[[1,2]]
+    if (dim(count(sta.data[sta.data$hours == h,], vars = "from"))[1] == 2) {
+      tmp.ratio <- count(sta.data[sta.data$hours == h,], vars = "from")[[2,2]]/1818 * 100 #count(sta.data[sta.data$hours == h,], from)[[1,2]]
     } else {
       tmp.ratio <- 0
     }
@@ -276,7 +334,9 @@ colnames(mess.tmp.mcat) <- c('hours','REF','BEN','TP','FP','POW','method')
 
 mess.res <- rbind(mess.tmp.lid,mess.tmp.mcat)
 ggplot(mess.res) +
-  geom_point(aes(x = TP, y = POW, col = method),lwd = 1.4)
+  geom_line(aes(x = POW, y = TP, col = method),lwd = 1.4) +
+  labs(x = 'Sensitivity',
+       y = 'Specificity')
 
 
 mess.res <- melt(mess.res, id.vars = c('hours','method','REF','BEN'))

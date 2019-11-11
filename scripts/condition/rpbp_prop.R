@@ -26,7 +26,7 @@ library(stringr)
 library(reshape2)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
-out_path = 'figs/seq_prop/'
+fig_path = 'figs/seq_prop/'
 
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
@@ -166,8 +166,10 @@ data$grp_len_aa <- as.numeric(cut(data$len_aa, 10))
 data$grp_evidence <- as.numeric(cut(data$evidence, 5))
 data <- cbind(data, xtra[2:5])
 # save(data,file = sprintf('%srpbp_all_props.RData',out_path))
-write.csv(data, file = 'TRANSLATEOME_PROPS.csv', row.names = F)
-dbWriteTable(conn, "RPBP_ORFS_PROPS", data, overwrite = T)
+# write.csv(data, file = 'TRANSLATEOME_PROPS.csv', row.names = F)
+# dbWriteTable(conn, "RPBP_ORFS_PROPS", data, overwrite = T)
+out_path = 'output/'
+load(sprintf('%srpbp_all_props.RData',out_path))
 
 dat.plt <- data[,c("id","orf_class","evidence","len_nt","len_aa","gc","tiny",
                    "small","aliphatic","aromatic","nonpolar","polar","charged",
@@ -236,6 +238,72 @@ ggsave(sprintf("%sevi2sgd.jpg",out_path),
 #        hello,
 #        width = 10, height = 10,
 #        dpi = 300)
+
 ##### CLUSTERING
 # BiocManager::install("M3C")
 library(M3C)
+devtools::install_github("vqv/ggbiplot")
+library(ggbiplot)
+
+library(caret)  
+library(Rtsne)
+
+data.pca <- data[,c(1,54:76)]
+data.pca <- data.pca[,c(1,2,4,5,8:24)]
+# data.pca <- data.frame(t(data.pca))
+data.pca[is.na(data.pca)] <- 0
+ana.pca <- prcomp(data.pca, center = TRUE, scale = TRUE)
+
+ggbiplot(ana.pca, obs.scale = 1, var.scale = 1, 
+         ellipse = TRUE, 
+         circle = TRUE)
+
+pca(data.pca)
+
+## Rtsne function may take some minutes to complete...
+set.seed(9)  
+tsne_model_1 = Rtsne(as.matrix(data.pca), check_duplicates=FALSE, pca=TRUE, perplexity=30, theta=0.5, dims=2, max_iter = 100)
+
+## getting the two dimension matrix
+d_tsne_1 = as.data.frame(tsne_model_1$Y)
+
+## plotting the results without clustering
+ggplot(d_tsne_1, aes(x=V1, y=V2)) +  
+  geom_point(size=0.25)
+
+
+
+## keeping original data
+d_tsne_1_original=d_tsne_1
+
+## Creating k-means clustering model, and assigning the result to the data used to create the tsne
+fit_cluster_kmeans=kmeans(scale(d_tsne_1), 3)  
+d_tsne_1_original$cl_kmeans = factor(fit_cluster_kmeans$cluster)
+
+## Creating hierarchical cluster model, and assigning the result to the data used to create the tsne
+fit_cluster_hierarchical=hclust(dist(scale(d_tsne_1)))
+
+## setting 3 clusters as output
+d_tsne_1_original$cl_hierarchical = factor(cutree(fit_cluster_hierarchical, k=3))
+
+plot_cluster=function(data, var_cluster, palette)  
+  {
+    ggplot(data, aes_string(x="V1", y="V2", color=var_cluster)) +
+      geom_point(size=0.25) +
+      guides(colour=guide_legend(override.aes=list(size=6))) +
+      xlab("") + ylab("") +
+      ggtitle("") +
+      theme_light(base_size=20) +
+      theme(axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            legend.direction = "horizontal", 
+            legend.position = "bottom",
+            legend.box = "horizontal") + 
+      scale_colour_brewer(palette = palette) 
+  }
+
+plot_k=plot_cluster(d_tsne_1_original, "cl_kmeans", "Accent")  
+plot_k
+plot_h=plot_cluster(d_tsne_1_original, "cl_hierarchical", "Set1")
+
+
