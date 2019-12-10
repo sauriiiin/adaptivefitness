@@ -17,9 +17,9 @@ library(stringr)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND_LID/"
-expt_name <- '4C3_GA3_RND'
-pvals = seq(0,1,0.005)
+# dat.dir <- "/home/sbp29/R/Projects/proto_plots/rawdata/4C3_GA3_RND_LID/"
+# expt_name <- '4C3_GA3_RND'
+# pvals = seq(0,1,0.005)
 
 ##### MAKING THE MESS
 # alldat = dbGetQuery(conn, 'select b.*, a.orf_name, a.hours, a.average
@@ -208,9 +208,9 @@ ggplot(ref.data) +
   theme_linedraw() +
   guides(color = guide_legend(override.aes = list(size=3)),
          shape = guide_legend(override.aes = list(size=3)))
-ggsave(sprintf("%srnd_jitter.jpg",out_path),
-       width = 6, height = 5,
-       dpi = 300)
+# ggsave(sprintf("%srnd_jitter.jpg",out_path),
+#        width = 6, height = 5,
+#        dpi = 300)
 
 den.dat <- data.frame(rbind(ref.data[ref.data$method == 'MCAT',c(1,3)],
                             sta.data[sta.data$method == 'MCAT',c(15,2)]))
@@ -227,44 +227,81 @@ ggplot(den.dat) +
        x = 'Colony Size (pix)') +
   facet_wrap(.~plate) +
   theme_linedraw()
-ggsave(sprintf("%srnd_den.jpg",out_path),
-       width = 5, height = 5,
-       dpi = 300)
+# ggsave(sprintf("%srnd_den.jpg",out_path),
+#        width = 5, height = 5,
+#        dpi = 300)
 
-pie.per <- count(pie.dat, vars = c('method','value'))
-pie.per$per <- pie.per$freq/(sum(pie.per$freq)/3) * 100
+sta.data$res <- sta.data$effect_p
+sta.data$res[sta.data$effect_p == 'Beneficial' & sta.data$from == 'more'] <- '5TrueBeneficial'
+sta.data$res[sta.data$effect_p == 'Beneficial' & sta.data$from == 'less'] <- '3FalseBeneficial'
+sta.data$res[sta.data$effect_p == 'Deleterious' & sta.data$from == 'more'] <- '4FalseDeleterious'
+sta.data$res[sta.data$effect_p == 'Deleterious' & sta.data$from == 'less'] <- '2TrueDeleterious'
+sta.data$res[sta.data$effect_p == 'Neutral' & sta.data$from == 'more'] <- '6BenNeutral'
+sta.data$res[sta.data$effect_p == 'Neutral' & sta.data$from == 'less'] <- '1DelNeutral'
+# sta.data$res[sta.data$effect_p == 'Neutral' & sta.data$from == 'less'] <- 'DelNeutral'
+# sta.data$res[sta.data$effect_p == 'Deleterious' & sta.data$from == 'less'] <- 'TrueDeleterious'
+# sta.data$res[sta.data$effect_p == 'Beneficial' & sta.data$from == 'less'] <- 'FalseBeneficial'
+# sta.data$res[sta.data$effect_p == 'Deleterious' & sta.data$from == 'more'] <- 'FalseDeleterious'
+# sta.data$res[sta.data$effect_p == 'Beneficial' & sta.data$from == 'more'] <- 'TrueBeneficial'
+# sta.data$res[sta.data$effect_p == 'Neutral' & sta.data$from == 'more'] <- 'BenNeutral'
 
 pie.dat <- data.frame(rbind(cbind(hours = sta.data$hours[sta.data$method == 'MCAT'],
                                   value = sta.data$from[sta.data$method == 'MCAT'],
-                                  method = '2_RAWDATA'),
+                                  method = 'TRUTH'),
                             cbind(hours = sta.data$hours[sta.data$method == 'MCAT'],
-                                  value = sta.data$effect_p[sta.data$method == 'MCAT'],
-                                  method = '3_MCAT'),
+                                  value = sta.data$res[sta.data$method == 'MCAT'],
+                                  method = 'MCAT'),
                             cbind(hours = sta.data$hours[sta.data$method == 'MCAT'],
-                                  value = sta.data$effect_p[sta.data$method == 'LID'],
-                                  method = '1_LID')))
-pie.dat$value.2 <- pie.dat$value
-pie.dat$value[pie.dat$value.2 == 'less'] <- 'Deleterious'
-pie.dat$value[pie.dat$value.2 == 'more'] <- 'Beneficial'
+                                  value = sta.data$res[sta.data$method == 'LID'],
+                                  method = 'LID')))
+
+pie.dat$value[pie.dat$value == 'less'] <- '2TrueDeleterious'
+pie.dat$value[pie.dat$value == 'more'] <- '5TrueBeneficial'
+
+# pie.dat <- arrange(transform(pie.dat,
+#                              value=factor(value,levels=c('DelNeutral','TrueDeleterious','FalseBeneficial',
+#                                                          'FalseDeleterious','TrueBeneficial','BenNeutral'))),
+#                    value)
+
+pie.dat <- arrange(transform(pie.dat,
+                           method=factor(method,levels=c('LID','TRUTH','MCAT'))),
+                   method)
+# pie.dat$value <- as.character(pie.dat$value)
+
+pie.per <- plyr::count(pie.dat, vars = c('method','value'))
+pie.per$per <- pie.per$freq/(sum(pie.per$freq)/3) * 100
 
 ggplot(pie.dat[pie.dat$hours == hours,]) +
   geom_bar(aes(x = "", y = "", fill = value), stat = 'identity') +
   coord_polar("y", start = 0) +
-  # geom_text(aes(y = value/3 + c(0, cumsum(value)[-length(value)]), 
-  #               label = percent(value/100)), size=5) +
   scale_fill_manual(name = 'Effects',
-                     breaks = c('Beneficial', 'Neutral', 'Deleterious'),
-                     values = c('Beneficial' = '#388E3C',
-                                'Deleterious' = '#FF5252',
-                                'Neutral' = '#303F9F')) +
-  # facet_wrap(.~hours * method)
+                    breaks = c('6BenNeutral',
+                               '5TrueBeneficial',
+                               '4FalseDeleterious',
+                               '3FalseBeneficial',
+                               '2TrueDeleterious',
+                               '1DelNeutral'),
+                    values = c('1DelNeutral'='#FF9800',
+                               '2TrueDeleterious'='#D32F2F',
+                               '3FalseBeneficial'='#FFEB3B',
+                               '4FalseDeleterious'='#DCEDC8',
+                               '5TrueBeneficial'='#388E3C',
+                               '6BenNeutral'='#8BC34A'),
+                    labels = c('1DelNeutral'='False Neutral Deleterious',
+                               '2TrueDeleterious'='True Deleterious',
+                               '3FalseBeneficial'='False Beneficial Deleterious',
+                               '4FalseDeleterious'='False Deleterious Beneficial',
+                               '5TrueBeneficial'='True Beneficial',
+                               '6BenNeutral'='False Neutral Beneficial')) +
+                      
   facet_wrap(.~method) +
   theme_linedraw() +
   theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
         legend.position = 'bottom')
 ggsave(sprintf("%srnd_pie.jpg",out_path),
        width = 6, height = 3,
-       dpi = 300)  
+       dpi = 1000)  
 
 
 
@@ -764,7 +801,7 @@ pred.mcat.box <- ggplot(pred.bean[pred.bean$hours > 16,]) +
   #                out_path),
   #        width = 6, height = 5) 
 
-  ggplot(pred.lid[pred.lid$hours > 16,]) +
+ggplot(pred.lid[pred.lid$hours > 16,]) +
     geom_vline(xintercept = pred.lid$ref[pred.lid$hours == hr], lwd = 0.8,
                linetype = 'dashed', col = 'black') +
     geom_histogram(aes(x = que, fill = effect),

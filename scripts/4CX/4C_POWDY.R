@@ -11,8 +11,8 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/';
-dat.dir <- "/home/sbp29/R/Projects/adaptivefitness/rawdata/4C3_GA3_CC2_TRBLBR_LID/"
-expt_name <- '4C3_GA3_CC2_TRBLBR'
+dat.dir <- "/home/sbp29/R/Projects/adaptivefitness/rawdata/4C3_GA3_CC2_LID/"
+expt_name <- '4C3_GA3_CC2'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -30,9 +30,9 @@ reps <- NULL
 refs <- NULL
 for (s in strsplit(stats.files,'_')) {
   # refs <- c(refs, as.numeric(s[4]))
-  reps <- c(reps, as.numeric(s[5]))
+  reps <- c(reps, as.numeric(s[4]))
   # reps <- 8
-  hours <- c(hours, as.numeric(s[6]))
+  hours <- c(hours, as.numeric(s[5]))
 }
 # refs <- unique(refs)
 reps <- unique(reps)
@@ -398,7 +398,7 @@ for (rep in unique(reps)) {
     geom_vline(xintercept = seq(0,2,0.025), col = '#757575', lwd = 0.5, alpha =0.5) +
     geom_hline(yintercept = c(t * seq(0,1,0.05)), col = '#757575', lwd = 0.5, alpha =0.5) +
     labs(title = "",
-         subtitle = sprintf('with %d technical replicate (p = 0.05)',rep),
+         subtitle = sprintf('with %d technical replicate (p <= 0.05)',rep),
          x = 'Effect Size',
          y = 'Sensitivity') +
     scale_y_continuous(breaks = c(t * seq(0,1,0.1)),

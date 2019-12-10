@@ -302,12 +302,13 @@ pwr.temp <- aggregate(pwr.change$sen[pwr.change$es %in% c(0.95,1.05)], list(pwr.
 colnames(pwr.temp) <- c('method', 'sen')
 
 ggplot(pwr.temp) +
-  # geom_line(aes(y = sen, x = 4:1), lwd = 2, col = '#303F9F', alpha = 0.9) +
-  geom_point(aes(y = sen, x = 1:4), size = 5, col = '#FFA000') +
-  geom_point(aes(y = sen, x = 1:4), size = 1) +
+  geom_line(aes(y = sen, x = 4:1), lwd = 2, col = '#303F9F', alpha = 0.9) +
+  geom_point(aes(y = sen, x = 4:1), size = 5, col = '#FFA000') +
+  geom_point(aes(y = sen, x = 4:1), size = 1) +
   scale_y_continuous(breaks = seq(0,100,10), minor_breaks = seq(0,100,5)) +
   scale_x_continuous(breaks = 1:4,
-                     labels = c('LI Detector','- Comp.\nCorrection','- Source\nNormalization','No.\nNormalization')) +
+                     labels = c('No\nNormalization','Ref. based\nLinear Interpolant',
+                                '+ Source\nDeconstruction','+ Local\nArtefact Correction')) +
   labs(title = 'Change in Sensitivity for 5% Fitness Effect',
        subtitle = 'At 5% False Discovery Rate',
        x = '',
@@ -482,3 +483,93 @@ ggplot(pie) +
         axis.title = element_blank(),
         rect = element_rect(fill = "transparent"))
 ggsave(sprintf("%spie625.png",out_path),  bg = "transparent")
+
+##### EFFECT SIZE
+es.dat <- data.frame('hours'=c(8,9,10,11,13,14,16,17,18),
+                     'P1'=double(length=9),
+                     'P2'=double(length=9),
+                     'P3'=double(length=9),
+                     'P4'=double(length=9),
+                     'P5'=double(length=9),
+                     'P6'=double(length=9),
+                     'P7'=double(length=9),
+                     'P8'=double(length=9),
+                     'P9'=double(length=9),
+                     row.names = c('P1','P2','P3','P4','P5','P6','P7','P8','P9'))
+es.dat <- rbind(hours=c(0,8,9,10,11,13,14,16,17,18),es.dat)
+
+for (r in unique(dat.all$hours[dat.all$method == 'lid'])) {
+  if (r > 0) {
+    # ref.mean <- mean(dat.all$average[dat.all$hours == r & dat.all$orf_name == 'BF_control'], na.rm = T)
+    ref.mean <- mean(dat.all$average[dat.all$hours == r], na.rm = T)
+    for (q in unique(dat.all$hours[dat.all$method == 'lid'])) {
+      if ( q > 0) {
+        # que.mean <- mean(dat.all$average[dat.all$hours == q & !is.na(dat.all$orf_name) & dat.all$orf_name != 'BF_control'], na.rm = T)
+        que.mean <- mean(dat.all$average[dat.all$hours == q], na.rm = T)
+        es.dat[es.dat[,1] == r,es.dat[1,] == q] <- que.mean/ref.mean
+      }
+    }
+  }
+}
+
+write.csv(es.dat, file = sprintf('%seffect_sizes.csv',out_path))
+
+##### PLATE LAYOUT
+lay.384$density <- 384
+lay.1536$density <- 1536
+lay.6144$density <- 6144
+colnames(lay.384) <- c('pos','strain_id','orf_name','pos..4','plate','row','col','colony','density')
+colnames(lay.1536) <- c('pos','strain_id','orf_name','pos..4','plate','row','col','colony','density')
+colnames(lay.6144) <- c('pos','strain_id','orf_name','pos..4','plate','row','col','colony','density')
+
+lay <- rbind(lay.384, lay.1536, lay.6144) 
+
+layout <- ggplot(lay) +
+  geom_point(aes(x = col, y = row, col = colony)) +
+  scale_color_manual(name = 'Colony Type',
+                     breaks = c('Stock','Reference', 'Query', 'Gap'),
+                     values = c("Stock" = "#689F38",
+                                "Reference" = "#FFC107",
+                                "Query" = "#303F9F",
+                                "Gap" = "#FF5252"),
+                     guide = F) +
+  facet_wrap(.~density*plate, nrow = 3, scales = "free") +
+  theme_linedraw() +
+  theme(axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_blank(),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+ggsave(sprintf("%slayout.jpg",out_path),
+       layout,
+       width = 12, height = 6,
+       dpi = 1000)  
+
+for (d in unique(lay$density)) {
+  if (d == 384) {
+    ggplot(lay[lay$density == d,]) +
+      geom_point(aes(x = col, y = row, col = colony)) +
+      scale_color_manual(name = 'Colony Type',
+                         breaks = c('Stock','Reference', 'Query', 'Gap'),
+                         values = c("Stock" = "#689F38",
+                                    "Reference" = "#FFC107",
+                                    "Query" = "#303F9F",
+                                    "Gap" = "#FF5252"),
+                         guide = F) +
+      scale_x_continuous(limits = c(1,) )
+      facet_wrap(.~plate, nrow = 1, scales = "free") +
+      theme_linedraw() +
+      theme(axis.title = element_blank(),
+            axis.text = element_blank(),
+            axis.ticks = element_blank(),
+            panel.grid = element_blank(),
+            panel.background = element_blank(),
+            strip.background = element_blank(),
+            strip.text.x = element_blank())
+  }
+}
+
+
+
