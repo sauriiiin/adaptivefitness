@@ -38,6 +38,8 @@ for (orf in bf.all$orf_name) {
   bf.all$nt_len[bf.all$orf_name == orf] = nchar(seq$seq_nt_atg[seq$orf_name == orf])
 }
 
+##### VISUALIZING DATA
+## ORF SEQ NT LENGHTS
 ggplot(bf.all) +
   geom_line(aes(x = nt_len, col = as.character(protogene)),
             lwd = 1.2,
@@ -48,11 +50,13 @@ ggplot(bf.all) +
        y = 'Density') +
   theme_linedraw() +
   scale_color_discrete(name = 'PG') +
-  facet_wrap(.~plate, scales = 'free')
+  facet_wrap(.~plate, scales = 'free_y',
+             nrow = 4, ncol = 6)
 ggsave(sprintf('%sEXPANDED_BF_NT_LENS.png',out_path),
-       width = 10, height = 10,
+       width = 15, height = 10,
        dpi = 300)
 
+## PG PROPORTIONS / PLATE
 pie.dat <- plyr::count(bf.all, vars = c('plate','protogene'))
 freq <- plyr::count(bf.all, vars = c('plate'))
 
@@ -70,8 +74,26 @@ ggplot(pie.dat,
   theme(axis.title = element_blank(),
         axis.ticks = element_blank()) +
   scale_fill_discrete(name = 'PG') +
-  facet_wrap(.~plate)
+  facet_wrap(.~plate,
+             nrow = 4, ncol = 6)
 ggsave(sprintf('%sEXPANDED_BF_NT_PROP.png',out_path),
-       width = 10, height = 10,
+       width = 15, height = 10,
+       dpi = 300)
+
+## PLATE MAPS
+ggplot(bf.all) +
+  geom_point(aes(x = col, y = row, col = as.character(protogene)), size = 2) +
+  labs(title = 'Plate Maps',
+       subtitle = 'Expanded BF Collection',
+       x = 'Columns',
+       y = 'Rows') +
+  scale_x_continuous(breaks = seq(0,24,2),limits = c(1,24)) +
+  scale_y_continuous(breaks = seq(0,26,2),limits = c(16,1),trans = 'reverse') +
+  theme_linedraw() +
+  scale_color_discrete(name = 'PG') +
+  facet_wrap(.~plate,
+             nrow = 4, ncol = 6)
+ggsave(sprintf('%sEXPANDED_BF_MAPS.png',out_path),
+       width = 18, height = 10,
        dpi = 300)
 
