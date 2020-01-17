@@ -9,12 +9,13 @@ library(ggplot2)
 library(ggExtra)
 library(gridExtra)
 library(ggpubr)
+library(reshape2)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
 out_path <- 'figs/4C4/'
 
-expt <- '4C4'
+expt <- '4C4_BEAN'
 pattern <- 'UP1'
 
 ##### PS2 DATA ANALYSIS
@@ -114,4 +115,44 @@ ggplot(data[data$hours == 21,]) +
 ggsave(sprintf("%s%s%s_%s_techsrc_fit.jpg",out_path,expt,pattern,stage),
        width = 5, height = 5,
        dpi = 300)
+
+##### PLATE EFFECT
+# stage <- 'FS'
+# density <- 6144
+# data <- dbGetQuery(conn, sprintf(('select * from %s_%s_%d_FITNESS a, 4C4_pos2coor b
+#                    where a.pos = b.pos
+#                    order by hours, b.plate, b.col, b.row'), expt, stage, density))
+
+data <- dbGetQuery(conn, "select * from 4C4_FS_6144_FITNESS a, 4C4_pos2coor b
+                   where a.pos = b.pos and a.pos not in (select pos from 4C4_borderpos)
+                   and hours > 1.02
+                   order by hours, b.plate, b.col, b.row")
+
+data[12] <- dbGetQuery(conn, "select fitness bean_fitness from 4C4_FS_BEAN_6144_FITNESS a, 4C4_pos2coor b
+                   where a.pos = b.pos and a.pos not in (select pos from 4C4_borderpos)
+                   and hours > 1.02
+                   order by hours, b.plate, b.col, b.row")
+
+data$source[data$row%%2==1 & data$col%%2==1] = '1TL'
+data$source[data$row%%2==0 & data$col%%2==1] = '3BL'
+data$source[data$row%%2==1 & data$col%%2==0] = '2TR'
+data$source[data$row%%2==0 & data$col%%2==0] = '4BR'
+
+temp <- data[c(1:6,12:13)]
+temp <- melt(temp, id.vars = c('orf_name','pos','hours','bg','source'))
+
+# ggplot(temp) +
+#   geom_line(aes(x = value, col = source), stat = 'density') +
+#   facet_wrap(.~hours*variable, scales = 'free', nrow = 6)
+# ggsave(sprintf("%s%s%s_%s_plate_effect.jpg",out_path,expt,pattern,stage),
+#        width = 15, height = 10,
+#        dpi = 300)
+
+ggplot(temp) +
+  geom_line(aes(x = value, col = source), stat = 'density') +
+  facet_wrap(.~hours*variable, scales = 'free', ncol = 6)
+ggsave(sprintf("%s4C4_plate_effect.jpg",out_path),
+       width = 15, height = 10,
+       dpi = 300)
+
 
