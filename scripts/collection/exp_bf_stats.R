@@ -53,8 +53,15 @@ ggsave(sprintf('%sEXPANDED_BF_NT_LENS.png',out_path),
        width = 10, height = 10,
        dpi = 300)
 
-ggplot(bf.all,
-       aes(x = protogene, y = "", fill = as.character(protogene))) +
+pie.dat <- plyr::count(bf.all, vars = c('plate','protogene'))
+freq <- plyr::count(bf.all, vars = c('plate'))
+
+for (p in freq$plate) {
+ pie.dat$freq[pie.dat$plate == p] <- pie.dat$freq[pie.dat$plate == p]/freq$freq[freq$plate == p] * 100
+}
+
+ggplot(pie.dat,
+       aes(x = "", y = freq, fill = as.character(protogene))) +
   geom_bar(stat = 'identity') +
   coord_polar(theta = "y", start = 0) +
   labs(title = 'Proto-gene Proportion',
