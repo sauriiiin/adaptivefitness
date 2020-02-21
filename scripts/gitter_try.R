@@ -4,9 +4,8 @@
 ##### TESTING OUT GITTER OUTPUT
 
 ##### INITIALIZE
-# source("https://bioconductor.org/biocLite.R")
-# biocLite("EBImage")
-# install.packages("tiff")
+BiocManager::install("EBImage")
+install.packages("tiff")
 library(gitter)
 
 jpeg.dir <- "/home/sbp29/RAW_Data/4Control/4C3/Ga/S1/"
