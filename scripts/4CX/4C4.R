@@ -19,10 +19,31 @@ expt <- '4C4_BEAN'
 pattern <- 'UP1'
 
 ##### PS2 DATA ANALYSIS
-stage <- 'PS2'
-data <- dbGetQuery(conn, 'select * from 4C4_PS2_1536_FITNESS a, 4C4_pos2coor b
+stage <- 'PS1'
+data.ps1 <- dbGetQuery(conn, sprintf('select * from 4C4_%s_1536_JPEG a, 4C4_pos2coor b
                    where a.pos = b.pos
-                   order by hours, b.plate, b.col, b.row')
+                   order by hours, b.plate, b.col, b.row', stage))
+data.ps1$stage <- "Upscale Plates (#1)"
+
+stage <- 'PS2'
+data.ps2 <- dbGetQuery(conn, sprintf('select * from 4C4_%s_1536_JPEG a, 4C4_pos2coor b
+                                     where a.pos = b.pos
+                                     order by hours, b.plate, b.col, b.row', stage))
+data.ps2$stage <- "Transition Plates (#2)"
+
+data.ps <- rbind(data.ps1, data.ps2[data.ps2$hours == 21,])
+data.ps$source[data.ps$row%%2==1 & data.ps$col%%2==1] = '1TL'
+data.ps$source[data.ps$row%%2==0 & data.ps$col%%2==1] = '3BL'
+data.ps$source[data.ps$row%%2==1 & data.ps$col%%2==0] = '2TR'
+data.ps$source[data.ps$row%%2==0 & data.ps$col%%2==0] = '4BR'
+
+data.ps$stage <- factor(data.ps$stage, levels = c("Upscale Plates (#1)", "Transition Plates (#2)"))
+
+for (s in unique(data.ps$stage)) {
+  data.ps$mean_cs[data.ps$stage == s] <- mean(data.ps$average[data.ps$stage == s], na.rm = T)
+  data.ps$median_cs[data.ps$stage == s] <- median(data.ps$average[data.ps$stage == s], na.rm = T)
+}
+
 
 # TECHNICAL SOURCE
 data$tech_src[data$row%%2==1 & data$col%%2==1] = '1TL'
