@@ -18,9 +18,9 @@ conn <- initialize.sql("saurin_test")
 load("figs/lid_paper/fitness.RData")
 
 ##### INITIALIZE
-expt_name = '4C3_GA3_CC2'
-expt = 'VAL'
-out_path = 'figs/lid_paper/';
+expt_name = '4C4_FS_CC'
+expt = 'VAL2'
+out_path = 'figs/lid_paper/4C4/';
 
 density = 6144;
 # tbl_pval = sprintf('%s_%d_PVALUE',expt_name,density)
@@ -99,10 +99,10 @@ density = 6144;
 # 
 # dat.all <- rbind(dat.nonrm, dat.bean, dat.nil, dat.ncc, dat.lid)
 # 
-# dat.all$source[dat.all$`6144row`%%2==1 & dat.all$`6144col`%%2==1] = '1TL'
-# dat.all$source[dat.all$`6144row`%%2==0 & dat.all$`6144col`%%2==1] = '3BL'
-# dat.all$source[dat.all$`6144row`%%2==1 & dat.all$`6144col`%%2==0] = '2TR'
-# dat.all$source[dat.all$`6144row`%%2==0 & dat.all$`6144col`%%2==0] = '4BR'
+# dat.all$source[dat.all$row%%2==1 & dat.all$col%%2==1] = '1TL'
+# dat.all$source[dat.all$row%%2==0 & dat.all$col%%2==1] = '3BL'
+# dat.all$source[dat.all$row%%2==1 & dat.all$col%%2==0] = '2TR'
+# dat.all$source[dat.all$row%%2==0 & dat.all$col%%2==0] = '4BR'
 # 
 # dat.all$colony[dat.all$orf_name == 'BF_control'] = 'Reference'
 # dat.all$colony[dat.all$orf_name != 'BF_control'] = 'Query'
@@ -570,6 +570,91 @@ for (d in unique(lay$density)) {
             strip.text.x = element_blank())
   }
 }
+
+##### POS2COOR
+
+p2c.data <- dbGetQuery(conn, 'select * from 4C4_pos2coor a, 4C4_pos2orf_name b
+                       where a.pos = b.pos')
+p2c.data$colony[p2c.data$orf_name == 'BF_control'] <- 'Reference'
+p2c.data$colony[p2c.data$orf_name != 'BF_control'] <- 'Query'
+p2c.data$colony[is.na(p2c.data$orf_name)] <- 'Gap'
+
+plate.map <- ggplot(p2c.data) +
+  geom_point(aes(x = col, y = row, col = colony, size = as.character(density))) +
+  scale_color_manual(name = 'Colony\nType',
+                     values = c("Gap" = "#FFFFFF",
+                                "Reference" = "#3F51B5",
+                                "Query" = "#FFC107")) +
+  scale_size_manual(guide = 'none',
+                      values = c("384" = 4,
+                                 "1536" = 1.5,
+                                 "6144" = 0.4)) +
+  theme_linedraw() +
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_blank()) +
+  facet_wrap(.~density * plate,
+             nrow = 3,
+             scales = 'free')
+ggsave(sprintf("%s%s_PLATE_MAP.jpg",out_path,expt_name),plate.map,
+       height = 9, width = 16,
+       dpi = 1000)
+
+##### SOURCE NORMALIZATION
+dat.avg <- dbGetQuery(conn, 'select b.*, orf_name, hours, average fitness
+                      from
+                      4C4_FS_NOSN_6144_FITNESS a, 4C4_pos2coor b
+                      where hours = 11.04 and a.pos = b.pos
+                      order by plate, col, row')
+dat.avg$method <- '1. Raw Colony Size'
+
+dat.nosn <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness
+                        from
+                        4C4_FS_NOSN_6144_FITNESS a, 4C4_pos2coor b
+                        where hours = 11.04 and a.pos = b.pos
+                        and fitness between 0 and 2
+                        order by plate, col, row')
+dat.nosn$method <- '2. LID w/o Source Normalization'
+
+dat.lid <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness
+                      from
+                      4C4_FS_CC_6144_FITNESS a, 4C4_pos2coor b
+                      where hours = 11.04 and a.pos = b.pos
+                      and fitness between 0 and 2
+                      order by plate, col, row')
+dat.lid$method <- '3. LID'
+
+dat.bean <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness
+                       from
+                       4C4_FS_BEAN_6144_FITNESS a, 4C4_pos2coor b
+                       where hours = 11.04 and a.pos = b.pos
+                       and fitness between 0 and 2
+                       order by plate, col, row')
+dat.bean$method <- '4. MCAT'
+
+dat.sn <- rbind(dat.avg, dat.nosn, dat.lid, dat.bean)
+dat.sn$source[dat.sn$row%%2==1 & dat.sn$col%%2==1] = '1TL'
+dat.sn$source[dat.sn$row%%2==0 & dat.sn$col%%2==1] = '3BL'
+dat.sn$source[dat.sn$row%%2==1 & dat.sn$col%%2==0] = '2TR'
+dat.sn$source[dat.sn$row%%2==0 & dat.sn$col%%2==0] = '4BR'
+
+ggplot(dat.sn[!is.na(dat.sn$fitness),]) +
+  geom_line(aes(x = fitness, col = source),
+            stat = 'density', trim = T,
+            lwd = 1.2) +
+  labs(title = 'Effect of Source Normalization') +
+  scale_colour_manual(name="Source",
+                      breaks=c("1TL","2TR","3BL","4BR"),
+                      values=c("1TL"="#303F9F","2TR"="#536DFE","3BL"="#FFA000","4BR"="#FFECB3"),
+                      labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  facet_wrap(.~method, nrow = 1,
+             scales = 'free') +
+  theme_linedraw() +
+  theme(axis.title = element_blank())
+ggsave(sprintf("%s%s_SN.jpg",out_path,expt_name),
+       height = 3, width = 10,
+       dpi = 1000)
 
 
 
