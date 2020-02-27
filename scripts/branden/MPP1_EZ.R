@@ -44,7 +44,7 @@ tblname_p2c <- '_pos2coor'
 data <- dbGetQuery(conn, sprintf('select c.*, b.orf_name, a.hours, a.average
           from %s a, %s b, %s c
           where a.pos = b.pos and a.pos = c.pos
-          order by a.hours, c.384plate, c.384col, c.384row',
+          order by a.hours, c.plate, c.col, c.row',
                                  tblname_JPEG, tblname_p2o, tblname_p2c))
 
 ##### PLOTTING DATA
