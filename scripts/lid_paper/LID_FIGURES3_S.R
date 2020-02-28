@@ -13,6 +13,7 @@ library(scales)
 library(egg)
 library(zoo)
 library(ggrepel)
+library(plotly)
 library(RMariaDB)
 
 source("R/functions/initialize.sql.R")
@@ -257,3 +258,92 @@ ggsave(sprintf("%sFIGURES6.jpg",out_path), sen.rep,
        height = 70, width = one.c, units = 'mm',
        dpi = 300)
 
+
+##### PLATE SURFACE
+load(sprintf('%sSOURCENORMALIZATIONDATA.RData',out_path))
+dat.sn$bg[is.na(dat.sn$average)] <- NA
+
+
+plt.avg <- ggplot(dat.sn[dat.sn$method == 3 & dat.sn$plate == 2,],
+                  aes(x = col, y = row)) +
+  geom_tile(aes(fill = average)) +
+  scale_size_continuous(range = c(0,2.5), guide = F) +
+  scale_x_continuous(breaks = seq(0,96,4)) +
+  scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+  scale_fill_gradient(low = "#303F9F", high = "#FFC107") +
+  labs(x = 'Column', y = 'Row') +
+  coord_cartesian(xlim = c(1,96), ylim = c(64,1)) +
+  # facet_wrap(.~plate, ncol = 4) +
+  theme_linedraw() +
+  theme(axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom',
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")),
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm"))
+
+plt.avg.sr <- ggplot(dat.sn[dat.sn$method == 3,], aes(x = col, y = row)) +
+  geom_tile(aes(fill = average), size = 4) +
+  scale_size_continuous(range = c(0,2.5), guide = F) +
+  scale_x_continuous(breaks = seq(0,96,4)) +
+  scale_y_continuous(breaks = seq(0,64,4),trans = 'reverse') +
+  scale_fill_gradient(low = "#303F9F", high = "#FFC107") +
+  labs(x = 'Column', y = 'Row') +
+  coord_cartesian(xlim = c(1,96), ylim = c(64,1)) +
+  facet_wrap(.~source, ncol = 2) +
+  theme_linedraw() +
+  theme(axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom',
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")),
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm"))
+
+ggsave(sprintf("%sFIGURES7.jpg",out_path), plt.srf,
+       height = 80, width = one.c, units = 'mm',
+       dpi = 300)
+
+
+plot_ly(z = matrix(dat.sn$average[dat.sn$method == 1 & dat.sn$plate == 3],
+       nrow = 64, byrow = F)) %>% add_surface(
+         contours = list(
+           z = list(
+             show=TRUE,
+             usecolormap=TRUE,
+             highlightcolor="#ff0000",
+             project=list(z=TRUE)
+           )
+         )
+       ) %>%
+  layout(
+    scene = list(
+      camera=list(
+        eye = list(x=1.87, y=0.88, z=-0.64)
+      )
+    )
+       )
+
+plot_ly(z = matrix(dat.sn$average[dat.sn$method == 1 & dat.sn$plate == 3 & dat.sn$source == '2TR'],
+                   nrow = 32, byrow = F)) %>% add_surface(
+                     contours = list(
+                       z = list(
+                         show=TRUE,
+                         usecolormap=TRUE,
+                         highlightcolor="#ff0000",
+                         project=list(z=TRUE)
+                       )
+                     )
+                   ) %>%
+  layout(
+    scene = list(
+      camera=list(
+        eye = list(x=1.87, y=0.88, z=-0.64)
+      )
+    )
+  )
