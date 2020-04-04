@@ -26,8 +26,18 @@ dat.nosn <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness,
                        where a.pos = b.pos
                        and fitness between 0 and 2
                        order by plate, col, row')
-dat.nosn$name <- '2. LID w/o Source Normalization'
+dat.nosn$name <- '2. LID-SN'
 dat.nosn$method <- 2
+
+dat.nocc <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness,
+                       bg, average
+                       from
+                       4C4_FS_6144_FITNESS a, 4C4_pos2coor b
+                       where a.pos = b.pos
+                       and fitness between 0 and 2
+                       order by plate, col, row')
+dat.nocc$name <- '3. LID-AC'
+dat.nocc$method <- 3
 
 dat.lid <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness,
                       bg, average
@@ -36,8 +46,8 @@ dat.lid <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness,
                       where a.pos = b.pos
                       and fitness between 0 and 2
                       order by plate, col, row')
-dat.lid$name <- '3. LID'
-dat.lid$method <- 3
+dat.lid$name <- '4. LID'
+dat.lid$method <- 4
 
 dat.bean <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness,
                        bg, average
@@ -46,11 +56,12 @@ dat.bean <- dbGetQuery(conn, 'select b.*, orf_name, hours, fitness,
                        where a.pos = b.pos
                        and fitness between 0 and 2
                        order by plate, col, row')
-dat.bean$name <- '4. MCAT'
-dat.bean$method <- 4
+dat.bean$name <- '5. MCAT'
+dat.bean$method <- 5
 
 dat.sn <- rbind(dat.avg[dat.avg$hours == 11.04,],
                 dat.nosn[dat.nosn$hours == 11.04,],
+                dat.nocc[dat.nocc$hours == 11.04,],
                 dat.lid[dat.lid$hours == 11.04,],
                 dat.bean[dat.bean$hours == 11.04,])
 dat.sn$source[dat.sn$row%%2==1 & dat.sn$col%%2==1] = '1TL'
@@ -282,5 +293,50 @@ for (s in unique(data.ps$stage)) {
 
 save(data.ps,
      file = sprintf('%s4C4PSDATA.RData',out_path))
+
+
+##### PLATE SURFACE
+dat.raw <- dbGetQuery(conn, 'select * from 4C4_FS_6144_RAW a, 4C4_pos2coor b
+                     where hours = 11.04 and a.pos = b.pos
+                      order by hours, plate, col, row')
+
+dat.raw$source[dat.raw$row%%2==1 & dat.raw$col%%2==1] = 'Top Left'
+dat.raw$source[dat.raw$row%%2==0 & dat.raw$col%%2==1] = 'Bottom Left'
+dat.raw$source[dat.raw$row%%2==1 & dat.raw$col%%2==0] = 'Top Right'
+dat.raw$source[dat.raw$row%%2==0 & dat.raw$col%%2==0] = 'Bottom Right'
+
+save(dat.raw,
+     file = sprintf('%s4C4SURFACE.RData',out_path))
+
+
+###### RND ES DATA
+rnd.es <- dbGetQuery(conn, 'select c.*, d.rnd_hrs from
+                    (select a.orf_name, a.hours, a.p lid_p, a.stat lid_stat, a.es lid_es, a.pix_es lid_pix_es,
+                     b.p mcat_p, b.stat mcat_stat, b.es mcat_es, b.pix_es mcat_pix_es
+                     from 4C4_FS_RND_6144_PVALUE a, 4C4_FS_RND_BEAN_6144_PVALUE b
+                     where a.orf_name = b.orf_name and a.hours = b.hours) c
+                     left join
+                     (select orf_name, max(hours) hours, max(rnd_hrs) rnd_hrs
+                     from 4C4_FS_RND_6144_DATA
+                     where orf_name is not NULL
+                     group by hours, orf_name) d
+                     on c.orf_name = d.orf_name and c.hours = d.hours')
+
+rnd.es$lid_effect[rnd.es$lid_p <= 0.05 & rnd.es$lid_stat > 0] <- 'Beneficial'
+rnd.es$lid_effect[rnd.es$lid_p <= 0.05 & rnd.es$lid_stat < 0] <- 'Deleterious'
+rnd.es$lid_effect[is.na(rnd.es$lid_effect)] <- 'Neutral'
+
+rnd.es$mcat_effect[rnd.es$mcat_p <= 0.05 & rnd.es$mcat_stat > 0] <- 'Beneficial'
+rnd.es$mcat_effect[rnd.es$mcat_p <= 0.05 & rnd.es$mcat_stat < 0] <- 'Deleterious'
+rnd.es$mcat_effect[is.na(rnd.es$mcat_effect)] <- 'Neutral'
+
+rnd.es$truth[rnd.es$hours < rnd.es$rnd_hrs] <- 'Beneficial'
+rnd.es$truth[rnd.es$hours > rnd.es$rnd_hrs] <- 'Deleterious'
+
+rnd.es$lid_result <- paste(strtrim(rnd.es$lid_effect,3), strtrim(rnd.es$truth,3), sep = '/')
+rnd.es$mcat_result <- paste(strtrim(rnd.es$mcat_effect,3), strtrim(rnd.es$truth,3), sep = '/')
+
+save(rnd.es,
+     file = sprintf('%sVP2PIXES.RData',out_path))
 
 
