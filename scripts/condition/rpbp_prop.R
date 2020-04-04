@@ -24,9 +24,14 @@ library(tidyverse)
 library(ggpubr)
 library(stringr)
 library(reshape2)
+library(cluster)
+library(circlize)
+library(RColorBrewer)
+library(ComplexHeatmap)
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 fig_path = 'figs/seq_prop/'
+out_path = 'output/'
 
 source("R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
@@ -168,13 +173,25 @@ data <- cbind(data, xtra[2:5])
 # save(data,file = sprintf('%srpbp_all_props.RData',out_path))
 # write.csv(data, file = 'TRANSLATEOME_PROPS.csv', row.names = F)
 # dbWriteTable(conn, "RPBP_ORFS_PROPS", data, overwrite = T)
-out_path = 'output/'
+
 load(sprintf('%srpbp_all_props.RData',out_path))
 
 dat.plt <- data[,c("id","orf_class","evidence","len_nt","len_aa","gc","tiny",
                    "small","aliphatic","aromatic","nonpolar","polar","charged",
                    "basic","acidic","pI","instability","cai","grp_len_aa",
                    "grp_evidence","frame_conservation","coding_score","pair_diffs","diverse")]
+
+# annot_df <- data.frame(orf_type = cond5.hm$orf_type,
+#                        age = cond5.hm$age)
+# col = list(orf_type = c("gene" = "green", "proto-gene" = "black"),
+#            age = circlize::colorRamp2(c(0, 10), 
+#                                       c("lightblue", "purple")))
+# ha <- HeatmapAnnotation(df = annot_df, col = col,
+#                         which = 'row')
+# 
+# Heatmap(cond5.hm[1:5], name = "fitness",
+#         left_annotation  = ha,
+#         show_row_names = F)
 
 # dat.plt <- dat.plt[dat.plt$orf_class != 'pseudogene' & dat.plt$orf_class != 'te',]
 # dat.plt <- dat.plt[dat.plt$evidence > 0,]
