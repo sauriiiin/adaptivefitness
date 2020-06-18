@@ -340,3 +340,157 @@ save(rnd.es,
      file = sprintf('%sVP2PIXES.RData',out_path))
 
 
+##### SPATIAL BIAS CV
+load(sprintf('%sBACKGROUNDDATA.RData',out_path))
+dat.bg <- dat.bg[dat.bg$hours == 11.04,]
+
+dat.bg.nonorm <- dat.bg[dat.bg$method == 6,]
+dat.bg.nonorm$method <- 7
+dat.bg.nonorm$name <- 'NO-NORM'
+dat.bg.nonorm$fitness <- dat.bg.nonorm$average
+
+dat.bg <- rbind(dat.bg, dat.bg.nonorm)
+
+spatial <- NULL
+i <- 1
+for (m in sort(unique(dat.bg$method))) {
+  n <- dat.bg$name[dat.bg$method == m][1]
+  for (hr in sort(unique(dat.bg$hours[dat.bg$method == m]))) {
+    for (tt in 1:2000) {
+      # spatial$method[i] <- m
+      spatial$name[i] <- n
+      spatial$hours[i] <- hr
+      spatial$plate[i] <- 999
+      spatial$sd[i] <- sd(sample(dat.bg$fitness[dat.bg$method == m &
+                                                  dat.bg$hours == hr], 10), na.rm = T)
+      spatial$mean[i] <- mean(sample(dat.bg$fitness[dat.bg$method == m &
+                                                      dat.bg$hours == hr], 10), na.rm = T)
+      i <- i + 1
+    }
+    # for (pl in sort(unique(dat.bg$plate[dat.bg$method == m &
+    #                                     dat.bg$hours == hr]))) {
+    #   for (tt in 1:250) {
+    #     # spatial$method[i] <- m
+    #     spatial$name[i] <- n
+    #     spatial$hours[i] <- hr
+    #     spatial$plate[i] <- pl
+    #     spatial$sd[i] <- sd(sample(dat.bg$fitness[dat.bg$method == m &
+    #                                                 dat.bg$hours == hr &
+    #                                                 dat.bg$plate == pl], 10), na.rm = T)
+    #     spatial$mean[i] <- mean(sample(dat.bg$fitness[dat.bg$method == m &
+    #                                                     dat.bg$hours == hr &
+    #                                                     dat.bg$plate == pl], 10), na.rm = T)
+    #     i <- i + 1
+    #   }
+    # }
+  }
+}
+spatial <- data.frame(spatial)
+spatial$cv <- spatial$sd/spatial$mean * 100
+
+spatial$name <- as.character(spatial$name)
+spatial$name[spatial$name == '6. RND'] <- 'RND'
+spatial$name[spatial$name == '5. LID-AC'] <- 'LID-AC'
+spatial$name[spatial$name == '4. MCAT'] <- 'MCAT'
+spatial$name[spatial$name == '3. LID'] <- 'LID'
+spatial$name[spatial$name == '2. LID w/o Source Normalization'] <- 'LID-SN'
+spatial$name <- factor(spatial$name, level = c('NO-NORM','RND','MCAT','LID-SN','LID-AC','LID'))
+
+save(spatial,
+     file = sprintf('%sSPATIAL.RData',out_path))
+
+
+##### SENSITIVITY OF LID, LID-AC & LID-SN
+sen.methods <- NULL
+
+expt_name <- '4C4_FS_CC'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SENSITIVITY.RData", expt_name))
+sen.all$method <- 'LID'
+sen.methods  <- rbind(sen.methods, sen.all[sen.all$rep == 16 & sen.all$atmpt == 1,c(1:11,13)])
+
+expt_name <- '4C4_FS'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SENSITIVITY.RData", expt_name))
+sen.all$method <- 'LID-AC'
+sen.methods <- rbind(sen.methods, sen.all[sen.all$rep == 16 & sen.all$atmpt == 1,])
+
+expt_name <- '4C4_FS_NOSN'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SENSITIVITY.RData", expt_name))
+sen.all$method <- 'LID-SN'
+sen.methods <- rbind(sen.methods, sen.all[sen.all$rep == 16 & sen.all$atmpt == 1,])
+
+expt_name <- '4C4_FS_NONORM'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SENSITIVITY.RData", expt_name))
+sen.all$method <- 'No Normalization'
+sen.methods <- rbind(sen.methods, sen.all[sen.all$rep == 16 & sen.all$atmpt == 1,])
+
+save(sen.methods,
+     file = sprintf('%sSEN_METHODS.RData',out_path))
+
+
+spe.methods <- NULL
+
+expt_name <- '4C4_FS_CC'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SPECIFICITY.RData", expt_name))
+spe.all$method <- 'LID'
+spe.methods  <- rbind(spe.methods, spe.all[spe.all$rep == 16 & spe.all$atmpt == 1,c(1:19,21)])
+
+expt_name <- '4C4_FS'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SPECIFICITY.RData", expt_name))
+spe.all$method <- 'LID-AC'
+spe.methods <- rbind(spe.methods, spe.all[spe.all$rep == 16 & spe.all$atmpt == 1,])
+
+expt_name <- '4C4_FS_NOSN'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SPECIFICITY.RData", expt_name))
+spe.all$method <- 'LID-SN'
+spe.methods <- rbind(spe.methods, spe.all[spe.all$rep == 16 & spe.all$atmpt == 1,])
+
+expt_name <- '4C4_FS_NONORM'
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SPECIFICITY.RData", expt_name))
+spe.all$method <- 'No Normalization'
+spe.methods <- rbind(spe.methods, spe.all[spe.all$rep == 16 & spe.all$atmpt == 1,])
+
+save(spe.methods,
+     file = sprintf('%sSPE_METHODS.RData',out_path))
+
+
+##### SOURCE DECONSTRUCTION
+plate384 <- dbGetQuery(conn, 'select b.*, a.plate 384plate from 4C4_pos2coor a, 4C4_pos2coor b
+                        where a.density = 384 and b.density = 384 and a.pos = b.pos
+                       order by b.plate, b.col, b.row')
+
+plate1536 <- dbGetQuery(conn, 'select b.*, a.plate 384plate from 4C4_pos2coor a, 4C4_pos2coor b
+                        where a.density = 384 and b.density = 1536 and
+                        (a.pos = b.pos - 10000
+                        or a.pos = b.pos - 20000
+                        or a.pos = b.pos - 30000
+                        or a.pos = b.pos - 40000)
+                        order by b.plate, b.col, b.row')
+
+plate6144 <- dbGetQuery(conn, 'select b.*, a.plate 384plate from 4C4_pos2coor a, 4C4_pos2coor b
+                        where a.density = 384 and b.density = 6144 and
+                        (
+                        a.pos = b.pos - 110000
+                        or a.pos = b.pos - 120000
+                        or a.pos = b.pos - 130000
+                        or a.pos = b.pos - 140000
+                        or a.pos = b.pos - 210000
+                        or a.pos = b.pos - 220000
+                        or a.pos = b.pos - 230000
+                        or a.pos = b.pos - 240000
+                        or a.pos = b.pos - 310000
+                        or a.pos = b.pos - 320000
+                        or a.pos = b.pos - 330000
+                        or a.pos = b.pos - 340000
+                        or a.pos = b.pos - 410000
+                        or a.pos = b.pos - 420000
+                        or a.pos = b.pos - 430000
+                        or a.pos = b.pos - 440000)
+                        order by b.plate, b.col, b.row')
+
+plates <- rbind(plate384, plate1536, plate6144)
+
+save(plates,
+     file = sprintf('%sPLATES.RData',out_path))
+
+
+

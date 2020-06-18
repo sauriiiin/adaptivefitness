@@ -12,7 +12,7 @@ library(ggpubr)
 library(stringr)
 out_path = 'figs/lid_paper/4C4/';
 dat.dir <- "/home/sbp29/R/Projects/adaptivefitness/rawdata/4C4_TR_CC/"
-expt_name <- '4C4_FS_CC'
+expt_name <- '4C4_FS_NONORM'
 pvals = seq(0,1,0.005)
 
 # getmode <- function(v) {
@@ -111,8 +111,10 @@ fit.all <- fit.all[!fit.all$orf_name %in% sprintf('MASK%d',1:1000),]
 # save(stats.all, file = sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_STATS.RData", expt_name))
 # save(fit.all, file = sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_FITNESS.RData", expt_name))
 
-# load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_STATS.RData", expt_name))
-# load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_FITNESS.RData", expt_name))
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_STATS.RData", expt_name))
+load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_FITNESS.RData", expt_name))
+atmpt <- sort(unique(stats.all$attempt))
+reps <- sort(unique(stats.all$replicates))
 
 ##### THE STATS DATA ANALYSIS
 # stats.all$es <- round(stats.all$es,4)
@@ -394,8 +396,8 @@ for (a in atmpt) {
 # save(dat.cnt.all, file = sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_DAT_CNT.RData", expt_name))
 # load(sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_DAT_CNT.RData", expt_name))
 
-spe.all$ref <- 1/4
-sen.all$ref <- 1/4
+# spe.all$ref <- 1/4
+# sen.all$ref <- 1/4
 
 save(spe.all, file = sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SPECIFICITY.RData", expt_name))
 save(sen.all, file = sprintf("/home/sbp29/R/Projects/adaptivefitness/output/%s_SENSITIVITY.RData", expt_name))

@@ -196,6 +196,33 @@ ggplot(data[data$average >= 600,]) +
 # OESP1 = 1419 (91, 66 del, 25 neut)
 # OESP2 = 1336 (8, 6 del, 2 neut)
 
+fdata <- dbGetQuery(conn, 'select a.strain_id, a.orf_name,
+                    a.cs_mean oesp1_cs_mean, a.cs_median oesp1_cs_median,
+                    b.cs_mean oesp2_cs_mean, b.cs_median oesp2_cs_median
+                    from OESP1_FS_6144_FITNESS_STATS a, OESP2_FS_6144_FITNESS_STATS b
+                    where a.strain_id = b.strain_id and a.hours = 22 and b.hours = 24')
+
+# fdata$oesp1_cs_mean[is.na(fdata$oesp1_cs_mean) & !is.na(fdata$oesp2_cs_mean)] <- 0
+# fdata$oesp2_cs_mean[is.na(fdata$oesp2_cs_mean) & !is.na(fdata$oesp1_cs_mean)] <- 0
+
+ggplot(fdata,
+       aes(x = oesp1_cs_mean, y = oesp2_cs_mean)) +
+  geom_point() +
+  geom_abline(col = 'red', linetype = 'dashed') +
+  geom_point(col = '#303F9F', alpha = 0.7) +
+  geom_density_2d(col = 'red', lwd = 0.1) +
+  annotate("text", x = 0.25, y = 1,
+           label = lm_eqn(data.frame(average = fdata$oesp1_cs_mean, bg = fdata$oesp2_cs_mean)),
+           size = 2, parse = T,
+           hjust = 0) +
+  labs(x = 'Pilot #1',
+       y = 'Pilot #2')
+  coord_cartesian(xlim = c(0, 1.1),
+                  ylim = c(0,1.1)) +
+  theme_linedraw()
+
+
+
 pdata <- dbGetQuery(conn, 'select a.strain_id, a.orf_name,
                     a.p oesp1_p, a.stat oesp1_stat, a.es oesp1_es,
                     b.p oesp2_p, b.stat oesp2_stat, b.es oesp2_es
@@ -232,11 +259,11 @@ pdata$oesp2_effect[is.na(pdata$oesp2_effect)] <- 'Neutral'
 pdata$effect <- paste(strtrim(pdata$oesp1_effect,3), strtrim(pdata$oesp2_effect,3), sep = '/')
 pdata$es <- rowMeans(cbind(pdata$oesp1_es, pdata$oesp2_es), na.rm = T)
 
-pie.per <- plyr::count(pdata, vars = c('effect'))
+pie.per <- plyr::count(pdata, vars = c('oesp1_effect'))
 pie.per$per <- pie.per$freq/sum(pie.per$freq) * 100
 
 
-ggplot(data = pie.per, aes(x = "", y = per, fill = effect)) +
+ggplot(data = pie.per, aes(x = "", y = per, fill = oesp1_effect)) +
   geom_bar(stat = 'identity') +
   coord_polar("y", start = 0) +
   geom_label_repel(aes(label = sprintf("%0.2f%%\n(%d)",per, freq)),

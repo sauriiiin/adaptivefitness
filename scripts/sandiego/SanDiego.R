@@ -29,77 +29,156 @@ txt <- 5
 lbls <- 9
 
 # ##### 5 CONDITION DATA
-# cond5 <- dbGetQuery(conn, 'select distinct a.orf_name, hours, n, colony_size normalized_cs, q_cs, effect_cs,exp_id,
-#                     AGE, chromosome, translation_media, category
-#                     from brian_031918.DATASET_6 a, ANNE.SUMMARY_2012 b where a.orf_name = b.orf_name and exp_id in (28,31,91,33, 93) and a.orf_name !="BF_control"')
+cond5 <- dbGetQuery(conn, 'select distinct a.orf_name, hours, n, colony_size normalized_cs, q_cs, effect_cs,exp_id,
+                    AGE, chromosome, translation_media, category
+                    from brian_031918.DATASET_6 a, ANNE.SUMMARY_2012 b where a.orf_name = b.orf_name and exp_id in (28,31,91,33, 93) and a.orf_name !="BF_control"')
+cond5$condition[cond5$exp_id == 28] <- '+/+'
+cond5$condition[cond5$exp_id == 31] <- '+/++'
+cond5$condition[cond5$exp_id == 91] <- '++/+'
+cond5$condition[cond5$exp_id == 33] <- '++/++'
+cond5$condition[cond5$exp_id == 93] <- '-/++'
+
 # save(cond5,
 #      file = sprintf('%sCONDITION5.RData',out_path))
-# 
-# ##### FITNESS RESULTS
+
+##### FITNESS RESULTS
 # load(sprintf('%sCONDITION5.RData',out_path))
-# cond5$effect_cs <- factor(cond5$effect_cs, levels = c('beneficial','neutral','deleterious'))
-# 
-# ggplot(cond5,
-#        aes(x = category, y = normalized_cs)) +
-#   # geom_boxplot() +
-#   geom_jitter(aes(col = effect_cs), alpha = 0.5, size = 0.2) +
-#   geom_violin(col = '#757575', fill = 'transparent') +
-#   # stat_compare_means() +
-#   facet_wrap(.~exp_id, nrow = 1) +
-#   scale_color_manual(breaks = c('beneficial','neutral','deleterious'),
-#                      values = c('deleterious'='#3F51B5',
-#                                 'neutral'='#212121',
-#                                 'beneficial'='#FFC107')) +
-#   theme_linedraw() +
-#   theme(axis.title = element_text(size = txt),
-#         axis.text = element_text(size = txt),
-#         legend.title = element_text(size = titles),
-#         legend.text = element_text(size = txt),
-#         legend.position = 'right',
-#         strip.text = element_text(size = txt,
-#                                   margin = margin(0.1,0,0.1,0, "mm")),
-#         legend.key.size = unit(3, "mm"),
-#         legend.box.spacing = unit(0.5,"mm"))
-# ggsave(sprintf("%sfitness.jpg",out_path),
-#        height = 60, width = two.c, units = 'mm',
-#        dpi = 300)
+cond5$effect_cs <- factor(cond5$effect_cs, levels = c('beneficial','neutral','deleterious'))
+
+### ORF TYPE - FITNESS PLANE
+ggplot(cond5,
+       aes(x = category, y = normalized_cs)) +
+  # geom_boxplot() +
+  geom_jitter(aes(col = effect_cs), alpha = 0.5, size = 0.2) +
+  geom_violin(col = '#757575', fill = 'transparent') +
+  # stat_compare_means() +
+  facet_wrap(.~condition, nrow = 2) +
+  labs(title = 'ORF Type - Fitness Plane',
+       x = 'Overexpressing ORF Type',
+       y = 'Normalized Colony Size (Fitness)') +
+  scale_color_manual(name = 'Phenotype',
+                     breaks = c('beneficial','neutral','deleterious'),
+                     values = c('deleterious'='#3F51B5',
+                                'neutral'='#212121',
+                                'beneficial'='#FFC107')) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles),
+        axis.title = element_text(size = txt),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom',
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")),
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm")) +
+  guides(color = guide_legend(override.aes = list(size = 3)))
+ggsave(sprintf("%sorftype_fitness_plane.jpg",out_path),
+       height = one.c, width = one.c, units = 'mm',
+       dpi = 300)
+
+### ORF - FITNESS PLANE
+ggplot(cond5[cond5$exp_id == 28,],
+       aes(x = orf_name, y = normalized_cs)) +
+  geom_point(aes(col = effect_cs), alpha = 0.5, size = 0.2) +
+  facet_wrap(.~condition, nrow = 2) +
+  labs(title = 'ORF - Fitness Plane',
+       x = 'Overexpressing ORF',
+       y = 'Normalized Colony Size (Fitness)') +
+  scale_color_manual(name = 'Phenotype',
+                     breaks = c('beneficial','neutral','deleterious'),
+                     values = c('deleterious'='#3F51B5',
+                                'neutral'='#212121',
+                                'beneficial'='#FFC107')) +
+  theme_light() +
+  theme(plot.title = element_text(size = titles),
+        panel.background = element_rect(fill = 'white'),
+        axis.title = element_text(size = txt),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_line(size = 0.01),
+        axis.text.y = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom',
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")),
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm")) +
+  guides(color = guide_legend(override.aes = list(size = 3)))
+ggsave(sprintf("%sorf_fitness_plane.jpg",out_path),
+       height = one.c, width = one.c, units = 'mm',
+       dpi = 300)
+
+### Condition-Fitness PLANE
+ggplot(cond5,
+       aes(x = condition, y = normalized_cs)) +
+  geom_jitter(aes(col = effect_cs), alpha = 0.5, size = 0.2) +
+  geom_violin(col = '#757575', fill = 'transparent') +
+  # stat_compare_means() +
+  # facet_wrap(.~condition, nrow = 2) +
+  labs(title = 'Condition - Fitness Plane',
+       x = 'Condition',
+       y = 'Normalized Colony Size (Fitness)') +
+  scale_color_manual(name = 'Phenotype',
+                     breaks = c('beneficial','neutral','deleterious'),
+                     values = c('deleterious'='#3F51B5',
+                                'neutral'='#212121',
+                                'beneficial'='#FFC107')) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles),
+        axis.title = element_text(size = txt),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom',
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")),
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm")) +
+  guides(color = guide_legend(override.aes = list(size = 3)))
+ggsave(sprintf("%scondition_fitness_plane.jpg",out_path),
+       height = one.c, width = one.c, units = 'mm',
+       dpi = 300)
 
 
 ##### FITNESS HEATMAP
-# ggplot(cond5) +
-#   geom_tile(aes(x = as.factor(exp_id), y = orf_name, col = normalized_cs)) +
-#   scale_color_distiller(palette = 'Set1')
+ggplot(cond5) +
+  geom_tile(aes(x = as.factor(exp_id), y = orf_name, col = normalized_cs)) +
+  scale_color_distiller(palette = 'Set1')
 
-# cond5.hm <- with(cond5, tapply(normalized_cs, list(orf_name, exp_id), c))
-# cond5.hm[is.na(cond5.hm)] <- 0
-# 
-# heatmap(cond5.hm, scale = "none")
-# 
-# cond5.hm <- data.frame(cond5.hm)
-# orf_type <- NULL
-# age <- NULL
-# for (orf in rownames(cond5.hm)) {
-#   orf_type <- c(orf_type, cond5$category[cond5$orf_name == orf][1])
-#   age <- c(age, cond5$AGE[cond5$orf_name == orf][1])
-# }
-# cond5.hm$orf_type <- orf_type
-# cond5.hm$age <- age
-# 
-# save(cond5.hm,
-#      file = sprintf('%sCONDITION5_HEATMAP.RData',out_path))
-# load(sprintf('%sCONDITION5_HEATMAP.RData',out_path))
-# 
-# annot_df <- data.frame(orf_type = cond5.hm$orf_type,
-#                        age = cond5.hm$age)
-# col = list(orf_type = c("gene" = "green", "proto-gene" = "black"),
-#            age = circlize::colorRamp2(c(0, 10), 
-#                                       c("lightblue", "purple")))
-# ha <- HeatmapAnnotation(df = annot_df, col = col,
-#                         which = 'row')
-# 
-# Heatmap(cond5.hm[1:5], name = "fitness",
-#         left_annotation  = ha,
-#         show_row_names = F)
+cond5.hm <- with(cond5, tapply(normalized_cs, list(orf_name, exp_id), c))
+cond5.hm[is.na(cond5.hm)] <- 0
+
+heatmap(cond5.hm[1:5], scale = "none")
+
+cond5.hm <- data.frame(cond5.hm)
+orf_type <- NULL
+age <- NULL
+for (orf in rownames(cond5.hm)) {
+  orf_type <- c(orf_type, cond5$category[cond5$orf_name == orf][1])
+  age <- c(age, cond5$AGE[cond5$orf_name == orf][1])
+}
+cond5.hm$orf_type <- orf_type
+cond5.hm$age <- age
+
+save(cond5.hm,
+     file = sprintf('%sCONDITION5_HEATMAP.RData',out_path))
+load(sprintf('%sCONDITION5_HEATMAP.RData',out_path))
+
+annot_df <- data.frame(orf_type = cond5.hm$orf_type,
+                       age = cond5.hm$age)
+col = list(orf_type = c("gene" = "green", "proto-gene" = "black"),
+           age = circlize::colorRamp2(c(0, 10),
+                                      c("lightblue", "purple")))
+ha <- HeatmapAnnotation(df = annot_df, col = col,
+                        which = 'row')
+
+Heatmap(cond5.hm[1:5], name = "fitness",
+        left_annotation  = ha,
+        show_row_names = F)
+
+
+
 
 # ##### LID ANALYZED RESULTS
 # fit.sd <- dbGetQuery(conn, 'select * from SDS_LI_6144_FITNESS

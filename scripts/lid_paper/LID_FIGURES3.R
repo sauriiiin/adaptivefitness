@@ -37,7 +37,7 @@ dat.sn$source <- factor(dat.sn$source, levels = c("4BR","3BL","2TR","1TL"))
 sn.raw <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 1,],
                  aes(x = source, y = average)) +
   # geom_boxplot(width = 0.5, outlier.size = 0.5, fill = '#C5CAE9', lwd = 0.15) +
-  geom_violin(fill = '#C5CAE9', draw_quantiles = c(0.25, 0.5, 0.75), lwd = 0.4) +
+  geom_violin(fill = 'grey90', draw_quantiles = c(0.25, 0.5, 0.75), lwd = 0.4) +
   stat_compare_means(label.x = 4.5, label.y = mean(dat.sn$average[!is.na(dat.sn$fitness) & dat.sn$method == 1], na.rm = T),
                      hjust = 0.5, size = 1.5) +
   scale_x_discrete(name="Source",
@@ -154,18 +154,19 @@ sn.bean <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 5,],
         legend.key.size = unit(5, "mm")) +
   coord_flip()
 
-fig2a <- ggarrange(sn.raw,sn.nosn,sn.nocc,sn.sn,sn.bean,
+fig2g_k <- ggarrange(sn.raw,sn.nosn,sn.nocc,sn.sn,sn.bean,
                   nrow = 1, ncol = 5,
-                  labels = c('a','','','',''),
+                  labels = c('g','h','i','j','k'),
                   label.args = list(gp=gpar(font = 2, fontsize = lbls),
                                     hjust = -1))
-ggsave(sprintf("%sFIGURE2a.jpg",out_path), fig2a,
-       height = 60, width = two.c, units = 'mm',
-       dpi = 300)
+# ggsave(sprintf("%sFIGURE2a.jpg",out_path), fig2a,
+#        height = 60, width = two.c, units = 'mm',
+#        dpi = 300)
 
 
 ##### FIGURE 2b-g: RMSE and BACKGROUND PREDICTION
 load(sprintf('%sBACKGROUNDDATA.RData',out_path))
+
 lm_eqn <- function(df){
   m <- lm(average ~ bg, df);
   eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(R)^2~"="~r2, 
@@ -284,17 +285,21 @@ pred.rnd <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
 load(sprintf('%sRMSEDATA.RData',out_path))
 rmse <- rmse[rmse$hour > 0,]
 
+# rmse.stat <- compare_means(per ~ name, data = rmse)
+# write.csv(rmse.stat,
+#           file = sprintf('%sRMSESTATS.csv', out_path))
+
 pred.rmse <- ggplot(rmse[order(rmse$method, decreasing = T),]) +
   geom_point(aes(x = hour, y = per, col = as.factor(method)),
              size = 2, alpha = 0.9) +
   labs(x = 'Time (hour)', y = 'RMSE %') +
   scale_x_continuous(breaks = seq(0,12,2)) +
   scale_color_manual(name = 'Method',
-                    breaks = c('3','5','2','4','6'),
-                    limits = c('3','5','2','4','6'),
-                    labels = c('LID','LID-AC','LID-SN','MCAT','RND'),
-                    values = c('#303F9F','#FFA000','#536DFE',
-                                '#FFEB3B','#C5CAE9')) +
+                    breaks = c('6','2','5','3','4'),
+                    limits = c('6','2','5','3','4'),
+                    labels = c('RND','LID-SN','LID-AC','LID','MCAT'),
+                    values = c('3'='#303F9F','5'='#FFA000','2'='#536DFE',
+                                '4'='#FFEB3B','6'='#C5CAE9')) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
@@ -302,20 +307,20 @@ pred.rmse <- ggplot(rmse[order(rmse$method, decreasing = T),]) +
         legend.text = element_text(size = txt))
 
 ### FINAL FIGURE
-fig2bg <- ggpubr::ggarrange(pred.rnd, pred.nosn,  pred.nocc,
+fig2a_f <- ggpubr::ggarrange(pred.rnd, pred.nosn,  pred.nocc,
                             pred.lid, pred.bean,  pred.rmse,
                             ncol = 3, nrow = 2,
-          labels = c('b','c','d',
-                     'e','f','g'),
+          labels = c('a','b','c',
+                     'd','e','f'),
           font.label = list(face = 'bold', size = lbls),
           hjust=-1,
           common.legend = T, legend = 'bottom')
-ggsave(sprintf("%sFIGURE2b-g.jpg",out_path), fig2bg,
-       height = 120, width = two.c, units = 'mm',
-       dpi = 300)
+# ggsave(sprintf("%sFIGURE2b-g.jpg",out_path), fig2bg,
+#        height = 120, width = two.c, units = 'mm',
+#        dpi = 300)
 
-fig2 <- ggpubr::ggarrange(fig2a, fig2bg, ncol = 1, nrow = 2,
-                            heights = c(1,2))
+fig2 <- ggpubr::ggarrange(fig2a_f, fig2g_k, ncol = 1, nrow = 2,
+                            heights = c(2,1))
 ggsave(sprintf("%sFIGURE2.jpg",out_path), fig2,
        height = 180, width = two.c, units = 'mm',
        dpi = 300)
@@ -370,13 +375,13 @@ sen.fdr <- ggplot(dat.cnt2) +
                      labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
   scale_x_continuous(breaks = seq(-2,2,0.05)*100,
                      minor_breaks = seq(-2,2,0.025)*100) +
-  scale_color_manual(name = 'Effects',
+  scale_color_manual(name = 'Phenotype',
                      breaks = c('Beneficial','Neutral','Deleterious'),
                      values = c('Deleterious'='#3F51B5',
                                 'Neutral'='#212121',
                                 'Beneficial'='#FFC107'),
                      guide = F) +
-  scale_fill_manual(name = 'Effects',
+  scale_fill_manual(name = 'Phenotype',
                     breaks = c('Beneficial','Neutral','Deleterious'),
                     values = c('Deleterious'='#3F51B5',
                                'Neutral'='#212121',
@@ -407,12 +412,12 @@ sen.p <- ggplot(dat.cnt2) +
   scale_x_continuous(breaks = seq(-2,2,0.05)*100,
                      minor_breaks = seq(-2,2,0.025)*100,
                      labels = paste(sprintf('%0.0f',seq(-2,2,0.05)*100),'%', sep = '')) +
-  scale_color_manual(name = 'Effects',
+  scale_color_manual(name = 'Phenotype',
                      breaks = c('Beneficial','Neutral','Deleterious'),
                      values = c('Deleterious'='#3F51B5',
                                 'Neutral'='#212121',
                                 'Beneficial'='#FFC107')) +
-  scale_fill_manual(name = 'Effects',
+  scale_fill_manual(name = 'Phenotype',
                     breaks = c('Beneficial','Neutral','Deleterious'),
                     values = c('Deleterious'='#3F51B5',
                                'Neutral'='#212121',
@@ -434,9 +439,9 @@ spe.1 <- ggplot(stats.tmp[stats.tmp$hours == stats.tmp$cont_hrs,],
                 aes(x = p, y = round((1-fpr),4)*100, col = as.factor(hours))) +
   stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), aes(group = 1),
                geom="ribbon", color="blue", alpha = 0.4) +
-  stat_summary(fun=mean, geom="line", color="blue", lwd =0.5) +
+  stat_summary(fun=mean, geom="line", color="#FFA000", lwd =1) +
   # stat_summary(fun=mean, geom="point", color="#FFC107", size = 2) +
-  labs(x = "p",
+  labs(x = "p-value",
        y = "Specificity") +
   scale_x_continuous(breaks = seq(-1,1,0.025),
                      minor_breaks = seq(-1,1,0.0125)) +
@@ -483,10 +488,17 @@ sen.rep <- ggplot(refrep[round(refrep$abs_cen) <= 5,],
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt))
 
+dat.method <- dat.method[dat.method$rep == 16,]
+my_comparisons <- list(c("LID", "LID-AC"), c("LID", "LID-SN"), c("LID", "NO-NORM")) 
+
 sen.met <- ggplot(data = dat.method[dat.method$rep == 16,],
                   aes(x = method, y = sen)) +
   geom_boxplot(aes(fill = as.factor(rep),
                    col = as.factor(rep))) +
+  stat_compare_means(comparisons = my_comparisons,
+                     aes(label = sprintf('p = %0.2f', ..p.format.. )),
+                     method = 't.test',
+                     paired = T, alternative = 'less', size = 1.5) +
   scale_x_discrete(breaks = c('NO-NORM','LID-SN','LID-AC','LID'),
                    limits = c('NO-NORM','LID-SN','LID-AC','LID')) +
   scale_fill_manual(name = 'Number of\nReplicates',
@@ -501,7 +513,7 @@ sen.met <- ggplot(data = dat.method[dat.method$rep == 16,],
                      labels = paste(seq(0,100,10),'%',sep ='')) +
   labs(x = 'Bias Correction Method',
        y = 'Sensitivity') +
-  coord_cartesian(ylim = c(0,100)) +
+  coord_cartesian(ylim = c(0,125)) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
@@ -518,6 +530,7 @@ ggsave(sprintf("%sFIGURE4.jpg",out_path), fig4,
        height = 160, width = two.c, units = 'mm',
        dpi = 300)
 
+compare_means(sen ~ method, dat.method, method = 't.test', paired = T, alternative = 'less')
 
 ##### FIGURE 5: VIRTUAL PLATE 2 RESULTS
 load(sprintf('%sVP2PIEDATA.RData',out_path))
@@ -534,7 +547,7 @@ rnd_pie <- ggplot(data = pie.per, aes(x = "", y = per, fill = value)) +
                    position = position_stack(vjust = 0.5),
                    label.size = 0.15,
                    show.legend = F) +
-  scale_fill_manual(name = 'Effects',
+  scale_fill_manual(name = 'Phenotype',
                     breaks = c('6BenNeutral',
                                '5TrueBeneficial',
                                '4FalseDeleterious',
@@ -572,8 +585,9 @@ rnd_den <- ggplot(rnd_data[!is.na(rnd_data$average) & !is.na(rnd_data$colony),],
   geom_density(stat = 'density', alpha = 0.8) +
   labs(x = 'Colony Size (pixel)',
        y = 'Density') +
-  scale_fill_manual(name = 'Colony Type',
+  scale_fill_manual(name = 'Mock Colony Type',
                      breaks = c("Reference","Query"),
+                    labels = c("Reference","Mutant"),
                      values = c("Reference" = "#3F51B5",
                                 "Query" = "#FFC107")) +
   facet_wrap(.~virtual) +
@@ -597,3 +611,5 @@ fig5 <- ggarrange(rnd_den, rnd_pie,
 ggsave(sprintf("%sFIGURE5.jpg",out_path), fig5,
        height = 200, width = two.c, units = 'mm',
        dpi = 300)
+
+compare_means(per ~ method, pie.per[str_detect(pie.per$value, 'True'),], paired = T, method = 't.test')
