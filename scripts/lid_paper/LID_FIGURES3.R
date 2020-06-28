@@ -34,6 +34,8 @@ lbls <- 9
 load(sprintf('%sSOURCENORMALIZATIONDATA.RData',out_path))
 dat.sn$source <- factor(dat.sn$source, levels = c("4BR","3BL","2TR","1TL"))
 
+dat.sn$name <- substr(dat.sn$name, 4, 100)
+
 sn.raw <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 1,],
                  aes(x = source, y = average)) +
   # geom_boxplot(width = 0.5, outlier.size = 0.5, fill = '#C5CAE9', lwd = 0.15) +
@@ -54,9 +56,9 @@ sn.raw <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 1,],
         axis.text.y = element_text(angle = 90, hjust = .5),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
-        strip.text = element_text(size = txt),
+        strip.text = element_text(size = txt, margin = margin(0.5,0,0.5,0, "mm")),
         legend.key.size = unit(5, "mm")) +
-  coord_flip()
+  coord_flip(xlim = c(1,4.1))
 
 sn.nosn <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 2,],
                   aes(x = source, y = fitness)) +
@@ -78,14 +80,14 @@ sn.nosn <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 2,],
         axis.title.y = element_blank(),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
-        strip.text = element_text(size = txt),
+        strip.text = element_text(size = txt, margin = margin(0.5,0,0.5,0, "mm")),
         legend.key.size = unit(5, "mm")) +
-  coord_flip()
+  coord_flip(xlim = c(1,4.1))
 
 sn.nocc <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 3,],
                   aes(x = source, y = fitness)) +
   # geom_boxplot(width = 0.5, outlier.size = 0.5, fill = '#FFA000', lwd = 0.15) +
-  geom_violin(fill = '#FFA000', draw_quantiles = c(0.25, 0.5, 0.75), lwd = 0.4) +
+  geom_violin(fill = '#C5CAE9', draw_quantiles = c(0.25, 0.5, 0.75), lwd = 0.4) +
   stat_compare_means(label.x = 4.5, label.y = 1, hjust = 0.5, size = 1.5) +
   scale_x_discrete(name="Source",
                    limits=c("4BR","3BL","2TR","1TL"),
@@ -102,9 +104,9 @@ sn.nocc <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 3,],
         axis.title.y = element_blank(),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
-        strip.text = element_text(size = txt),
+        strip.text = element_text(size = txt, margin = margin(0.5,0,0.5,0, "mm")),
         legend.key.size = unit(5, "mm")) +
-  coord_flip()
+  coord_flip(xlim = c(1,4.1))
 
 sn.sn <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 4,],
                 aes(x = source, y = fitness)) +
@@ -126,14 +128,14 @@ sn.sn <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 4,],
         axis.title.y = element_blank(),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
-        strip.text = element_text(size = txt),
+        strip.text = element_text(size = txt, margin = margin(0.5,0,0.5,0, "mm")),
         legend.key.size = unit(5, "mm")) +
-  coord_flip()
+  coord_flip(xlim = c(1,4.1))
 
 sn.bean <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 5,],
                   aes(x = source, y = fitness)) +
   # geom_boxplot(width = 0.5, outlier.size = 0.5, fill = '#FFEB3B', lwd = 0.15) +
-  geom_violin(fill = '#FFEB3B', draw_quantiles = c(0.25, 0.5, 0.75), lwd = 0.4) +
+  geom_violin(fill = '#FFA000', draw_quantiles = c(0.25, 0.5, 0.75), lwd = 0.4) +
   stat_compare_means(label.x = 4.5, label.y = 1, hjust = 0.5, size = 1.5) +
   scale_x_discrete(name="Source",
                    limits=c("4BR","3BL","2TR","1TL"),
@@ -150,11 +152,11 @@ sn.bean <- ggplot(dat.sn[!is.na(dat.sn$fitness) & dat.sn$method == 5,],
         axis.title.y = element_blank(),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
-        strip.text = element_text(size = txt),
+        strip.text = element_text(size = txt, margin = margin(0.5,0,0.5,0, "mm")),
         legend.key.size = unit(5, "mm")) +
-  coord_flip()
+  coord_flip(xlim = c(1,4.1))
 
-fig2g_k <- ggarrange(sn.raw,sn.nosn,sn.nocc,sn.sn,sn.bean,
+fig2g_k <- ggarrange(sn.raw,sn.sn,sn.nosn,sn.nocc,sn.bean,
                   nrow = 1, ncol = 5,
                   labels = c('g','h','i','j','k'),
                   label.args = list(gp=gpar(font = 2, fontsize = lbls),
@@ -188,14 +190,16 @@ pred.lid <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
            label = lm_eqn(dat.bg[!is.na(dat.bg$fitness) & dat.bg$method == 3,]),
            size = 2, parse = T,
            hjust = 0) +
-  labs(x = 'Observed Colony Size (pixel)',
-       y = 'Predicted Colony Size (pixel)') +
+  labs(title = 'LID',
+       x = 'Observed Colony Size (pixel)',
+       y = 'Background Colony Size (pixel)') +
   coord_flip(xlim = c(0,650),
                   ylim = c(0,650)) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
-        plot.title = element_text(size = titles))
+        plot.title = element_text(size = titles,
+                                  hjust = 0.5))
 
 ## BEAN BACKGROUND
 pred.bean <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
@@ -203,20 +207,22 @@ pred.bean <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
                              dat.bg$hours > 0,],
                     aes(x = average, y = bg)) +
   geom_abline(col = 'red', linetype = 'dashed') +
-  geom_point(col = '#FFEB3B', alpha = 0.7) +
+  geom_point(col = '#FFA000', alpha = 0.7) +
   geom_density_2d(col = 'red', lwd = 0.1) +
   annotate("text", y = 0, x = 580,
            label = lm_eqn(dat.bg[!is.na(dat.bg$fitness) & dat.bg$method == 4,]),
            size = 2, parse = T,
            hjust = 0) +
-  labs(x = 'Observed Colony Size (pixel)',
+  labs(title = 'MCAT',
+       x = 'Observed Colony Size (pixel)',
        y = 'Background Colony Size (pixel)') +
   coord_flip(xlim = c(0,650),
                   ylim = c(0,650)) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
-        plot.title = element_text(size = titles))
+        plot.title = element_text(size = titles,
+                                  hjust = 0.5))
 
 ## NOSN BACKGROUND
 pred.nosn <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
@@ -230,14 +236,16 @@ pred.nosn <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
            label = lm_eqn(dat.bg[!is.na(dat.bg$fitness) & dat.bg$method == 2,]),
            size = 2, parse = T,
            hjust = 0) +
-  labs(x = 'Observed Colony Size (pixel)',
-       y = 'Predicted Colony Size (pixel)') +
+  labs(title = 'LID - SN',
+       x = 'Observed Colony Size (pixel)',
+       y = 'Background Colony Size (pixel)') +
   coord_flip(xlim = c(0,650),
                   ylim = c(0,650)) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
-        plot.title = element_text(size = titles))
+        plot.title = element_text(size = titles,
+                                  hjust = 0.5))
 
 ## NOCC BACKGROUND
 pred.nocc <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
@@ -245,20 +253,22 @@ pred.nocc <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
                              dat.bg$hours > 0,],
                     aes(x = average, y = bg)) +
   geom_abline(col = 'red', linetype = 'dashed') +
-  geom_point(col = '#FFA000', alpha = 0.7) +
+  geom_point(col = '#C5CAE9', alpha = 0.7) +
   geom_density_2d(col = 'red', lwd = 0.1) +
   annotate("text", y = 0, x = 580,
            label = lm_eqn(dat.bg[!is.na(dat.bg$fitness) & dat.bg$method == 5,]),
            size = 2, parse = T,
            hjust = 0) +
-  labs(x = 'Observed Colony Size (pixel)',
-       y = 'Predicted Colony Size (pixel)') +
+  labs(title = 'LID - AC',
+       x = 'Observed Colony Size (pixel)',
+       y = 'Background Colony Size (pixel)') +
   coord_flip(xlim = c(0,650),
                   ylim = c(0,650)) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
-        plot.title = element_text(size = titles))
+        plot.title = element_text(size = titles,
+                                  hjust = 0.5))
 
 ## RND BACKGROUND
 pred.rnd <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
@@ -266,20 +276,22 @@ pred.rnd <- ggplot(dat.bg[!is.na(dat.bg$fitness) &
                             dat.bg$hours > 0,],
                    aes(x = average, y = bg)) +
   geom_abline(col = 'red', linetype = 'dashed') +
-  geom_point(col = '#C5CAE9', alpha = 0.7) +
+  geom_point(col = '#FFEB3B', alpha = 0.7) +
   geom_density_2d(col = 'red', lwd = 0.1) +
   annotate("text", y = 0, x = 580,
            label = lm_eqn(dat.bg[!is.na(dat.bg$fitness) & dat.bg$method == 6,]),
            size = 2, parse = T,
            hjust = 0) +
-  labs(x = 'Observed Colony Size (pixel)',
+  labs(title = 'RND',
+       x = 'Observed Colony Size (pixel)',
        y = 'Randomly Picked Colony Size (pixel)') +
   coord_flip(xlim = c(0,650),
                   ylim = c(0,650)) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
-        plot.title = element_text(size = titles))
+        plot.title = element_text(size = titles,
+                                  hjust = 0.5))
 
 ## RMSE
 load(sprintf('%sRMSEDATA.RData',out_path))
@@ -292,29 +304,36 @@ rmse <- rmse[rmse$hour > 0,]
 pred.rmse <- ggplot(rmse[order(rmse$method, decreasing = T),]) +
   geom_point(aes(x = hour, y = per, col = as.factor(method)),
              size = 2, alpha = 0.9) +
-  labs(x = 'Time (hour)', y = 'RMSE %') +
+  labs(title = 'RMSE',
+       x = 'Time (hour)', y = 'RMSE %') +
   scale_x_continuous(breaks = seq(0,12,2)) +
   scale_color_manual(name = 'Method',
-                    breaks = c('6','2','5','3','4'),
-                    limits = c('6','2','5','3','4'),
-                    labels = c('RND','LID-SN','LID-AC','LID','MCAT'),
-                    values = c('3'='#303F9F','5'='#FFA000','2'='#536DFE',
-                                '4'='#FFEB3B','6'='#C5CAE9')) +
+                    breaks = c('3','2','5','4','6'),
+                    limits = c('3','2','5','4','6'),
+                    labels = c('LID','LID-SN','LID-AC','MCAT','RND'),
+                    values = c('3'='#303F9F','5'='#C5CAE9','2'='#536DFE',
+                                '4'='#FFA000','6'='#FFEB3B')) +
   theme_linedraw() +
-  theme(axis.title = element_text(size = titles),
+  theme(plot.title = element_text(size = titles,
+                                  hjust = 0.5),
+        axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
         legend.title = element_text(size = titles),
-        legend.text = element_text(size = txt))
+        legend.text = element_text(size = txt),
+        legend.position = c(0.6, 0.75),
+        legend.background = element_rect(fill = 'transparent'),
+        legend.key = element_rect(size = 0.5),
+        legend.key.size = unit(.8, 'lines')) +
+  guides(color = guide_legend(ncol=2))
 
 ### FINAL FIGURE
-fig2a_f <- ggpubr::ggarrange(pred.rnd, pred.nosn,  pred.nocc,
-                            pred.lid, pred.bean,  pred.rmse,
-                            ncol = 3, nrow = 2,
-          labels = c('a','b','c',
-                     'd','e','f'),
-          font.label = list(face = 'bold', size = lbls),
-          hjust=-1,
-          common.legend = T, legend = 'bottom')
+fig2a_f <- ggpubr::ggarrange(pred.lid, pred.nosn, pred.nocc,
+                             pred.bean, pred.rnd, pred.rmse,
+                             ncol = 3, nrow = 2,
+                             labels = c('a','b','c',
+                                        'd','e','f'),
+                             font.label = list(face = 'bold', size = lbls),
+                             hjust=-1)
 # ggsave(sprintf("%sFIGURE2b-g.jpg",out_path), fig2bg,
 #        height = 120, width = two.c, units = 'mm',
 #        dpi = 300)
@@ -341,8 +360,8 @@ es.heatmap <- ggplot(virP1) +
                        trans = 'pseudo_log',
                        midpoint = 0,
                        breaks = c(-80,-20,-5,0,5,20,80,400)) +
-  labs(x = 'Query Time (hour)',
-       y = 'Reference Time (hour)') +
+  labs(x = 'Mutant Colony-Size Time (hour)',
+       y = 'Reference Colony-Size Time (hour)') +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
@@ -368,13 +387,16 @@ sen.fdr <- ggplot(dat.cnt2) +
   geom_area(aes(x = (cen-1)*100, y = Deleterious, fill = 'Deleterious'), alpha = 1) +
   geom_vline(xintercept = seq(-2,2,0.025)*100, col = '#757575', lwd = 0.5, alpha =0.5) +
   geom_hline(yintercept = c(t * seq(0,1,0.05)), col = '#757575', lwd = 0.5, alpha =0.5) +
+  geom_vline(xintercept = c(-5,5), col = 'red', lwd = 1, linetype = 'dashed') +
+  geom_text(x=0, y=t*0.9, label="LID", col = 'white', size = 3) +
   labs(x = 'Fitness Effect',
        y = 'Sensitivity') +
   scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
                      minor_breaks = c(t * seq(0,1,0.05)),
                      labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
   scale_x_continuous(breaks = seq(-2,2,0.05)*100,
-                     minor_breaks = seq(-2,2,0.025)*100) +
+                     minor_breaks = seq(-2,2,0.025)*100,
+                     labels = paste0(round(seq(-2,2,0.05)*100), '%', sep = '')) +
   scale_color_manual(name = 'Phenotype',
                      breaks = c('Beneficial','Neutral','Deleterious'),
                      values = c('Deleterious'='#3F51B5',
@@ -391,7 +413,9 @@ sen.fdr <- ggplot(dat.cnt2) +
         axis.text = element_text(size = txt),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
-        legend.key.size = unit(5, "mm")) +
+        legend.key.size = unit(4, "mm"),
+        legend.position = c(0.87,0.2),
+        legend.margin = margin(0.5,0.5,0.5,0.5, "mm")) +
   coord_cartesian(xlim = c(-10,10),
                   ylim = c(0,t))
 # ggsave(sprintf("%sFIGUREXXX.jpg",out_path), sen.fdr,
@@ -469,7 +493,7 @@ refrep$ref_prop <- as.factor(refrep$ref_prop)
 
 sen.rep <- ggplot(refrep[round(refrep$abs_cen) <= 5,],
                   aes(x = rep, y = power, fill = ref_prop)) +
-  geom_boxplot() +
+  geom_boxplot(outlier.shape = NA) +
   # geom_smooth(aes(x = rep, y = power), method = 'loess', se = F, lwd = 1.2) +
   labs(x = 'No. of Replicates',
        y = 'Sensitivity') +
@@ -477,16 +501,72 @@ sen.rep <- ggplot(refrep[round(refrep$abs_cen) <= 5,],
   scale_y_continuous(breaks = seq(0,100,10),
                      minor_breaks = seq(0,105,5),
                      labels = paste(seq(0,100,10),'%',sep='')) +
-  scale_fill_manual(name = 'Reference\nProportion',
+  scale_fill_manual(name = 'Reference Proportion',
                     breaks = c(0.0625,0.125,0.1875,0.25),
-                    values = c('#C5CAE9','#448AFF','#3F51B5','#212121'),
+                    values = c('#BDBDBD','#795548','#FFEB3B','#9C27B0'),
                     labels = c(sprintf('%0.2f%%',c(0.0625,0.125,0.1875,0.25)*100))) +
   coord_cartesian(ylim = c(0,100)) +
   theme_linedraw() +
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
         legend.title = element_text(size = titles),
-        legend.text = element_text(size = txt))
+        legend.text = element_text(size = txt),
+        legend.key = element_rect(size = 0.5),
+        legend.key.size = unit(.8, 'lines'),
+        legend.position = c(0.5,0.1),
+        legend.margin = margin(0.5,0.5,0.5,0.5, "mm")) +
+  guides(fill = guide_legend(nrow=1))
+
+load(sprintf('%sBEANSPEDATA.RData',out_path))
+t <- dat.cnt2$Beneficial[1]
+sen.fdr.mcat <- ggplot(dat.cnt2) +
+  geom_area(aes(x = (cen-1)*100, y = Neutral, fill = 'Neutral'), alpha = 1) +
+  geom_area(aes(x = (cen-1)*100, y = Beneficial, fill = 'Beneficial'), alpha = 1) +
+  geom_area(aes(x = (cen-1)*100, y = Deleterious, fill = 'Deleterious'), alpha = 1) +
+  geom_vline(xintercept = seq(-2,2,0.025)*100, col = '#757575', lwd = 0.5, alpha =0.5) +
+  geom_hline(yintercept = c(t * seq(0,1,0.05)), col = '#757575', lwd = 0.5, alpha =0.5) +
+  geom_vline(xintercept = c(-5,5), col = 'red', lwd = 1, linetype = 'dashed') +
+  geom_text(x=0, y=t*0.9, label="MCAT", col = 'white', size = 3) +
+  labs(x = 'Fitness Effect',
+       y = 'Sensitivity') +
+  scale_y_continuous(breaks = c(t * seq(0,1,0.1)),
+                     minor_breaks = c(t * seq(0,1,0.05)),
+                     labels = c('0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%')) +
+  scale_x_continuous(breaks = seq(-2,2,0.05)*100,
+                     minor_breaks = seq(-2,2,0.025)*100,
+                     labels = paste0(round(seq(-2,2,0.05)*100), '%', sep = '')) +
+  scale_color_manual(name = 'Phenotype',
+                     breaks = c('Beneficial','Neutral','Deleterious'),
+                     values = c('Deleterious'='#3F51B5',
+                                'Neutral'='#212121',
+                                'Beneficial'='#FFC107'),
+                     guide = F) +
+  scale_fill_manual(name = 'Phenotype',
+                    breaks = c('Beneficial','Neutral','Deleterious'),
+                    values = c('Deleterious'='#3F51B5',
+                               'Neutral'='#212121',
+                               'Beneficial'='#FFC107')) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles, hjust = 0.5),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(4, "mm"),
+        legend.position = c(0.87,0.2),
+        legend.margin = margin(0.5,0.5,0.5,0.5, "mm")) +
+  coord_cartesian(xlim = c(-10,10),
+                  ylim = c(0,t))
+
+fig4 <- ggarrange(spe.1, sen.fdr, sen.fdr.mcat, sen.rep,
+                  nrow = 2, ncol = 2,
+                  labels = c('a','b','c','d'),
+                  label.args = list(gp=gpar(font = 2, fontsize = lbls),
+                                    hjust=-1))
+ggsave(sprintf("%sFIGURE4.jpg",out_path), fig4,
+       height = 180, width = two.c, units = 'mm',
+       dpi = 300)
+
 
 dat.method <- dat.method[dat.method$rep == 16,]
 my_comparisons <- list(c("LID", "LID-AC"), c("LID", "LID-SN"), c("LID", "NO-NORM")) 
@@ -506,9 +586,9 @@ sen.met <- ggplot(data = dat.method[dat.method$rep == 16,],
                                '16' = '#536DFE'),
                     guide = F) +
   scale_color_manual(name = 'Number of\nReplicates',
-                    values = c('8' = '#FFA000',
-                               '16' = '#303F9F'),
-                    guide = F) +
+                     values = c('8' = '#FFA000',
+                                '16' = '#303F9F'),
+                     guide = F) +
   scale_y_continuous(breaks = seq(0,100,10),
                      labels = paste(seq(0,100,10),'%',sep ='')) +
   labs(x = 'Bias Correction Method',
@@ -520,14 +600,8 @@ sen.met <- ggplot(data = dat.method[dat.method$rep == 16,],
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
         legend.key.size = unit(5, "mm"))
-
-fig4 <- ggarrange(spe.1, sen.fdr, sen.met, sen.rep,
-                  nrow = 2, ncol = 2,
-                  labels = c('a','b','c','d'),
-                  label.args = list(gp=gpar(font = 2, fontsize = lbls),
-                                    hjust=-1))
-ggsave(sprintf("%sFIGURE4.jpg",out_path), fig4,
-       height = 160, width = two.c, units = 'mm',
+ggsave(sprintf("%sFIGURES16.jpg",out_path), sen.met,
+       height = one.c, width = one.c, units = 'mm',
        dpi = 300)
 
 compare_means(sen ~ method, dat.method, method = 't.test', paired = T, alternative = 'less')
@@ -537,8 +611,8 @@ load(sprintf('%sVP2PIEDATA.RData',out_path))
 load(sprintf('%sVP2RNDDATA.RData',out_path))
 
 # rnd_data$hours <- factor(rnd_data$hours, levels = c(sort(unique(rnd_data$hours))))
-rnd_data$virtual <- sprintf('Ref. at %0.2f hr', rnd_data$hours)
-rnd_data$virtual <- factor(rnd_data$virtual, levels = sprintf('Ref. at %0.2f hr', c(unique(sort(rnd_data$hours)))))
+rnd_data$virtual <- sprintf('Ref. CS Time = %0.2f hr', rnd_data$hours)
+rnd_data$virtual <- factor(rnd_data$virtual, levels = sprintf('Ref. CS Time = %0.2f hr', c(unique(sort(rnd_data$hours)))))
 
 rnd_pie <- ggplot(data = pie.per, aes(x = "", y = per, fill = value)) +
   geom_bar(stat = 'identity') +
@@ -576,24 +650,96 @@ rnd_pie <- ggplot(data = pie.per, aes(x = "", y = per, fill = value)) +
         legend.text = element_text(size = txt),
         legend.key.size = unit(3, "mm"),
         legend.position = 'bottom',
-        strip.text = element_text(size = txt),
+        strip.text = element_text(size = titles),
         legend.box.spacing = unit(0.5,"mm"))
 
-rnd_den <- ggplot(rnd_data[!is.na(rnd_data$average) & !is.na(rnd_data$colony),],
-                 aes(x = average, fill = colony)) +
+ggsave(sprintf("%sFIGURE5.jpg",out_path), rnd_pie,
+       height = 80, width = two.c, units = 'mm',
+       dpi = 300)
+
+# rnd_den <- ggplot(rnd_data[!is.na(rnd_data$average) & !is.na(rnd_data$colony),],
+#                  aes(x = average, fill = colony)) +
+#   # geom_line(stat = 'density', trim = T, lwd = 1.2) +
+#   geom_density(stat = 'density', alpha = 0.8) +
+#   labs(x = 'Colony Size (pixel)',
+#        y = 'Density') +
+#   scale_fill_manual(name = 'Mock Colony Type',
+#                      breaks = c("Reference","Query"),
+#                     labels = c("Reference","Mutant"),
+#                      values = c("Reference" = "#3F51B5",
+#                                 "Query" = "#FFC107")) +
+#   facet_wrap(.~virtual) +
+#   coord_cartesian(ylim = c(0,0.015)) +
+#   theme_linedraw() +
+#   theme(axis.title = element_text(size = titles),
+#         axis.text = element_text(size = txt),
+#         legend.title = element_text(size = titles),
+#         legend.text = element_text(size = txt),
+#         strip.text = element_text(size = txt),
+#         legend.key.size = unit(3, "mm"),
+#         legend.position = "bottom",
+#         legend.box.spacing = unit(0.5,"mm"))
+# 
+# fig5 <- ggarrange(rnd_den, rnd_pie,
+#                   ncol = 1, heights = c(0.6,1),
+#                   labels = c('a','b'),
+#                   label.args = list(gp=gpar(font = 2, fontsize = lbls),
+#                                     hjust=-1))
+# 
+# ggsave(sprintf("%sFIGURE5.jpg",out_path), fig5,
+#        height = 200, width = two.c, units = 'mm',
+#        dpi = 300)
+
+compare_means(per ~ method, pie.per[str_detect(pie.per$value, 'True'),], paired = T, method = 't.test')
+
+
+##### NEW FIGURE 2
+virP1$text <- '12x12 Fitness Effect Matrix'
+es.heatmap <- ggplot(virP1) +
+  geom_tile(aes(x = sprintf('%0.1f',que_hrs), y = sprintf('%0.1f',ref_hrs), fill = round((es-1)*100,0)),
+            col = 'black') +
+  geom_text(aes(x = sprintf('%0.1f',que_hrs), y = sprintf('%0.1f',ref_hrs), label = round((es-1)*100,0)),
+            col = 'black', size = 2) +
+  scale_x_discrete(limits = sprintf('%0.1f',hhours)) +
+  scale_y_discrete(limits = sprintf('%0.1f',sort(hhours, decreasing = T))) +
+  scale_fill_gradient2(name = 'Fitness Effect %',
+                       low = "#303F9F", high = "#FFC107", mid = "white",
+                       trans = 'pseudo_log',
+                       midpoint = 0,
+                       breaks = c(-50,-5,0,5,50,500)) +
+  labs(title = 'Bimodal Colony-Size Distribution',
+       x = 'Mutant Colony-Size Time (hour)',
+       y = 'Reference Colony-Size Time (hour)') +
+  facet_wrap(.~text) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        strip.text = element_text(size = txt),
+        legend.position = 'bottom',
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm"))
+
+rnd_den <- ggplot(rnd_data[!is.na(rnd_data$average) & !is.na(rnd_data$colony)
+                           & rnd_data$hours > 0,],
+                  aes(x = average, fill = colony)) +
   # geom_line(stat = 'density', trim = T, lwd = 1.2) +
   geom_density(stat = 'density', alpha = 0.8) +
-  labs(x = 'Colony Size (pixel)',
+  labs(title = 'Random Colony-Size Distribution',
+       x = 'Colony Size (pixel)',
        y = 'Density') +
   scale_fill_manual(name = 'Mock Colony Type',
-                     breaks = c("Reference","Query"),
+                    breaks = c("Reference","Query"),
                     labels = c("Reference","Mutant"),
-                     values = c("Reference" = "#3F51B5",
-                                "Query" = "#FFC107")) +
+                    values = c("Reference" = "#3F51B5",
+                               "Query" = "#FFC107")) +
   facet_wrap(.~virtual) +
   coord_cartesian(ylim = c(0,0.015)) +
   theme_linedraw() +
-  theme(axis.title = element_text(size = titles),
+  theme(plot.title = element_text(size = titles),
+        axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
@@ -602,14 +748,21 @@ rnd_den <- ggplot(rnd_data[!is.na(rnd_data$average) & !is.na(rnd_data$colony),],
         legend.position = "bottom",
         legend.box.spacing = unit(0.5,"mm"))
 
-fig5 <- ggarrange(rnd_den, rnd_pie,
-                  ncol = 1, heights = c(0.6,1),
-                  labels = c('a','b'),
-                  label.args = list(gp=gpar(font = 2, fontsize = lbls),
-                                    hjust=-1))
 
-ggsave(sprintf("%sFIGURE5.jpg",out_path), fig5,
-       height = 200, width = two.c, units = 'mm',
+# fig2.new <- ggarrange(es.heatmap, rnd_den,
+#                   nrow = 1, widths = c(0.5,1),
+#                   labels = c('b','c'),
+#                   label.args = list(gp=gpar(font = 2, fontsize = lbls),
+#                                     hjust=-1))
+
+fig2.new <- ggarrange(es.heatmap, rnd_den,
+                  nrow = 1, widths = c(0.5,1))
+
+# fig2.new.cp <- annotate_figure(fig2.new,
+#                 top = text_grob("Condition Positive Dataset",
+#                                 face = "bold", size = titles+1))
+
+
+ggsave(sprintf("%sFIGURE2_new.jpg",out_path), fig2.new,
+       height = 80, width = two.c, units = 'mm',
        dpi = 300)
-
-compare_means(per ~ method, pie.per[str_detect(pie.per$value, 'True'),], paired = T, method = 't.test')

@@ -269,7 +269,7 @@ vir.cs <- ggplot(fit.all, aes(x = average, fill = colony)) +
   geom_density(stat = 'density', alpha = 0.8) +
   labs(x = 'Colony Size (pixel)',
        y = 'Density') +
-  scale_fill_manual(name = 'Colony Type',
+  scale_fill_manual(name = 'Mock Colony Type',
                     breaks = c("Reference","Mutant"),
                     values = c("Reference" = "#3F51B5",
                                "Mutant" = "#FFC107")) +
@@ -710,7 +710,7 @@ rmse.r <- ggplot(rmse.rr[rmse.rr$rep == 16 & rmse.rr$hours > 2,],
                      labels = paste(seq(0,100,2),'%',sep='')) +
   scale_color_manual(name = 'Reference\nProportion',
                      breaks = c(0.0625,0.125,0.1875,0.25),
-                     values = c('#C5CAE9','#448AFF','#3F51B5','#212121'),
+                     values = c('#BDBDBD','#795548','#FFEB3B','#9C27B0'),
                      labels = c(sprintf('%0.2f%%',c(0.0625,0.125,0.1875,0.25)*100))) +
   # coord_cartesian(ylim = c(90,100)) +
   theme_linedraw() +
@@ -738,7 +738,7 @@ mcatbar <- ggplot(rnd.es) +
   geom_bar(aes(x = as.factor(hours), fill = mcat_result)) +
   labs(title = 'MCAT',
        x = 'Reference Population Time Point (hours)',
-       y = 'Number of Mock Mutant Strains') +
+       y = '') +
   scale_fill_manual(name = 'Phenotype',
                     breaks = c('Neu/Ben',
                                'Ben/Ben',
@@ -772,7 +772,7 @@ lidbar <- ggplot(rnd.es) +
   geom_bar(aes(x = as.factor(hours), fill = lid_result)) +
   labs(title = 'LID',
        x = 'Reference Population Time Point (hours)',
-       y = 'Number of Mock Mutant Strains') +
+       y = 'Number of Mutant Strains') +
   scale_fill_manual(name = 'Phenotype',
                     breaks = c('Neu/Ben',
                                'Ben/Ben',
@@ -807,7 +807,7 @@ truthbar <- ggplot(rnd.es,
   geom_bar(aes(fill = truth)) +
   labs(title = 'TRUTH',
        x = 'Reference Population Time Point (hours)',
-       y = 'Number of Mock Mutant Strains') +
+       y = '') +
   scale_fill_manual(name = 'Phenotype',
                     breaks = c('Beneficial',
                                'Deleterious'),
@@ -826,12 +826,13 @@ truthbar <- ggplot(rnd.es,
         legend.box.spacing = unit(0.5,"mm"))
 
 
-lidpixes <- ggplot(rnd.es,
+lidpixes <- ggplot(rnd.es[!(rnd.es$lid_pix_es > 0 & rnd.es$truth == 'Deleterious') &
+                            !(rnd.es$lid_pix_es < 0 & rnd.es$truth == 'Beneficial'),],
        aes(x = lid_pix_es * 100, fill = lid_result)) +
   geom_histogram(binwidth = 10) +
   labs(title = 'LID',
        x = 'Fitness Effect',
-       y = 'Number of Mock Mutant Strains') +
+       y = 'Number of Mutant Strains') +
   scale_x_continuous(breaks = seq(-1000,1000,100),
                      minor_breaks = seq(-1000,1000,10),
                      labels = paste(seq(-1000,1000,100),'%', sep = '')) +
@@ -865,12 +866,13 @@ lidpixes <- ggplot(rnd.es,
         legend.text = element_text(size = txt),
         legend.box.spacing = unit(0.5,"mm"))
 
-mcatpixes <- ggplot(rnd.es,
+mcatpixes <- ggplot(rnd.es[!(rnd.es$lid_pix_es > 0 & rnd.es$truth == 'Deleterious') &
+                             !(rnd.es$lid_pix_es < 0 & rnd.es$truth == 'Beneficial'),],
        aes(x = lid_pix_es*100, fill = mcat_result)) +
   geom_histogram(binwidth = 10) +
   labs(title = 'MCAT',
        x = 'Fitness Effect',
-       y = 'Number of Mock Mutant Strains') +
+       y = '') +
   scale_x_continuous(breaks = seq(-1000,1000,100),
                      minor_breaks = seq(-1000,1000,10),
                      labels = paste(seq(-1000,1000,100),'%', sep = '')) +
@@ -919,6 +921,142 @@ ggsave(sprintf("%sFIGURES11.jpg",out_path), pixesbars,
        height = two.c, width = two.c, units = 'mm',
        dpi = 300)
 
+##### FIGURE 5 for DRAFT V9
+load(sprintf('%sVP2PIEDATA.RData',out_path))
+
+rnd_pie.lid <- ggplot(data = pie.per[pie.per$method == 'LID',], aes(x = "", y = per, fill = value)) +
+  geom_bar(stat = 'identity') +
+  coord_polar("y", start = 0) +
+  geom_label_repel(aes(label = sprintf("%0.2f%%",per)),
+                   position = position_stack(vjust = 0.5),
+                   label.size = 0.15,
+                   show.legend = F) +
+  scale_fill_manual(name = 'Phenotype',
+                    breaks = c('6BenNeutral',
+                               '5TrueBeneficial',
+                               '4FalseDeleterious',
+                               '3FalseBeneficial',
+                               '2TrueDeleterious',
+                               '1DelNeutral'),
+                    values = c('1DelNeutral'='#536DFE',
+                               '2TrueDeleterious'='#303F9F',
+                               '3FalseBeneficial'='#C5CAE9',
+                               '4FalseDeleterious'='#FFECB3',
+                               '5TrueBeneficial'='#FFA000',
+                               '6BenNeutral'='#FFC107'),
+                    labels = c('1DelNeutral'='False-Neutral Deleterious',
+                               '2TrueDeleterious'='True Deleterious',
+                               '3FalseBeneficial'='False-Beneficial Deleterious',
+                               '4FalseDeleterious'='False-Deleterious Beneficial',
+                               '5TrueBeneficial'='True Beneficial',
+                               '6BenNeutral'='False-Neutral Beneficial'),
+                    guide = F) +
+  labs(title = 'LID') +
+  theme_linedraw() +
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        plot.title = element_text(size = titles),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(3, "mm"),
+        legend.position = 'bottom',
+        strip.text = element_text(size = titles),
+        legend.box.spacing = unit(0.5,"mm"))
+
+rnd_pie.truth <- ggplot(data = pie.per[pie.per$method == 'TRUTH',], aes(x = "", y = per, fill = value)) +
+  geom_bar(stat = 'identity') +
+  coord_polar("y", start = 0) +
+  geom_label_repel(aes(label = sprintf("%0.2f%%",per)),
+                   position = position_stack(vjust = 0.5),
+                   label.size = 0.15,
+                   show.legend = F) +
+  scale_fill_manual(name = 'Phenotype',
+                    breaks = c('6BenNeutral',
+                               '5TrueBeneficial',
+                               '4FalseDeleterious',
+                               '3FalseBeneficial',
+                               '2TrueDeleterious',
+                               '1DelNeutral'),
+                    values = c('1DelNeutral'='#536DFE',
+                               '2TrueDeleterious'='#303F9F',
+                               '3FalseBeneficial'='#C5CAE9',
+                               '4FalseDeleterious'='#FFECB3',
+                               '5TrueBeneficial'='#FFA000',
+                               '6BenNeutral'='#FFC107'),
+                    labels = c('1DelNeutral'='False-Neutral Deleterious',
+                               '2TrueDeleterious'='True Deleterious',
+                               '3FalseBeneficial'='False-Beneficial Deleterious',
+                               '4FalseDeleterious'='False-Deleterious Beneficial',
+                               '5TrueBeneficial'='True Beneficial',
+                               '6BenNeutral'='False-Neutral Beneficial'),
+                    guide = F) +
+  labs(title = 'TRUTH') +
+  theme_linedraw() +
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        plot.title = element_text(size = titles),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(3, "mm"),
+        legend.position = 'bottom',
+        strip.text = element_text(size = titles),
+        legend.box.spacing = unit(0.5,"mm"))
+
+rnd_pie.mcat <- ggplot(data = pie.per[pie.per$method == 'MCAT',], aes(x = "", y = per, fill = value)) +
+  geom_bar(stat = 'identity') +
+  coord_polar("y", start = 0) +
+  geom_label_repel(aes(label = sprintf("%0.2f%%",per)),
+                   position = position_stack(vjust = 0.5),
+                   label.size = 0.15,
+                   show.legend = F) +
+  scale_fill_manual(name = 'Phenotype',
+                    breaks = c('6BenNeutral',
+                               '5TrueBeneficial',
+                               '4FalseDeleterious',
+                               '3FalseBeneficial',
+                               '2TrueDeleterious',
+                               '1DelNeutral'),
+                    values = c('1DelNeutral'='#536DFE',
+                               '2TrueDeleterious'='#303F9F',
+                               '3FalseBeneficial'='#C5CAE9',
+                               '4FalseDeleterious'='#FFECB3',
+                               '5TrueBeneficial'='#FFA000',
+                               '6BenNeutral'='#FFC107'),
+                    labels = c('1DelNeutral'='False-Neutral Deleterious',
+                               '2TrueDeleterious'='True Deleterious',
+                               '3FalseBeneficial'='False-Beneficial Deleterious',
+                               '4FalseDeleterious'='False-Deleterious Beneficial',
+                               '5TrueBeneficial'='True Beneficial',
+                               '6BenNeutral'='False-Neutral Beneficial'),
+                    guide = F) +
+  labs(title = 'MCAT') +
+  theme_linedraw() +
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        plot.title = element_text(size = titles),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(3, "mm"),
+        legend.position = 'bottom',
+        strip.text = element_text(size = titles),
+        legend.box.spacing = unit(0.5,"mm"))
+
+
+fig5.a <- ggpubr::ggarrange(rnd_pie.lid, rnd_pie.truth, rnd_pie.mcat,
+                    nrow = 1)
+
+fig5 <- ggarrange(fig5.a, hrlybars, pixes,
+                          nrow = 3,
+                          ncol = 1,
+                  labels = c('a','b','c'),
+                  label.args = list(gp=gpar(font = 2, fontsize = lbls),
+                                    hjust=-1))
+ggsave(sprintf("%sFIGURE5.jpg",out_path), fig5,
+       height = two.c, width = two.c, units = 'mm',
+       dpi = 300)
 
 ##### SPATIAL BIAS CV
 load(sprintf('%sSPATIAL.RData',out_path))
@@ -1016,7 +1154,7 @@ spe.ref <- spe.data[spe.data$cont_hrs == spe.data$hours &
 spe.r <- ggplot(spe.ref,
                 aes(x = rep, y = round((1-fpr),4)*100,
                     fill = ref)) +
-  geom_boxplot() +
+  geom_boxplot(outlier.shape = NA) +
   labs(x = 'Number of Replicates',
        y = 'Specificity') +
   scale_x_discrete(breaks = seq(0,16,2)) +
@@ -1025,7 +1163,7 @@ spe.r <- ggplot(spe.ref,
                      labels = paste(seq(0,100,2),'%',sep='')) +
   scale_fill_manual(name = 'Reference\nProportion',
                     breaks = c(0.0625,0.125,0.1875,0.25),
-                    values = c('#C5CAE9','#448AFF','#3F51B5','#212121'),
+                    values = c('#BDBDBD','#795548','#FFEB3B','#9C27B0'),
                     labels = c(sprintf('%0.2f%%',c(0.0625,0.125,0.1875,0.25)*100))) +
   coord_cartesian(ylim = c(90,100)) +
   theme_linedraw() +
@@ -1045,7 +1183,7 @@ spe.met <- spe.methods[spe.methods$cont_hrs == spe.methods$hours &
 
 spe.m <- ggplot(spe.met,
                 aes(x = method, y = round((1-fpr),4)*100)) +
-  geom_boxplot(fill = 'white') +
+  geom_boxplot(fill = 'white', outlier.shape = NA) +
   labs(x = 'Bias Correction Method',
        y = 'Specificity') +
   scale_x_discrete(limits = c('No Normalization',

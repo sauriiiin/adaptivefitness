@@ -361,3 +361,8 @@ pixesbars <- ggarrange(hrlybars, pixes,
 ggsave(sprintf("%sVP2_RESULTS.jpg",out_path), pixesbars,
        height = two.c, width = two.c, units = 'mm',
        dpi = 300)
+
+
+######
+rnd.es[!(rnd.es$lid_pix_es < 0 & rnd.es$truth == 'Deleterious') &
+         !(rnd.es$lid_pix_es > 0 & rnd.es$truth == 'Beneficial'),]
