@@ -20,44 +20,45 @@ conn <- initialize.sql("saurin_test")
 out_path = 'figs/lid_paper/4C4/';
 
 ##### MAKING THE MESS
-# alldat = dbGetQuery(conn, 'select c.*, b.orf_name, a.hours, a.average
-#                   from 4C4_FS_6144_RAW a, 4C4_pos2orf_name b, 4C4_pos2coor c
-#                   where a.pos = b.pos and b.pos = c.pos')
-# alldat$rnd_hrs <- alldat$hours
-# alldat$rnd_avg <- alldat$average
-# 
-# ggplot(alldat) +
-#   geom_point(aes(x = rnd_hrs, y = rnd_avg))
-# 
-# for (hr in unique(alldat$hours)) {
-#   for (orf in unique(alldat$orf_name[alldat$hours == hr & !is.na(alldat$orf_name) & alldat$orf_name != "BF_control"])) {
-#     hr.tmp <- sample(unique(alldat$hours[alldat$hours != hr]),1)
-#     alldat$rnd_avg[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr] <-
-#       alldat$average[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr.tmp]
-#     alldat$rnd_hrs[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr] <-
-#       alldat$hours[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr.tmp]
-#   }
-# }
-# 
-# ggplot(alldat) +
-#   geom_point(aes(x = rnd_hrs, y = rnd_avg))
-# 
-# dbWriteTable(conn, "4C4_FS_RND_6144_DATA", alldat, overwrite = T)
-# 
-# dbExecute(conn, 'drop table 4C4_FS_RND_BEAN_6144_JPEG')
-# dbExecute(conn, 'create table 4C4_FS_RND_BEAN_6144_JPEG
-#     select pos, hours, rnd_hrs, rnd_avg average
-#     from 4C4_FS_RND_6144_DATA')
-# 
-# dbExecute(conn, 'drop table 4C4_FS_RND_6144_JPEG')
-# dbExecute(conn, 'create table 4C4_FS_RND_6144_JPEG
-#     select pos, hours, rnd_hrs, rnd_avg average
-#     from 4C4_FS_RND_6144_DATA')
-# 
-# dbExecute(conn, 'update 4C4_FS_RND_6144_JPEG
-#     set average = NULL
-#     where pos in
-#     (select pos from 4C4_borderpos)')
+alldat = dbGetQuery(conn, 'select c.*, b.orf_name, a.hours, a.average
+                  from 4C4_FS_6144_RAW a, 4C4_pos2orf_name b, 4C4_pos2coor c
+                  where a.pos = b.pos and b.pos = c.pos')
+alldat$rnd_hrs <- alldat$hours
+alldat$rnd_avg <- alldat$average
+
+ggplot(alldat) +
+  geom_point(aes(x = rnd_hrs, y = rnd_avg))
+
+for (hr in unique(alldat$hours)) {
+  for (orf in unique(alldat$orf_name[alldat$hours == hr & !is.na(alldat$orf_name) & alldat$orf_name != "BF_control"])) {
+    # hr.tmp <- sample(unique(alldat$hours[alldat$hours != hr]),1)
+    hr.tmp <- sample(unique(alldat$hours),1)
+    alldat$rnd_avg[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr] <-
+      alldat$average[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr.tmp]
+    alldat$rnd_hrs[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr] <-
+      alldat$hours[!is.na(alldat$orf_name) & alldat$orf_name == orf & alldat$hours == hr.tmp]
+  }
+}
+
+ggplot(alldat) +
+  geom_point(aes(x = rnd_hrs, y = rnd_avg))
+
+dbWriteTable(conn, "4C4_FS_RND2_6144_DATA", alldat, overwrite = T)
+
+dbExecute(conn, 'drop table 4C4_FS_RND2_BEAN_6144_JPEG')
+dbExecute(conn, 'create table 4C4_FS_RND2_BEAN_6144_JPEG
+    select pos, hours, rnd_hrs, rnd_avg average
+    from 4C4_FS_RND2_6144_DATA')
+
+dbExecute(conn, 'drop table 4C4_FS_RND2_6144_JPEG')
+dbExecute(conn, 'create table 4C4_FS_RND2_6144_JPEG
+    select pos, hours, rnd_hrs, rnd_avg average
+    from 4C4_FS_RND2_6144_DATA')
+
+dbExecute(conn, 'update 4C4_FS_RND2_6144_JPEG
+    set average = NULL
+    where pos in
+    (select pos from 4C4_borderpos)')
 
 ##### ANALYZING THE MESS
 dat.dir <- "/home/sbp29/R/Projects/adaptivefitness/rawdata/4C4_FS_RND_BEAN/"

@@ -35,13 +35,18 @@ lbls <- 9
 load(sprintf('%s4C4PSDATA.RData',out_path))
 
 ps.plateeffect <- ggplot(data.ps,
-       aes(x = source, y = average-median_cs)) +
+       aes(x = source, y = average-median_cs, fill = source)) +
   geom_boxplot() +
   geom_hline(yintercept = 0, col = 'red', linetype = 'dashed') +
   labs(x = 'Source Plate',
        y = 'Median Substracted Pixel Counts') +
   scale_x_discrete(breaks=c("1TL","2TR","3BL","4BR"),
                    labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  scale_fill_manual(breaks = c('1TL','2TR','3BL','4BR'),
+                    values = c('1TL' = 'blue',
+                               '2TR' = 'red',
+                               '3BL' = 'yellow',
+                               '4BR' = 'green')) +
   stat_compare_means(label.x = 2.5, label.y = 700, hjust = 0.5, size = 1.5) +
   facet_wrap(.~stage) +
   theme_linedraw()+

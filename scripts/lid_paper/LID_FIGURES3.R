@@ -353,10 +353,13 @@ es.heatmap <- ggplot(virP1) +
             col = 'black') +
   geom_text(aes(x = sprintf('%0.1f',que_hrs), y = sprintf('%0.1f',ref_hrs), label = round((es-1)*100,0)),
             col = 'black', size = 2) +
+  # geom_tile(data = virP1[virP1$ref_hrs == virP1$que_hrs,],
+  #           aes(x = sprintf('%0.1f',que_hrs), y = sprintf('%0.1f',ref_hrs)),
+  #           fill = 'black', col = 'black') +
   scale_x_discrete(limits = sprintf('%0.1f',hhours)) +
   scale_y_discrete(limits = sprintf('%0.1f',sort(hhours, decreasing = T))) +
   scale_fill_gradient2(name = 'Fitness\nEffect %',
-                       low = "#303F9F", high = "#FFC107", mid = "white",
+                       low = "#616161", high = "#7C4DFF", mid = "white",
                        trans = 'pseudo_log',
                        midpoint = 0,
                        breaks = c(-80,-20,-5,0,5,20,80,400)) +
@@ -703,7 +706,7 @@ es.heatmap <- ggplot(virP1) +
   scale_x_discrete(limits = sprintf('%0.1f',hhours)) +
   scale_y_discrete(limits = sprintf('%0.1f',sort(hhours, decreasing = T))) +
   scale_fill_gradient2(name = 'Fitness Effect %',
-                       low = "#303F9F", high = "#FFC107", mid = "white",
+                       low = "#FF4081", high = "#673AB7", mid = "white",
                        trans = 'pseudo_log',
                        midpoint = 0,
                        breaks = c(-50,-5,0,5,50,500)) +
@@ -763,6 +766,6 @@ fig2.new <- ggarrange(es.heatmap, rnd_den,
 #                                 face = "bold", size = titles+1))
 
 
-ggsave(sprintf("%sFIGURE2_new.jpg",out_path), fig2.new,
+ggsave(sprintf("%sFIGURE2.jpg",out_path), fig2.new,
        height = 80, width = two.c, units = 'mm',
        dpi = 300)
