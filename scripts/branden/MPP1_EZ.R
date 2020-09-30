@@ -37,9 +37,9 @@ conn <- dbConnect(MariaDB(), dbname = sql.db,
                   host = 'paris.csb.pitt.edu')
 
 ##### GETTING DATA FROM SQL
-tblname_JPEG <- '_JPEG'
-tblname_p2o <- '_pos2orf_name'
-tblname_p2c <- '_pos2coor'
+tblname_JPEG <- '4C4_FS_6144_JPEG'
+tblname_p2o <- '4C4_pos2orf_name'
+tblname_p2c <- '4C4_pos2coor'
 
 data <- dbGetQuery(conn, sprintf('select c.*, b.orf_name, a.hours, a.average
           from %s a, %s b, %s c

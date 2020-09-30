@@ -493,4 +493,8 @@ save(plates,
      file = sprintf('%sPLATES.RData',out_path))
 
 
-
+##### CONDITION POSITIVE AND NEGATIVE DENSITY PLOTS
+density.data <- dbGetQuery(conn, 'select a.pos, c.orf_name, a.hours, b.rnd_hrs, a.average, b.average rnd_avg
+                           from 4C4_FS_6144_JPEG a, 4C4_FS_RND2_6144_JPEG b, 4C4_pos2orf_name c
+                           where a.hours = b.hours and a.pos = b.pos and a.pos = c.pos')
+save(density.data, file = sprintf('%sCS_DENSITY_DATA.RData', out_path))

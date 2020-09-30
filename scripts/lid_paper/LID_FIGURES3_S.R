@@ -193,8 +193,8 @@ vir1plt.a <- ggplot(vir1.eg[vir1.eg$kind == "1. Time = 2.9 hr",]) +
   geom_point(aes(x = col, y = row, size = average, col = colony)) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c("Reference","Mutant"),
-                     values = c("Reference" = "#3F51B5",
-                                "Mutant" = "#FFC107"),
+                     values = c("Reference" = "#9E9E9E",
+                                "Mutant" = "#7B1FA2"),
                      guide = F) +
   scale_size_continuous(range = c(0,2.5), guide = F) +
   scale_x_continuous(breaks = seq(0,96,4)) +
@@ -215,8 +215,8 @@ vir1plt.b <- ggplot(vir1.eg[vir1.eg$kind == "2. Time = 11.04 hr",]) +
   geom_point(aes(x = col, y = row, size = average, col = colony)) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c("Reference","Mutant"),
-                     values = c("Reference" = "#3F51B5",
-                                "Mutant" = "#FFC107")) +
+                     values = c("Reference" = "#9E9E9E",
+                                "Mutant" = "#7B1FA2")) +
   scale_size_continuous(name = 'Colony Size (pixels)',
                         range = c(0,2.5)) +
   scale_x_continuous(breaks = seq(0,96,4)) +
@@ -237,8 +237,8 @@ vir1plt.c <- ggplot(vir1.eg[vir1.eg$kind == "3. Virtual Plate",]) +
   geom_point(aes(x = col, y = row, size = average, col = colony)) +
   scale_color_manual(name = 'Colony Type',
                      breaks = c("Reference","Mutant"),
-                     values = c("Reference" = "#3F51B5",
-                                "Mutant" = "#FFC107"),
+                     values = c("Reference" = "#9E9E9E",
+                                "Mutant" = "#7B1FA2"),
                      guide = F) +
   scale_size_continuous(range = c(0,2.5), guide = F) +
   scale_x_continuous(breaks = seq(0,96,4)) +
@@ -261,7 +261,7 @@ vir1plt <- ggarrange(vir1plt.a, vir1plt.b, vir1plt.c,
                                        hjust=0),
                      nrow = 1, ncol = 3)
 
-ggsave(sprintf("%sFIGURES3.jpg",out_path), vir1plt,
+ggsave(sprintf("%sFIGURE_S3.jpg",out_path), vir1plt,
        height = 70, width = two.c, units = 'mm',
        dpi = 300)
 
@@ -1073,7 +1073,7 @@ spatial$hours <- as.factor(spatial$hours)
 my_comparisons <- list(c("NO-NORM", "RND"), c("NO-NORM", "MCAT"), c("NO-NORM", "LID-SN"),
                         c("NO-NORM", "LID-AC"), c("NO-NORM", "LID") )
 
-ggplot(spatial[spatial$hours == 11.04 &
+cv.plot <- ggplot(spatial[spatial$hours == 11.04 &
                  spatial$plate == 999,],
        aes(x = name, y = cv, fill = plate)) +
   geom_hline(yintercept = median(spatial$cv[spatial$name == "LID" & spatial$plate == 999], na.rm = T),

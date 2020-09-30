@@ -1,0 +1,240 @@
+---
+title: "LI Detector Tutorial"
+author: "Saurin Parikh"
+output:
+  html_document:
+    toc: true
+    number_sections: false
+    toc_float:
+      collapsed: false
+    toc_depth: 2
+    df_print: paged
+    highlight: monochrome
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    highlight: breezedark
+  slidy_presentation:
+    font_adjustment: -1
+  fontsize: 13pt
+  geometry: margin=0.5in
+---
+```{r, eval=TRUE, include=FALSE}
+install.packages('rsconnect')
+library(rsconnect)
+```
+
+
+# STEP 1: Photos and Files
+### Photos, Plate maps and strain-id to orf-name table
+
+1. Photo ethics
+    - Things to keep in mind while taking pictures of the plates:
+        - Camera should be at maximum zoom
+        - Make sure the camera is properly leveled
+            - When in doubt use the level tool in the lab by placing it parallel to the length and width of the camera LCD
+        - The black background should cover the entire field of view
+        - Plate orientation - the color strips (specifying media) should point away from you
+    - Photos should be organized as Experiment > Arm > Stage > Hours
+        - Within the Hours folder the photos should be arranged in the same order as the plate names/number
+    - Example
+        - If you were conducting an experiment using the mutant collection
+        - The experiment had two parallel arms going from 384 density plates (Starter Plates) to 1536 density plates (Pre-screen) to 6144 density plates (Final Screen)
+        - Photos for the Starter Plates and Pre-screen were taken at saturation and those for Final Screen were taken at 0, 4 and 12 hours
+        - Then the folder heirarchy would be as follows:
+            - Experiment
+                - Arm #1
+                    - Starter Plates
+                        - 36h
+                            - Plate 1
+                            - Plate 2
+                    - Pre-screen
+                        - 20h
+                            - Plate A
+                            - Plate B
+                    - Final Screen
+                        - 00h
+                        - 04h
+                        - 12h
+                - Arm #2
+                    - Starter Plates
+                        - 36h
+                    - Pre-screen
+                        - 20h
+                    - Final Screen
+                        - 00h
+                        - 04h
+                        - 12h
+        - If the bifurcation of the arms occur later in the experiment then the folder heirarchy could be as follows:
+            - Experiment
+                - Starter Plates
+                    - 36h
+                        - Plate 1
+                        - Plate 2
+                - Pre-screen
+                    - 20h
+                        - Plate A
+                        - Plate B
+                - Arm #1
+                    - Final Screen
+                        - 00h
+                        - 04h
+                        - 12h
+                - Arm #2
+                    - Final Screen
+                        - 00h
+                        - 04h
+                        - 12h
+        - Make sure the terminal folders containing the photos are names is a '<strong>tt</strong>h' manner like shown above
+        - If the photos weren't organized while taking them then use an STFP client to download all photos to your local computer, organize them and upload.
+            - Use an SFTP client like [FileZilla](https://filezilla-project.org){target="_blank"} for Mac and Windows or [WinSCP](https://winscp.net/eng/download.php){target="_blank"} for Windows.
+2. Plate maps of the starting density plate
+    - One plate per sheet in excel
+    - Cells contain strain-id
+    - Save file in .xlsx format
+    - [Example](https://pitt-my.sharepoint.com/:x:/g/personal/sbp29_pitt_edu/EUqQET4XWYtNktm35JmFjrkBugFrj3fPiRk_Mk2MjN2MQQ){target="_blank"}
+3. Excel table specifying strain-id to orf-name relationship
+    - First column is strain_id
+    - Second column is orf_name
+    - Give unique strain-ids to each orf
+    - Each strain-id from the platemaps should have an associated orf-name
+    - Save file in .xlsx format
+    - [Example](https://pitt-my.sharepoint.com/:x:/g/personal/sbp29_pitt_edu/EX_KyGzwFp9DvrcKN9pwREcBeWoA4viPlbWRnVuCxlKw6A){target="_blank"}
+4. Use SFTP clients mentioned earlier to upload all files to the MATLAB folder.
+    - If this is your first time then perform STEP 2 before uploading the files.
+    
+
+# STEP 2: Download LI Detector
+### Download LID scripts and the necessary dependencies
+
+0. Points 1 to 5 only needs to be performed during your first time
+    - Otherwise proceed to point 6
+1. Connect to paris from terminal
+    - Both ```ssh -X``` and ```ssh -Y``` are ok to use. ```ssh -Y``` works more consistently for me.
+```{bash, eval=FALSE}
+ssh -Y username@paris.csb.pitt.edu
+```
+2. Refer to [Computational Resources on Paris](https://docs.google.com/document/d/1OwNVBYRe6Q5J33pX0ZYS5AEuec5_UDdicQsxVVlFA7w/edit){target="_blank"} section of the Lab Manual to make sure you have all the necessary components to run MATLAB GUI on paris server.
+    - Install Database Toolbox, Image Processing Toolbox and Parallel Computing Toolbox from the APPS > Get More Apps option within MATLAB
+        - ![](/home/sbp29/R/Projects/adaptivefitness/rawdata/tutorial/mcat_toolbox.png){width='50%'}
+3. Copy dependencies to your MATLAB folder.
+```{bash, eval=FALSE}
+cd MATLAB
+cp /home/sbp29/MATLAB/mysql-connector-java-8.0.16.jar ./
+```
+4. Copy the download lid bash script to your MATLAB folder and make it executable.
+```{bash, eval=FALSE}
+cp /home/sbp29/MATLAB/download_lid.sh ./
+chmod +x download_lid.sh
+```
+5. Run the download script
+    - Specify sub-directory to store all the scripts when prompted
+        - The sub-directory will be made if it doesn't exist 
+        - Pressing enter will save everything to the MATLAB folder itself
+```{bash, eval=FALSE}
+./download_lid.sh
+```
+6. Navigate to the ```lidetector``` folder for executing the next steps.
+```{bash, eval=FALSE}
+cd <sub-directory name from point 5>/lidetector
+```
+7. Video walkthrough:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/SfrbWDI-5R0?start=9" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+# STEP 3: Initialize
+### Generating tables necessary for next steps
+
+1. Information to keep in handy before proceeding:
+    - Path to your MALTAB directory 
+        - most likely to be ```/home/username/MATLAB```
+    - Path to tbe sub-directory from Step 2, point 5
+        - If everything is stored within the MATLAB folder itself, then pressing enter when prompted will suffice.
+    - MySQL credentials - username, password, database name
+    - Upscale patterns from the experiment - ie in what combinations were the lower density plates condensed to form the higher density plates
+    - Name of reference strain being used
+        - Should one of the orf-name in the files from step 1
+    - Path to files created in Step 1
+2. Successful run will create the following tables:
+    - <strong>_borderpos</strong> = border positions of all plates in the experiment
+        - 1 border for 384 density, 2 for 1536 and 4 for 6144
+    - <strong>_pos2coor</strong> = position ids and their corresponding plate coordinate
+        - unique position ids for all possible colony positions in the experiment and thei correspoing plate coordinates ie colony density, plate number, row number and column number
+    - <strong>_pos2orf_name</strong> = position ids and the corresponding orf-name (or mutant name)
+    - <strong>_pos2rep</strong> = position ids of lowest density plates to their replicates at higher density plates based on the upscale pattern
+        - for internal use
+    - <strong>_pos2strain_id</strong> = position ids and their corresponding strain ids
+    - <strong>_strainid2orf_name</strong> = table from point 3 of step 1
+3. Execute
+```{bash, eval=FALSE}
+./initialize.sh
+```
+4. Video walkthrough:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/SfrbWDI-5R0?start=140" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+# STEP 4: Analyze Images
+### Pixel count estimation
+1. Information to keep in handy before proceeding:
+    - Path to your MALTAB directory 
+        - most likely to be ```/home/username/MATLAB```
+    - Path to tbe sub-directory from Step 2, point 5
+        - If everything is stored within the MATLAB folder itself, then pressing enter when prompted will suffice.
+    - Path to the 'Stage' level photos from Step 1
+    - Location of any smudges on the plates ie the colonies you want to remove from the analysis because of any technical issues
+        - plate number, row number, column number
+2. User will be asked to verify binary files before uploading raw pixel count data
+    - Use SFTP clients mentioned above to download the photo folder from Step 1
+    - Each image will now have 3 additional files - .binary, .cs.txt and .info.mat
+    - View the .binary file (using Preview in Mac) to verify if the colonies have been correctly identified
+        - Original image:
+            - ![](/home/sbp29/R/Projects/adaptivefitness/rawdata/tutorial/IMG_0004.JPG){width='500'}
+        - Good binary image:
+            - ![](/home/sbp29/R/Projects/adaptivefitness/rawdata/tutorial/good_binary.JPG){width='500'}
+        - Bad binary image:
+            - ![](/home/sbp29/R/Projects/adaptivefitness/rawdata/tutorial/bad_binary.JPG){width='500'}
+3. Successful run will create the following tables:
+    - <strong>_RAW</strong> = raw colony size estimations per hour per position id of all the images
+        - image1, image2 and image3 columns correspond to the three images per plate
+        - average column is the mean of the pixel count estimation from the three images
+            - image1 = image2 = image3 = average if there is a single image per plate
+    - <strong>_smudgebox</strong> = position ids corresponding to the user defined coordinates
+    - <strong>_JPEG</strong> = similar to <strong>_RAW</strong> with
+        - pixel count estimations for borders and smudgebox NULL'd
+        - and any pixel count estimation < 10 is also NULL'd - likely to be a light artifact
+4. Execute
+```{bash, eval=FALSE}
+./imageanalyzer.sh
+```
+5. Video walkthrough:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/SfrbWDI-5R0?start=305" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+# STEP 5: Spatial Bias Correction
+### Relative fitness measurements and p-value estimation
+1. Information to keep in handy before proceeding:
+    - Path to your MALTAB directory 
+        - most likely to be ```/home/username/MATLAB```
+    - Path to tbe sub-directory from Step 2, point 5
+        - If everything is stored within the MATLAB folder itself, then pressing enter when prompted will suffice.
+2. Successful run will create the following tables:
+    - <strong>_NORM</strong> = position ids and their corresponding relative fitness measurements
+        - also includes the background pixel count measurement based on references
+    - <strong>_FITNESS</strong> = similar to <strong>_NORM</strong> but with strain ids and orf-names included
+    - <strong>_FITNESS_STAT</strong> = strain-id-wise mean, median and standard deviation of relative fitness
+    - <strong>_PVALUE</strong> = strain-id-wise empirical p-values
+        - stat = (strain mean fitness - reference mean fitness)/reference fitness standard deviation
+        - es = (strain mean fitness - reference mean fitness)reference mean fitness
+3. Execute
+```{bash, eval=FALSE}
+./lid.sh
+```
+4. Video walkthrough:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/SfrbWDI-5R0?start=565" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+    
+    
+

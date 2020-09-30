@@ -1,0 +1,191 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\PassOptionsToPackage{hyphens}{url} % url is loaded by hyperref
+\usepackage[unicode=true]{hyperref}
+\hypersetup{
+            pdftitle={LI Detector Tutorial},
+            pdfauthor={Saurin Parikh},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{LI Detector Tutorial}
+\author{Saurin Parikh}
+\date{08/15/2020}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{STEP 1}\label{step-1}
+
+\subsection{Photos, Plate maps and strain-id to orf-name
+table}\label{photos-plate-maps-and-strain-id-to-orf-name-table}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Photos from the experiment need to be organized in a heirarchy of
+  folders
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Example
+
+    \begin{itemize}
+    \tightlist
+    \item
+      if you were conducting an experiment using the mutant collection
+    \item
+      the experiment had two parallel arms going from 384 density plates
+      to 1536 density plates to 6144 density plates
+    \item
+      photos for the 384 and 1536 density plates were taken at
+      saturation and those for 6144 density plates were taken at 0, 4
+      and 12 hours
+    \item
+      then the folder heirarchy would be as follows:
+
+      \begin{itemize}
+      \tightlist
+      \item
+        Experiment
+
+        \begin{itemize}
+        \tightlist
+        \item
+          Arm \#1
+
+          \begin{itemize}
+          \tightlist
+          \item
+            384 density
+
+            \begin{itemize}
+            \tightlist
+            \item
+              36h
+            \end{itemize}
+          \item
+            1536 density
+
+            \begin{itemize}
+            \tightlist
+            \item
+              20h
+            \end{itemize}
+          \item
+            6144 density
+
+            \begin{itemize}
+            \tightlist
+            \item
+              00h
+            \item
+              04h
+            \item
+              12h
+            \end{itemize}
+          \end{itemize}
+        \item
+          Arm \#2
+
+          \begin{itemize}
+          \tightlist
+          \item
+            384 density
+
+            \begin{itemize}
+            \tightlist
+            \item
+              36h
+            \end{itemize}
+          \item
+            1536 density
+
+            \begin{itemize}
+            \tightlist
+            \item
+              20h
+            \end{itemize}
+          \item
+            6144 density
+
+            \begin{itemize}
+            \tightlist
+            \item
+              00h
+            \item
+              04h
+            \item
+              12h
+            \end{itemize}
+          \end{itemize}
+        \end{itemize}
+      \end{itemize}
+    \end{itemize}
+  \end{itemize}
+\end{enumerate}
+
+\end{document}
