@@ -13,6 +13,7 @@ library(stringr)
 library(scales)
 library(egg)
 library(zoo)
+library(png)
 library(ggrepel)
 library(reshape2)
 library(RMariaDB)
@@ -43,8 +44,16 @@ load("/home/sbp29/R/Projects/adaptivefitness/output/4C4_FS_CC_VIR_PLATE1_ES.Rdat
 hhours <- c(0,1.02,1.38,2.9,4.02,4.89,6.14,6.88,7.85,8.96,9.97,11.04)
 virP1$text <- '11x11 Fitness Effect Matrix'
 
-##### 2C
-fig.2c <- ggplot(density.data[!is.na(density.data$colony) &
+##### 2A
+illustration <- readPNG('figs/paper/FIGURE2A.png')
+
+fig.2a <- ggplot() + 
+  background_image(illustration) +
+  theme(plot.margin = margin(t=6, l=2, r=2, b=6, unit = "mm"),
+        plot.background = element_blank())
+
+##### 2B
+fig.2b <- ggplot(density.data[!is.na(density.data$colony) &
                                 density.data$hours > 0,],
                  aes(x = average, y = colony, group = colony, fill = colony)) +
   geom_density_ridges(quantile_lines = TRUE,
@@ -74,8 +83,8 @@ fig.2c <- ggplot(density.data[!is.na(density.data$colony) &
         strip.text = element_text(size = txt,
                                   margin = margin(0.1,0,0.1,0, "mm")))
 
-##### 2D
-fig.2d <- ggplot(virP1[virP1$ref_hrs > 0 & virP1$que_hrs > 0,]) +
+##### 2C
+fig.2c <- ggplot(virP1[virP1$ref_hrs > 0 & virP1$que_hrs > 0,]) +
   geom_tile(aes(x = sprintf('%0.1f',que_hrs), y = sprintf('%0.1f',ref_hrs), fill = round((es-1)*100,0)),
             col = 'black') +
   geom_text(aes(x = sprintf('%0.1f',que_hrs), y = sprintf('%0.1f',ref_hrs), label = round((es-1)*100,0)),
@@ -103,8 +112,8 @@ fig.2d <- ggplot(virP1[virP1$ref_hrs > 0 & virP1$que_hrs > 0,]) +
         strip.text = element_text(size = txt,
                                   margin = margin(0.1,0,0.1,0, "mm")))
 
-##### 2E
-fig.2e <- ggplot(density.data[!is.na(density.data$colony) &
+##### 2D
+fig.2d <- ggplot(density.data[!is.na(density.data$colony) &
                                      density.data$hours > 0,],
                       aes(x = rnd_avg, y = colony, group = colony, fill = colony)) +
   geom_density_ridges(quantile_lines = TRUE,
@@ -135,16 +144,17 @@ fig.2e <- ggplot(density.data[!is.na(density.data$colony) &
                                   margin = margin(0.1,0,0.1,0, "mm")))
 
 ##### FINAL FIGURE
-fig2 <- ggpubr::ggarrange(NULL, NULL,
-                          fig.2c, fig.2d,
-                          fig.2e, NULL, 
-                          nrow = 3, ncol = 2,
-                          labels = c('A','B','C','D','E',''),
-                          heights = c(0.9,1,1),
-                          font.label = list(face = 'bold', size = lbls, family = "sans"),
-                          hjust=-1)
+fig2 <- annotate_figure(ggpubr::ggarrange(fig.2a, fig.2b,
+                                          fig.2c, fig.2d, 
+                                          nrow = 2, ncol = 2,
+                                          labels = c('A','B','C','D'),
+                                          heights = c(1,1),
+                                          font.label = list(face = 'bold', size = lbls, family = "sans"),
+                                          hjust=-1),
+                        bottom = text_grob(expression("t"["R"]~"= Reference colony size time ,"~"t"["M"]~"= Mutant colony size time"),
+                                           face = "bold", family = "sans", size = titles))
 ggsave(sprintf("%sFIGURE2.jpg",out_path), fig2,
-       height = two.c*1.2, width = two.c, units = 'mm',
+       height = two.c*0.9, width = two.c, units = 'mm',
        dpi = 300)
 
 
