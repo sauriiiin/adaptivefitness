@@ -13,19 +13,19 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = 'OESP1_FS'
-expt = 'OESP1 FS'
-density = 6144;
+expt_name = 'SDPG_GLU_FS_R1'
+expt = 'SDPG GLU FS R1'
+density = 1536;
 
 ##### CHECK POSITION WISE VARIABILITY
 conn <- initialize.sql("saurin_test")
 
-tablename_p2o = 'OESP1_pos2orf_name'
+tablename_p2o = 'SDPG_pos2orf_name'
 tablename_jpeg = sprintf('%s_%d_RAW',expt_name,density);
 tablename_jpeg_cc = sprintf('%s_CC_%d_RAW',expt_name,density);
 
 p2c_info = NULL
-p2c_info[1] = 'OESP1_pos2coor'
+p2c_info[1] = 'SDPG_pos2coor'
 p2c_info[2] = 'plate'
 p2c_info[3] = 'col'
 p2c_info[4] = 'row'
@@ -39,8 +39,8 @@ p2c <- dbGetQuery(conn, sprintf('select * from %s
 p2c$source = 'ALL'
 
 pos <- NULL
-neigh <- matrix(ncol = 8, nrow = 6144*8)
-neigh_sr <- matrix(ncol = 8, nrow = 6144*8)
+neigh <- matrix(ncol = 8, nrow = density*length(unique(p2c$plate)))
+neigh_sr <- matrix(ncol = 8, nrow = density*length(unique(p2c$plate)))
 i <- 1
 for (pl in sort(unique(p2c$plate))) {
   for (sr in sort(unique(p2c$source))) {
@@ -66,8 +66,11 @@ for (pl in sort(unique(p2c$plate))) {
     } 
   }
 }
-grids <- cbind(pos, neigh)
-grids_sr <- cbind(pos, neigh_sr)
+grids <- cbind(data.frame(pos), data.frame(neigh))
+grids_sr <- cbind(data.frame(pos), data.frame(neigh_sr))
+
+grids <- data.frame(lapply(grids, as.numeric))
+grids_sr <- data.frame(lapply(grids_sr, as.numeric))
 
 alldat <- dbGetQuery(conn, sprintf('select b.*, c.orf_name, a.hours, a.average
                                    from %s a, %s b, %s c
@@ -101,8 +104,8 @@ for (hr in sort(unique(alldat$hours))) {
     tempdat$average[is.na(tempdat$orf_name)] <- 0
     
     for (i in seq(1,dim(grids)[1])) {
-      tempdat$neigh[tempdat$pos == grids[i]] <- mean(tempdat$average[tempdat$pos %in% grids[i,2:9]], na.rm = T)
-      tempdat$neigh_sr[tempdat$pos == grids_sr[i]] <- mean(tempdat$average[tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
+      tempdat$neigh[tempdat$pos == grids[i,1]] <- mean(tempdat$average[tempdat$pos %in% grids[i,2:9]], na.rm = T)
+      tempdat$neigh_sr[tempdat$pos == grids_sr[i,1]] <- mean(tempdat$average[tempdat$pos %in% grids_sr[i,2:9]], na.rm = T)
     }
     
     tempdat$neigh[is.na(tempdat$average) & !is.na(tempdat$orf_name)] <- NA

@@ -12,15 +12,15 @@ library(ggpubr)
 source("R/functions/initialize.sql.R")
 
 ##### GET/SET DATA
-expt_name = 'OESP1_FS'
-expt = 'OESP1 FS'
+expt_name = 'SDPG_GLU_FS'
+expt = 'SDPG GLU FS'
 out_path = 'figs/comp/';
 density = 6144;
 
 ##### CHECK POSITION WISE VARIABILITY
 conn <- initialize.sql("saurin_test")
 
-tablename_p2o = 'OESP1_pos2orf_name'
+tablename_p2o = 'SDPG_pos2orf_name'
 tablename_jpeg = sprintf('%s_%d_RAW',expt_name,density);
 tablename_jpeg_cc = sprintf('%s_CC_%d_RAW',expt_name,density);
 tablename_fit = sprintf('%s_%d_FITNESS',expt_name,density);
@@ -28,7 +28,7 @@ tablename_fit_cc = sprintf('%s_CC_%d_FITNESS',expt_name,density);
 # tablename_mdfr = sprintf('%s_CC_%d_MDFR',expt_name,density);
 
 p2c_info = NULL
-p2c_info[1] = 'OESP1_pos2coor'
+p2c_info[1] = 'SDPG_pos2coor'
 p2c_info[2] = 'plate'
 p2c_info[3] = 'col'
 p2c_info[4] = 'row'
@@ -48,8 +48,8 @@ p2c <- dbGetQuery(conn, sprintf('select * from %s
 p2c$source = 'ALL'
 
 pos <- NULL
-neigh <- matrix(ncol = 8, nrow = 6144*8)
-neigh_sr <- matrix(ncol = 8, nrow = 6144*8)
+neigh <- matrix(ncol = 8, nrow = density*8)
+neigh_sr <- matrix(ncol = 8, nrow = density*8)
 i <- 1
 for (pl in sort(unique(p2c$plate))) {
   for (sr in sort(unique(p2c$source))) {
