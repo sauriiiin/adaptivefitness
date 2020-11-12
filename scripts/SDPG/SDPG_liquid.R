@@ -16,89 +16,152 @@ library(zoo)
 path.out <- 'figs/SDPG/'
 path.out.gc <- 'figs/SDPG/GC/'
 expt_name <- 'SDPG' 
-df <- as.data.frame(readxl::read_excel("rawdata/SDPG/PR_Results.xlsx"))
+
+##### TEXT SIZE
+titles <- 7
+txt <- 7
+lbls <- 9
+
+##### LOAD DATA AND CLEAN
+df <- as.data.frame(readxl::read_excel("rawdata/SDPG/SDPG_LiquidGrowth.xlsx", sheet = 2))
+df <- df[!(df$Arm == 'SDA' & df$Replicate %in% c('R1','R2')),]
+
 map <- as.data.frame(readxl::read_excel("rawdata/SDPG/SDPG_96well.xlsx"))
-# colnames(map) <- c('')
+map$orf_name[map$orf_name == 'YGR296W'] <- "YGR269W"
+map$orf_name[map$orf_name == 'REF'] <- 'BF_control'
 
-##### INITIALIZE OUTPUT
-span_parameter <- 0.15
-outlier_threshold <- 1
+##### ANALYZE USING GROWTHRATES
+growth_dat <- NULL
+growth_res <- NULL
+growth_exp <- NULL
+growth_fit <- NULL
 
-out       = NULL
-maxgr     = NULL
-dtime     = NULL
-ltime     = NULL
-sod       = NULL
-arm       = NULL
-sample    = NULL
-media     = NULL
-replicate = NULL
-
-ii <- 1
 min.od <- 0.001
 min.t <- 0
 for (a in unique(df$Arm)) {
-  temp <- df[df$Arm == a,]
-  temp$Time <- seq(15,15*dim(temp)[1],15)
-  for (i in 4:dim(temp)[2]) {
-    if (sum(temp[[i]] > min.od, na.rm = T) > 30) {
-      # temp[[i]] <- rollapplyr(temp[[i]], 5, mean, na.rm = TRUE, fill = 0, align = 'right', partial = T)
-      # fit0 <- fit_easylinear(temp$Time[(temp[[i]] > min.od) & (temp$Time > min.t) & !is.na(temp[[i]])],
-      #                        temp[(temp[[i]] > min.od) & (temp$Time > min.t) & !is.na(temp[[i]]),i], h=40, quota = 1);
-      lo <- loess.smooth(temp$Time, log(temp[,i]),
-                         span = span_parameter)
-      fit0 <- fit_easylinear(lo$x, exp(lo$y), h=20, quota = 1);
-      # fit0 <- fit_easylinear(temp$Time, temp[,i], h=7, quota = 0.95);
-      arm[ii] = a
-      maxgr[ii] = coef(fit0)[[3]]
-      dtime[ii] = log(2)/coef(fit0)[[3]] #* 60
-      ltime[ii] = coef(fit0)[[4]]
-      sod[ii] = temp[[9,i]]
-      sample[ii] = as.character(map$orf_name[map$well == colnames(temp[i])])
-      replicate[ii] = map$replicate[map$well == colnames(temp[i])]
-      media[ii] = temp$Media[1]
-      ii <- ii + 1
+  for (r in unique(df$Replicate[df$Arm == a])) {
+    temp <- df[df$Arm == a & df$Replicate == r,]
+    temp$Time <- seq(15,15*dim(temp)[1],15)
+    temp <- temp[,colSums(temp > 0.001) >= dim(temp)[1]*0.9]
+    temp[temp <= 0] <- 0.001
+    
+    for (i in 4:dim(temp)[2]) {
+      # lo <- loess.smooth(temp$Time, log(temp[,i]), span = 0.15, evaluation = length(temp[,i]))
+      # fit0 <- fit_easylinear(lo$x, exp(lo$y), h=10, quota = 1);
+      fit0 <- fit_easylinear(temp$Time, temp[,i], h = 20, quota = 1);
+      AUC <- sum(diff(temp$Time)*rollmean(temp[,i],2))
 
-      jpeg(sprintf('%s%s_%s_%s-%s_GC.png',
-                   path.out.gc,
-                   expt_name,
-                   a,
-                   map$orf_name[map$well == colnames(temp[i])],
-                   as.character(map$replicate[map$well == colnames(temp[i])])),
-      width=600, height=600)
-      plot(fit0, log = 'y',
-           main=sprintf('%s | %s | %s \n Doubling Time = %0.2f mins',
-                        a, colnames(df[i]), map$orf_name[map$well == colnames(temp[i])],
-                        log(2)/coef(fit0)[[3]]),
-           ylim = c(0.01,6))
-      dev.off()
+      temp_res <- data.frame(arm = a, replicate = r, maxgr = coef(fit0)[[3]],
+                             dtime = log(2)/coef(fit0)[[3]], ltime = coef(fit0)[[4]],
+                             auc = AUC, ood = temp[2,i], sod = temp[length(temp[,i]), i],
+                             orf_name = as.character(map$orf_name[map$well == colnames(temp[i])]),
+                             bio_rep = map$replicate[map$well == colnames(temp[i])])
+      growth_res <- rbind(growth_res, temp_res)
+
+      temp_dat <- slot(fit0,'obs')
+      temp_dat$od <- temp[,i]
+      temp_dat$arm <- a
+      temp_dat$replicate <- r
+      temp_dat$maxgr <- coef(fit0)[[3]]
+      temp_dat$dtime <- log(2)/coef(fit0)[[3]]
+      temp_dat$ltime <- coef(fit0)[[4]]
+      temp_dat$auc <- AUC
+      temp_dat$ood <- temp[2,i]
+      temp_dat$sod <- temp[length(temp[,i]), i]
+      temp_dat$orf_name <- as.character(map$orf_name[map$well == colnames(temp[i])])
+      temp_dat$bio_rep <- map$replicate[map$well == colnames(temp[i])]
+      growth_dat <- rbind(growth_dat, temp_dat)
+
+      temp_exp <- slot(fit0,'obs')[slot(fit0,'ndx'),]
+      temp_exp$arm <- a
+      temp_exp$replicate <- r
+      temp_exp$maxgr <- coef(fit0)[[3]]
+      temp_exp$dtime <- log(2)/coef(fit0)[[3]]
+      temp_exp$ltime <- coef(fit0)[[4]]
+      temp_exp$auc <- AUC
+      temp_exp$ood <- temp[2,i]
+      temp_exp$sod <- temp[length(temp[,i]), i]
+      temp_exp$orf_name <- as.character(map$orf_name[map$well == colnames(temp[i])])
+      temp_exp$bio_rep <- map$replicate[map$well == colnames(temp[i])]
+      growth_exp <- rbind(growth_exp, temp_exp)
+
+      temp_fit <- data.frame(time = seq(0,4000,100),
+                             y = predict(slot(fit0, 'fit'),
+                                         newdata = data.frame(x = seq(0,4000,100))))
+      temp_fit$arm <- a
+      temp_fit$replicate <- r
+      temp_fit$maxgr <- coef(fit0)[[3]]
+      temp_fit$dtime <- log(2)/coef(fit0)[[3]]
+      temp_fit$ltime <- coef(fit0)[[4]]
+      temp_fit$auc <- AUC
+      temp_fit$ood <- temp[2,i]
+      temp_fit$sod <- temp[length(temp[,i]), i]
+      temp_fit$orf_name <- as.character(map$orf_name[map$well == colnames(temp[i])])
+      temp_fit$bio_rep <- map$replicate[map$well == colnames(temp[i])]
+      growth_fit <- rbind(growth_fit, temp_fit)
     }
   }
-  #df[df$Arm == a,] <- temp
 }
+growth_res$arm <- factor(growth_res$arm, levels = c('GLU','CAS','SDA'))
+growth_dat$arm <- factor(growth_dat$arm, levels = c('GLU','CAS','SDA'))
+growth_exp$arm <- factor(growth_exp$arm, levels = c('GLU','CAS','SDA'))
+growth_fit$arm <- factor(growth_fit$arm, levels = c('GLU','CAS','SDA'))
 
-out <- data.frame(Arm = arm,
-                  Sample = sample,
-                  Media = media,
-                  Replicate = replicate,
-                  MaxGR = maxgr,
-                  DTime = dtime,
-                  SOD = sod,
-                  LagTime = ltime)
+growth_res <- growth_res[!(growth_res$orf_name %in% c('YHR021W-A','BLANK','BORDER')),]
+growth_dat <- growth_dat[!(growth_dat$orf_name %in% c('YHR021W-A','BLANK','BORDER')),]
+growth_exp <- growth_exp[!(growth_exp$orf_name %in% c('YHR021W-A','BLANK','BORDER')),]
+growth_fit <- growth_fit[!(growth_fit$orf_name %in% c('YHR021W-A','BLANK','BORDER')),]
 
-# write.csv(out, file = sprintf("%s%s_GC_PLC_Result.csv",path.out,expt_name))
+# head(growth_exp)
+# head(growth_dat)
+# head(growth_exp)
+# head(growth_fit)
 
-##### DOUBLING TIME RESULTS
-ggplot(out[out$Sample != 'YHR021W-A' & out$Arm != 'INIT_96',],
-       aes(x = Sample, y = DTime)) +
-  geom_boxplot() + geom_point() +
-  coord_flip(ylim = c(60,120)) +
-  labs(y = 'Doubling Time (mins)') +
-  facet_wrap(~Arm)
+save(growth_res, growth_dat, growth_exp, growth_fit,
+     file = '/home/sbp29/R/Projects/adaptivefitness/figs/SDPG/growthrates_results.RData')
 
-ggsave(sprintf('%s%s_DTime_Box.png',path.out,expt_name),
-       height = two.c, width = two.c, units = 'mm',
-       dpi = 300)
 
-##### GROWTH CRUVES
-
+# #### GROWTH CRUVES
+# gc_all <- ggplot() +
+#   geom_point(data = growth_dat, aes(x = time, y = od)) +
+#   # geom_line(data = growth_dat, aes(x = time, y = y)) +
+#   geom_point(data = growth_exp, aes(x = time, y = y), col = 'red') +
+#   geom_line(data = growth_fit, aes(x = time, y = exp(y))) +
+#   geom_text(data = growth_res, aes(x = 2000, y = 0.025, label = round(dtime,2)), size = 3) +
+#   geom_text(data = growth_res, aes(x = 2000, y = 0.05, label = round(auc,2)), size = 3) +
+#   scale_y_log10() +
+#   coord_cartesian(ylim = c(0.01,6)) +
+#   facet_wrap(.~arm*orf_name*replicate*bio_rep) +
+#   theme_linedraw() +
+#   theme(axis.title = element_text(size = titles),
+#         axis.text = element_text(size = txt),
+#         legend.title = element_text(size = titles),
+#         legend.text = element_text(size = txt),
+#         legend.key.size = unit(3, "mm"),
+#         legend.position = "bottom",
+#         legend.box.spacing = unit(0.5,"mm"),
+#         strip.text = element_text(size = txt,
+#                                   margin = margin(0.1,0,0.1,0, "mm")))
+# ggsave(sprintf('%sGROWTHCURVES_ALL.png',path.out), gc_all,
+#        height = 1000, width = 1000, units = 'mm',
+#        dpi = 300, limitsize = F)
+# 
+# 
+# ##### AUC RESULTS
+# ggplot(growth_res,
+#        aes(x = orf_name, y = auc)) +
+#   geom_boxplot() +
+#   geom_point(aes(col = replicate)) +
+#   coord_flip() +
+#   labs(y = 'AUC') +
+#   facet_wrap(~arm*replicate)
+# 
+# ##### DOUBLING TIME RESULTS
+# ggplot(growth_res,
+#        aes(x = orf_name, y = dtime)) +
+#   geom_boxplot() +
+#   geom_point(aes(col = replicate)) +
+#   coord_flip() +
+#   labs(y = 'Doubling Time (mins)') +
+#   facet_wrap(~arm*replicate)
+# 

@@ -1,0 +1,51 @@
+---
+title: "F28 RESULTS"
+author: "Saurin Parikh"
+date: "11/12/2020"
+output:
+  html_document:
+    toc: true
+    number_sections: false
+    toc_float:
+      collapsed: false
+    toc_depth: 2
+    df_print: paged
+    highlight: kate
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    highlight: breezedark
+  fontsize: 13pt
+  geometry: margin=0.5in
+---
+
+```{r INITIALIZE}
+##### LOAD PACKAGES
+library(ggplot2)
+library(ggridges)
+library(gridExtra)
+library(grid)
+library(tidyverse)
+library(ggpubr)
+library(stringr)
+library(scales)
+library(egg)
+library(zoo)
+library(ggrepel)
+library(reshape2)
+
+out_path = 'figs/SDPG/';
+path.out.gc <- 'figs/SDPG/GC/'
+
+##### FIGURE TEXT SIZE
+titles <- 7
+txt <- 7
+lbls <- 9
+
+##### LOAD DATA
+load(file = '/home/sbp29/R/Projects/adaptivefitness/figs/SDPG/solid_results.RData')
+load(file = '/home/sbp29/R/Projects/adaptivefitness/figs/SDPG/liquid_results.RData')
+liquid_results <- all_results
+liquid_summary <- all_results2
+```
+
