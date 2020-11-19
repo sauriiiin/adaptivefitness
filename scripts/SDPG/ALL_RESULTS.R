@@ -18,6 +18,7 @@ library(reshape2)
 
 out_path = 'figs/SDPG/ALL/';
 out_path_gc <- 'figs/SDPG/GC/'
+out_path_den <- 'figs/SDPG/DEN/'
 
 ##### FIGURE TEXT SIZE
 titles <- 7
@@ -27,9 +28,15 @@ lbls <- 9
 ##### LOAD DATA
 load(file = '/home/sbp29/R/Projects/adaptivefitness/figs/SDPG/solid_results.RData')
 load(file = '/home/sbp29/R/Projects/adaptivefitness/figs/SDPG/liquid_results.RData')
-liquid_results <- all_results
-liquid_summary <- all_results2
-colnames(liquid_summary) <- c("arm", "replicate", "orf_name", "bio_rep", "method", "value", "liquid_phenotype")
+
+z.test2sam = function(a, b){
+  var.a = var(a)
+  var.b = var(b)
+  n.a = length(a)
+  n.b = length(b)
+  zeta = (mean(a) - mean(b)) / (sqrt(var.a/n.a + var.b/n.b))
+  return(zeta)
+}
 
 ##### COMBINED PHENOTYPES
 liquid_phenotype <- liquid_results[,c(1,2,3,seq(1,ncol(liquid_results))[str_detect(names(liquid_results), 'phenotype')])]
@@ -94,8 +101,42 @@ ggsave(sprintf('%sALL_PHENOTYPE_MATRIX.png',out_path), pheno_mat,
        dpi = 300, limitsize = F)
 
 
-##### SOLID V LIQUID
+##### COMBINED PHENOTYPE WITH LIQ AUC ONLY
+pheno_mat2 <- ggplot(melt(all_phenotype[c(1,2,3,11,14:16)], id.vars = c('orf_name','arm','replicate'),
+                         variable.name = 'method', value.name = 'phenotype'),
+                    aes(x = method, y = orf_name)) +
+  geom_tile(aes(fill = phenotype), col = 'black') +
+  scale_fill_manual(name = 'Phenotype',
+                    breaks = c('Deleterious','Neutral','Beneficial'),
+                    values = c('Deleterious'='#3F51B5',
+                               'Neutral'='#212121',
+                               'Beneficial'='#FFC107'),
+                    na.value = 'grey50') +
+  scale_x_discrete(limits = names(all_phenotype[c(11,14:16)]),
+                   # labels = str_remove_all(names(all_phenotype[c(11,14:16)]), '_phenotype')) +
+                   labels = c('liquid','solid_1536','solid_6144','expectation')) +
+  labs(x = 'Method',
+       y = 'ORFs') +
+  facet_wrap(.~arm*replicate) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles + 2,
+                                  face = 'bold',
+                                  hjust = 0.5),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        # axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(3, "mm"),
+        legend.position = "right",
+        legend.box.spacing = unit(0.5,"mm"),
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")))
+ggsave(sprintf('%sALL_PHENOTYPE_MATRIX2.png',out_path), pheno_mat2,
+       height = 270, width = 300, units = 'mm',
+       dpi = 300, limitsize = F)
 
+##### SOLID V LIQUID
 most_common_phenotype <- NULL
 i <- 1
 for (a in unique(all_phenotype$arm)) {
@@ -127,6 +168,7 @@ common_pheno_mat <- ggplot(most_common_phenotype,
                     na.value = 'grey50') +
   labs(x = 'Method',
        y = 'ORFs') +
+  scale_x_discrete(labels = c('liquid','solid_1536','solid_6144','expectation')) +
   facet_wrap(.~arm, nrow = 1) +
   theme_linedraw() +
   theme(plot.title = element_text(size = titles + 2,
@@ -134,7 +176,7 @@ common_pheno_mat <- ggplot(most_common_phenotype,
                                   hjust = 0.5),
         axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+        # axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
         legend.key.size = unit(3, "mm"),
@@ -143,7 +185,7 @@ common_pheno_mat <- ggplot(most_common_phenotype,
         strip.text = element_text(size = txt,
                                   margin = margin(0.1,0,0.1,0, "mm")))
 ggsave(sprintf('%sCOMMON_PHENOTYPE_MATRIX.png',out_path), common_pheno_mat,
-       height = 120, width = 300, units = 'mm',
+       height = 100, width = 300, units = 'mm',
        dpi = 300, limitsize = F)
 
 
@@ -305,3 +347,316 @@ rr_corr <- ggpubr::ggarrange(rr12, rr13, rr23,
 ggsave(sprintf('%sREPLICATEREPLICATE_CLIFF_CORR.png',out_path), rr_corr,
        height = 200, width = 350, units = 'mm',
        dpi = 300, limitsize = F)
+
+##### ALL PAIRWISE COMPARISONS
+cor_dat <- NULL
+cols <- data.frame()
+for (d in unique(solid_stats$density)) {
+  for (a in unique(solid_stats$arm[solid_stats$density == d])) {
+    for (r in unique(solid_stats$replicate[solid_stats$density == d & 
+                                solid_stats$arm == a])) {
+      cor_dat <- cbind(cor_dat, t(t(solid_stats$cliff.delta[solid_stats$density == d &
+                                                          solid_stats$arm == a &
+                                                          solid_stats$replicate == r &
+                                                          solid_stats$saturation == 'Saturated'])))
+      cols <- rbind(cols,
+                    data.frame(title = sprintf('%d_%s_%s',d,a,r),
+                               density = d,
+                               arm = a,
+                               replicate = r))
+    }
+  }
+}
+colnames(cor_dat) <- cols$title
+head(cor_dat)
+
+ha <- HeatmapAnnotation(
+  Density = cols$density,
+  Condition = cols$arm,
+  Replicate = cols$replicate,
+  col = list(Density = c("1536" = "#607D8B", "6144" = "#FFA000"),
+             Condition = c("GLU" = "#B3E5FC", "CAS" = "#448AFF", "SDA" = "#303F9F"),
+             Replicate = c("R1" = "#E1BEE7", "R2" = "#E040FB", "R3" = "#7B1FA2")),
+  gp = gpar(col = "black", lwd = 0.2)
+)
+ra <- rowAnnotation(
+  Density = cols$density,
+  Condition = cols$arm,
+  Replicate = cols$replicate,
+  Saturation = cols$saturation,
+  col = list(Density = c("1536" = "#607D8B", "6144" = "#FFA000"),
+             Condition = c("GLU" = "#B3E5FC", "CAS" = "#448AFF", "SDA" = "#303F9F"),
+             Replicate = c("R1" = "#E1BEE7", "R2" = "#E040FB", "R3" = "#7B1FA2")),
+  gp = gpar(col = "black", lwd = 0.2),
+  show_annotation_name = FALSE,
+  show_legend = FALSE
+)
+mat <- cor(cor_dat, use = 'complete.obs', method = 'spearman')
+
+ht <- Heatmap(mat,
+              name = "Correlation",
+              column_title = "The Famous 28 Correlation",
+              cell_fun = function(j, i, x, y, width, height, fill) {
+                grid.text(sprintf("%0.2f", mat[i, j]), x, y, gp = gpar(fontsize = 5))
+              },
+              column_title_gp = gpar(fontsize = 12, fontface = "bold"),
+              show_row_dend = F,
+              rect_gp = gpar(col = "black", lwd = 0.2),
+              show_row_names = F,
+              show_column_names = F,
+              border = T,
+              top_annotation = ha)
+png(file = sprintf('%sALL_CORR.png',out_path),
+    width = 180, height = 160, units = "mm", res = 300,
+    bg = "transparent")
+draw(ra + ht)
+dev.off()
+
+
+#### PHENOTYPE DYNAMICS
+pheno_dynamics <- ggplot(solid_stats,
+                     aes(x = hours, y = cliff.delta)) +
+  geom_hline(yintercept = c(-0.474,0.474), col = '#212121', linetype = 'dashed', lwd = 0.3) +
+  geom_hline(yintercept = c(-0.33,0.33), col = '#757575', linetype = 'dashed', lwd = 0.3) +
+  geom_hline(yintercept = c(-0.147,0.147), col = '#BDBDBD', linetype = 'dashed', lwd = 0.3) +
+  # stat_regline_equation(aes(label =  ..eq.label..)) +
+  # stat_cor(method = "pearson") +
+  geom_line(aes(group = 1, col = replicate)) +
+  geom_point(aes(col = pitt_phenotype)) +
+  facet_wrap(.~orf_name*arm*density*replicate,
+             ncol = 15,
+             scale = 'free_x') +
+  scale_color_manual(name = '',
+                     breaks = c('Deleterious','Neutral','Beneficial',
+                                "R1","R2","R3"),
+                     values = c('Deleterious'='#3F51B5',
+                                'Neutral'='#212121',
+                                'Beneficial'='#FFC107',
+                                "R1" = "#E1BEE7", "R2" = "#E040FB", "R3" = "#7B1FA2")) +
+  labs(x = 'Time (hours)',
+       y = "Cliff's Delta") +
+  # scale_y_discrete(limits = c('Deleterious','Neutral','Beneficial')) +
+  theme_linedraw() +
+  theme(plot.title = element_blank(),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        # axis.text.x = element_text(angle = 90),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(3, "mm"),
+        legend.position = "bottom",
+        legend.box.spacing = unit(0.5,"mm"),
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")))
+ggsave(sprintf("%sPHENOTYPE_DYNAMICS.jpg",out_path),pheno_dynamics,
+       height = 1500, width = 1000, units = 'mm', limitsize = F,
+       dpi = 300)
+
+
+##### LIQUID GROWTH CURVES
+
+for (a in unique(all_results2$condition)) {
+  for (r in unique(all_results2$exp_rep[all_results2$condition == a])) {
+    for (o in unique(all_results2$orf_name[all_results2$condition == a & all_results2$exp_rep == r & all_results2$orf_name != 'BF_control'])) {
+      ref_gc <- gc_results[gc_results$arm == a &
+                             gc_results$replicate == r &
+                             gc_results$orf_name == 'BF_control',]
+      orf_gc <- gc_results[gc_results$arm == a &
+                             gc_results$replicate == r &
+                             gc_results$orf_name == o,]
+      ref_res <- all_results2[all_results2$method == 'growthcurver_plc' &
+                                all_results2$condition == a &
+                                all_results2$exp_rep == r &
+                                all_results2$orf_name == 'BF_control',]
+      orf_res <- all_results2[all_results2$method == 'growthcurver_plc' &
+                                all_results2$condition == a &
+                                all_results2$exp_rep == r &
+                                all_results2$orf_name == o,]
+      ref_auc <- all_results2[all_results2$method == 'growthcurver_plc_auc' &
+                                all_results2$condition == a &
+                                all_results2$exp_rep == r &
+                                all_results2$orf_name == 'BF_control',]
+      orf_auc <- all_results2[all_results2$method == 'growthcurver_plc_auc' &
+                                all_results2$condition == a &
+                                all_results2$exp_rep == r &
+                                all_results2$orf_name == o,]
+      
+      plot_dtime <- ggplot() +
+        geom_point(data = ref_res,
+                   aes(x = orf_name, y = value, shape = bio_rep, fill = phenotype),
+                   size = 3, alpha = 0.5) +
+        geom_text_repel(data = ref_res, aes(x = orf_name, y = value, label = sprintf('%0.2f',value)),
+                        size = 2) +
+        geom_point(data = orf_res,
+                   aes(x = orf_name, y = value, shape = bio_rep, fill = phenotype),
+                   size = 3) +
+        geom_text_repel(data = orf_res, aes(x = orf_name, y = value, label = sprintf('%0.2f',value)),
+                        size = 2) +
+        # scale_y_continuous(minor_breaks = seq(0,400,20)) +
+        # scale_x_discrete(limits = c("aleeza", "alleza_plc", "growthrates", "growthrates_plc", "growthcurver", "growthcurver_plc")) +
+        scale_fill_manual(name = 'Phenotype',
+                          breaks = c('Beneficial','Neutral','Deleterious'),
+                          values = c('Deleterious'='#3F51B5',
+                                     'Neutral'='#212121',
+                                     'Beneficial'='#FFC107'),
+                          na.value = 'grey50', drop = F) +
+        scale_shape_manual(name = 'bioRep',
+                           breaks = c(1,2),
+                           values = c(21,24)) +
+        labs(x = 'ORF',
+             y = 'Doubling Time (mins)') +
+        coord_cartesian(ylim = c(20,360)) +
+        theme_linedraw() +
+        theme(plot.title = element_text(size = titles + 2,
+                                        face = 'bold',
+                                        hjust = 0.5),
+              axis.title = element_text(size = titles),
+              axis.text = element_text(size = txt),
+              legend.title = element_text(size = titles),
+              legend.text = element_text(size = txt),
+              legend.key.size = unit(3, "mm"),
+              legend.position = "bottom",
+              legend.box.spacing = unit(0.5,"mm"),
+              strip.text = element_text(size = txt,
+                                        margin = margin(0.1,0,0.1,0, "mm"))) +
+        guides(fill = guide_legend(override.aes = list(shape = 22)))
+      
+      plot_auc <- ggplot() +
+        geom_point(data = ref_auc,
+                   aes(x = orf_name, y = value, shape = bio_rep, fill = phenotype),
+                   size = 3, alpha = 0.5) +
+        geom_text_repel(data = ref_auc,
+                        aes(x = orf_name, y = value, label = sprintf('%0.2f',value)),
+                        size = 2) +
+        geom_point(data = orf_auc,
+                   aes(x = orf_name, y = value, shape = bio_rep, fill = phenotype),
+                   size = 3) +
+        geom_text_repel(data = orf_auc,
+                        aes(x = orf_name, y = value, label = sprintf('%0.2f',value)),
+                        size = 2) +
+        # scale_x_discrete(limits = c("growthcurver_auc", "growthcurver_plc_auc", "growthcurver_auc2", "growthcurver_plc_auc2")) +
+        # scale_y_continuous(minor_breaks = seq(0,20000,1000)) +
+        scale_shape_manual(name = 'bioRep',
+                           breaks = c(1,2),
+                           values = c(21,24)) +
+        scale_fill_manual(name = 'Phenotype',
+                          breaks = c('Beneficial','Neutral','Deleterious'),
+                          values = c('Deleterious'='#3F51B5',
+                                     'Neutral'='#212121',
+                                     'Beneficial'='#FFC107'),
+                          na.value = 'grey50', drop = F) +
+        labs(x = 'ORF',
+             y = 'AUC') +
+        coord_cartesian(ylim = c(10,17000)) +
+        theme_linedraw() +
+        theme(plot.title = element_text(size = titles + 2,
+                                        face = 'bold',
+                                        hjust = 0.5),
+              axis.title = element_text(size = titles),
+              axis.text = element_text(size = txt),
+              legend.title = element_text(size = titles),
+              legend.text = element_text(size = txt),
+              legend.key.size = unit(3, "mm"),
+              legend.position = "bottom",
+              legend.box.spacing = unit(0.5,"mm"),
+              strip.text = element_text(size = txt,
+                                        margin = margin(0.1,0,0.1,0, "mm"))) +
+        guides(fill = guide_legend(override.aes = list(shape = 22)))
+      
+      plot_gc <- ggplot() +
+        geom_line(data = ref_gc, aes(x = time, y = od, linetype = bio_rep),
+                  alpha = 0.5, lwd = 1) +
+        geom_line(data = orf_gc, aes(x = time, y = od, linetype = bio_rep),
+                  lwd = 1) +
+        # geom_point(data = ref_gc, aes(x = time, y = od, shape = bio_rep),
+        #           alpha = 0.5, size = 1) +
+        # geom_point(data = orf_gc, aes(x = time, y = od, shape = bio_rep),
+        #           size = 1) +
+        geom_text(aes(x = 0, y = 5.5, label = 'BF_control'),
+                  alpha = 0.5, size = 2.5, hjust = 0) +
+        geom_text(aes(x = 0, y = 5.1, label = 'Mutant'),
+                  size = 2.5, hjust = 0) +
+        # scale_y_log10() +
+        labs(x = 'Time (mins)',
+             y = 'PLC OD') +
+        scale_linetype_discrete(name = 'bioRep') +
+        # scale_shape_manual(name = 'bioRep',
+        #                    breaks = c(1,2),
+        #                    values = c(21,24)) +
+        coord_cartesian(ylim = c(0.01,6)) +
+        theme_linedraw() +
+        theme(plot.title = element_text(size = titles + 2,
+                                        face = 'bold',
+                                        hjust = 0.5),
+              axis.title = element_text(size = titles),
+              axis.text = element_text(size = txt),
+              legend.title = element_text(size = titles),
+              legend.text = element_text(size = txt),
+              legend.key.size = unit(3, "mm"),
+              legend.position = "right",
+              legend.box.spacing = unit(0.5,"mm"),
+              strip.text = element_text(size = txt,
+                                        margin = margin(0.1,0,0.1,0, "mm")))
+      
+      plot_all <- annotate_figure(ggpubr::ggarrange(plot_gc, ggpubr::ggarrange(plot_dtime, plot_auc,
+                                                                               nrow = 1, align = 'hv',
+                                                                               widths = c(1,1),
+                                                                               common.legend = T,
+                                                                               legend = 'right'),
+                                                    ncol = 2,
+                                                    widths = c(1,1)),
+                                  top = text_grob(sprintf('%s | %s | %s',a,r,o), face = "bold", size = 10))
+      ggsave(sprintf('%s%s_%s_%s.png',out_path_gc,a,r,o), plot_all,
+             height = 100, width = 300, units = 'mm',
+             dpi = 300, limitsize = F)
+    }
+  }
+}
+
+##### FITNESS DISTRIBUTION
+for (o in unique(solid_fit$orf_name[!(solid_fit$orf_name %in% c('YHR201W-A','BOR','BF_control'))])) {
+  for (a in unique(solid_fit$arm[solid_fit$orf_name == o])) {
+    for (d in unique(solid_fit$density[solid_fit$orf_name == o & solid_fit$arm == a])) {
+      for (r in unique(solid_fit$replicate[solid_fit$orf_name == o & solid_fit$arm == a & solid_fit$density == d & solid_fit$saturation == 'Saturated'])) {
+        den_plot <- ggplot(merge(solid_fit[solid_fit$saturation == 'Saturated' &
+                                 solid_fit$orf_name %in% c(o, 'BF_control') &
+                                 solid_fit$density == d &
+                                 solid_fit$arm == a &
+                                 solid_fit$replicate == r &
+                                 !is.na(solid_fit$orf_name),], solid_phenotype, by = c('arm','replicate','orf_name'), all.x = T),
+               aes(x = fitness, y = orf_name, group = orf_name, fill = pitt_phenotype_6144)) +
+          geom_density_ridges(quantile_lines = TRUE,
+                              scale = 3, alpha = 0.9, size = 0.3,
+                              vline_size = 0.2, vline_color = "black",
+                              na.rm = T) +
+          labs(x = "Fitness",
+               y = 'ORF') +
+          scale_fill_manual(name = 'Phenotype',
+                            breaks = c('Beneficial','Neutral','Deleterious'),
+                            values = c('Deleterious'='#3F51B5',
+                                       'Neutral'='#212121',
+                                       'Beneficial'='#FFC107'),
+                            na.value = 'grey50', drop = F) +
+          facet_wrap(.~arm*density*replicate,
+                     nrow = 3) +
+          theme_linedraw() +
+          theme(plot.title = element_blank(),
+                axis.title = element_text(size = titles),
+                axis.text = element_text(size = txt),
+                legend.title = element_text(size = titles),
+                legend.text = element_text(size = txt),
+                legend.key.size = unit(3, "mm"),
+                legend.position = "bottom",
+                legend.box.spacing = unit(0.5,"mm"),
+                strip.text = element_text(size = txt,
+                                          margin = margin(0.1,0,0.1,0, "mm"))) +
+          coord_cartesian(xlim = c(0.8, 1.2))
+        ggsave(sprintf("%s%s_%s_%d_%s.jpg",out_path_den,o,a,d,r), den_plot,
+               height = 100, width = 110, units = 'mm',
+               dpi = 300)
+      }
+    }
+  }
+}
+
+

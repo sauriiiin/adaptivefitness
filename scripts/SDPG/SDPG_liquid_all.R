@@ -335,7 +335,7 @@ for (a in unique(all_results2$condition)) {
         geom_text_repel(data = orf_res, aes(x = method, y = value, label = sprintf('%0.2f',value)),
                         size = 2) +
         # scale_y_continuous(minor_breaks = seq(0,400,20)) +
-        scale_x_discrete(limits = c("aleeza", "alleza_plc", "growthrates", "growthrates_plc", "growthcurver", "growthcurver_plc")) +
+        # scale_x_discrete(limits = c("aleeza", "alleza_plc", "growthrates", "growthrates_plc", "growthcurver", "growthcurver_plc")) +
         scale_fill_manual(name = 'Phenotype',
                           breaks = c('Beneficial','Neutral','Deleterious'),
                           values = c('Deleterious'='#3F51B5',
