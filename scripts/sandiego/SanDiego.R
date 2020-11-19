@@ -25,11 +25,11 @@ two.c <- 190 #full width
 
 ##### TEXT SIZE
 titles <- 7
-txt <- 5
+txt <- 7
 lbls <- 9
 
 # ##### 5 CONDITION DATA
-cond5 <- dbGetQuery(conn, 'select distinct a.orf_name, hours, n, colony_size normalized_cs, q_cs, effect_cs,exp_id,
+cond5 <- dbGetQuery(conn, 'select distinct a.orf_name, hours, n, colony_size normalized_cs, q_cs, effect_cs, exp_id,
                     AGE, chromosome, translation_media, category
                     from brian_031918.DATASET_6 a, ANNE.SUMMARY_2012 b where a.orf_name = b.orf_name and exp_id in (28,31,91,33, 93) and a.orf_name !="BF_control"')
 cond5$condition[cond5$exp_id == 28] <- '+/+'
@@ -398,3 +398,45 @@ ggsave(sprintf("%ssdVSpitt.jpg",out_path),
        height = 80, width = one.c, units = 'mm',
        dpi = 300)
 
+###### REFERENCE FITNESS
+head(platemap.sd)
+
+ggplot(platemap.sd[platemap.sd$orf_name == 'BF_control',]) +
+  geom_line(aes(x = fitness), stat = 'density', trim = T) +
+  facet_wrap(.~exp_id) +
+  coord_cartesian(xlim = c(0.8,1.2))
+
+##### FITNESS STATS in SD
+load(file = '/home/sbp29/R/Projects/adaptivefitness/figs/SDPG/solid_results.RData')
+head(cond5)
+
+cond5$arm[cond5$exp_id == 91] <- 'CAS'
+cond5$arm[cond5$exp_id == 93] <- 'SDA'
+
+head(solid_fit)
+f28 <- data.frame(solid_fit[solid_fit$saturation == 'Saturated',] %>%
+             group_by(arm, density, replicate, orf_name) %>%
+             summarise(pitt_fitness = mean(fitness_mean, na.rm = T)))
+
+hello <- merge(f28[f28$density == 1536,], cond5[,c('orf_name','arm','normalized_cs')], by = c('arm','orf_name'))
+
+ggplot(hello,
+       aes(x = pitt_fitness, y = normalized_cs)) +
+  geom_point() +
+  stat_cor(method = 'spearman') +
+  labs(x = 'Pitt Avg. Fitness',
+       y = 'SanDiego Avg. Fitness') +
+  coord_cartesian(xlim = c(0.9,1.2),
+                  ylim = c(0.9,1.2)) +
+  facet_wrap(.~arm*replicate, ncol = 2) +
+  theme_linedraw() +
+  theme(plot.title = element_blank(),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(3, "mm"),
+        legend.position = "bottom",
+        legend.box.spacing = unit(0.5,"mm"),
+        strip.text = element_text(size = txt,
+                                  margin = margin(0.1,0,0.1,0, "mm")))
