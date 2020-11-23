@@ -106,57 +106,169 @@ rnd2_data$mcat_wilcox_phenotype[is.na(rnd2_data$mcat_wilcox_phenotype)] <- 'Neut
 
 head(rnd2_data)
 
-plyr::count(rnd2_data[(rnd2_data$lid_phenotype != rnd2_data$lid_wilcox_phenotype) &
-                        (rnd2_data$phenotype == rnd2_data$lid_wilcox_phenotype),],
-            vars = c('hours'))
-plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$lid_wilcox_phenotype,],
-            vars = c('hours'))
-
-plyr::count(rnd2_data[(rnd2_data$mcat_phenotype != rnd2_data$mcat_wilcox_phenotype) &
-                        (rnd2_data$phenotype == rnd2_data$mcat_wilcox_phenotype),],
-            vars = c('hours'))
-plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$mcat_wilcox_phenotype,],
-            vars = c('hours'))
-
 pheno_mismatch <- NULL
 pheno_mismatch$hours <- sort(unique(rnd2_data$hours))
 pheno_mismatch <- merge(pheno_mismatch,
-                        plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$lid_phenotype,],
-                                    vars = c('hours')),
+                        plyr::count(plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$lid_phenotype,],
+                                    vars = c('hours', 'orf_name'))[,1:2], vars = 'hours'),
                         by = 'hours', all = T)
 pheno_mismatch <- merge(pheno_mismatch,
-                        plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$lid_wilcox_phenotype,],
-                                    vars = c('hours')),
+                        plyr::count(plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$lid_wilcox_phenotype,],
+                                    vars = c('hours', 'orf_name'))[,1:2], vars = 'hours'),
                         by = 'hours', all = T)
 pheno_mismatch <- merge(pheno_mismatch,
-                        plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$mcat_phenotype,],
-                                    vars = c('hours')),
+                        plyr::count(plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$mcat_phenotype,],
+                                    vars = c('hours', 'orf_name'))[,1:2], vars = 'hours'),
                         by = 'hours', all = T)
 pheno_mismatch <- merge(pheno_mismatch,
-                        plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$mcat_wilcox_phenotype,],
-                                    vars = c('hours')),
+                        plyr::count(plyr::count(rnd2_data[rnd2_data$phenotype != rnd2_data$mcat_wilcox_phenotype,],
+                                    vars = c('hours', 'orf_name'))[,1:2], vars = 'hours'),
                         by = 'hours', all = T)
 
 colnames(pheno_mismatch) <- c('hours','lid_emp','lid_wilcox','mcat_emp','mcat_wilcox')
-pheno_mismatch
+pheno_mismatch[is.na(pheno_mismatch)] <- 0
 
+##### PLOT THE PHENOTYPE RESULTS
 ggplot(melt(pheno_mismatch, id.vars = 'hours', variable.name = 'method', value.name = 'count'),
        aes(x = hours, y = count + 0.001)) +
   geom_line(aes(col = method)) +
-  scale_y_log10()
+  scale_x_continuous(breaks = seq(1,13,2)) +
+  scale_y_continuous(breaks = seq(0,300,50)) +
+  scale_color_discrete(name = 'Method') +
+  labs(x = 'Time (hours)',
+       y = 'Mismatch') +
+  coord_cartesian(xlim = c(1,11)) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom')
 
-######
-ggplot(rnd2_data[rnd2_data$hours == 11.04,],
-       aes(x = orf_name, y = fitness)) +
-  geom_boxplot(aes(fill = lid_phenotype),
-               outlier.shape = NA) +
-  scale_fill_manual(name = 'Phenotype',
-                    breaks = c('Beneficial','Neutral','Deleterious'),
-                    values = c('Deleterious'='#3F51B5',
-                               'Neutral'='#212121',
-                               'Beneficial'='#FFC107'),
-                    guide = F) +
-  facet_wrap(.~hours)
+##### FALSE POSITIVES & NEGATIVES
+head(rnd2_data)
+rnd2_data$lid_results[rnd2_data$phenotype == 'Beneficial' & rnd2_data$lid_phenotype == 'Beneficial'] <- 'True Positive'
+rnd2_data$lid_results[rnd2_data$phenotype == 'Deleterious' & rnd2_data$lid_phenotype == 'Deleterious'] <- 'True Positive'
+rnd2_data$lid_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$lid_phenotype == 'Neutral'] <- 'True Negative'
+rnd2_data$lid_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$lid_phenotype != 'Neutral'] <- 'False Positive'
+rnd2_data$lid_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$lid_phenotype == 'Neutral'] <- 'False Negative'
+rnd2_data$lid_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$lid_phenotype != 'Neutral' &
+                        rnd2_data$phenotype != rnd2_data$lid_phenotype] <- 'Switched Positive'
+
+rnd2_data$lid_wilcox_results[rnd2_data$phenotype == 'Beneficial' & rnd2_data$lid_wilcox_phenotype == 'Beneficial'] <- 'True Positive'
+rnd2_data$lid_wilcox_results[rnd2_data$phenotype == 'Deleterious' & rnd2_data$lid_wilcox_phenotype == 'Deleterious'] <- 'True Positive'
+rnd2_data$lid_wilcox_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$lid_wilcox_phenotype == 'Neutral'] <- 'True Negative'
+rnd2_data$lid_wilcox_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$lid_wilcox_phenotype != 'Neutral'] <- 'False Positive'
+rnd2_data$lid_wilcox_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$lid_wilcox_phenotype == 'Neutral'] <- 'False Negative'
+rnd2_data$lid_wilcox_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$lid_wilcox_phenotype != 'Neutral' &
+                        rnd2_data$phenotype != rnd2_data$lid_wilcox_phenotype] <- 'Switched Positive'
+
+rnd2_data$mcat_results[rnd2_data$phenotype == 'Beneficial' & rnd2_data$mcat_phenotype == 'Beneficial'] <- 'True Positive'
+rnd2_data$mcat_results[rnd2_data$phenotype == 'Deleterious' & rnd2_data$mcat_phenotype == 'Deleterious'] <- 'True Positive'
+rnd2_data$mcat_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$mcat_phenotype == 'Neutral'] <- 'True Negative'
+rnd2_data$mcat_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$mcat_phenotype != 'Neutral'] <- 'False Positive'
+rnd2_data$mcat_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$mcat_phenotype == 'Neutral'] <- 'False Negative'
+rnd2_data$mcat_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$mcat_phenotype != 'Neutral' &
+                        rnd2_data$phenotype != rnd2_data$mcat_phenotype] <- 'Switched Positive'
+
+rnd2_data$mcat_wilcox_results[rnd2_data$phenotype == 'Beneficial' & rnd2_data$mcat_wilcox_phenotype == 'Beneficial'] <- 'True Positive'
+rnd2_data$mcat_wilcox_results[rnd2_data$phenotype == 'Deleterious' & rnd2_data$mcat_wilcox_phenotype == 'Deleterious'] <- 'True Positive'
+rnd2_data$mcat_wilcox_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$mcat_wilcox_phenotype == 'Neutral'] <- 'True Negative'
+rnd2_data$mcat_wilcox_results[rnd2_data$phenotype == 'Neutral' & rnd2_data$mcat_wilcox_phenotype != 'Neutral'] <- 'False Positive'
+rnd2_data$mcat_wilcox_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$mcat_wilcox_phenotype == 'Neutral'] <- 'False Negative'
+rnd2_data$mcat_wilcox_results[rnd2_data$phenotype != 'Neutral' & rnd2_data$mcat_wilcox_phenotype != 'Neutral' &
+                               rnd2_data$phenotype != rnd2_data$mcat_wilcox_phenotype] <- 'Switched Positive'
+
+ggplot(rnd2_data,
+       aes(x = hours)) +
+  geom_histogram(aes(fill = mcat_results))
+
+lid_results <- data.frame(plyr::count(rnd2_data, vars = c('hours','orf_name','lid_results'))[,c(1:3)], method = 'lid_emp')
+colnames(lid_results) <- c('hours','orf_name','results','method')           
+
+lid_wilcox_results <- data.frame(plyr::count(rnd2_data, vars = c('hours','orf_name','lid_wilcox_results'))[,c(1:3)], method = 'lid_wilcox')
+colnames(lid_wilcox_results) <- c('hours','orf_name','results','method') 
+
+mcat_results <- data.frame(plyr::count(rnd2_data, vars = c('hours','orf_name','mcat_results'))[,c(1:3)], method = 'mcat_emp')
+colnames(mcat_results) <- c('hours','orf_name','results','method') 
+
+mcat_wilcox_results <- data.frame(plyr::count(rnd2_data, vars = c('hours','orf_name','mcat_wilcox_results'))[,c(1:3)], method = 'mcat_wilcox')
+colnames(mcat_wilcox_results) <- c('hours','orf_name','results','method') 
+
+all_results <- rbind(lid_results, lid_wilcox_results, mcat_results, mcat_wilcox_results)
+head(all_results)
+
+ggplot(all_results,
+       aes(x = hours)) +
+  geom_bar(aes(fill = results)) +
+  facet_wrap(.~method) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom')
+
+ggplot(all_results,
+       aes(x = method)) +
+  geom_bar(aes(fill = results)) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles),
+        axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom')
 
 
+##### FALSE POSITIVES & NEGATIVES SUMMARY
+all_results_sum <- plyr::count(all_results, vars = c('method','results'))
+all_results_sum$freq <- all_results_sum$freq/(9.11*11)
+head(all_results_sum)
+
+ggplot(all_results_sum, aes(x = "", y = freq, fill = results)) +
+  geom_bar(stat = 'identity', col = 'black') +
+  coord_polar("y", start = 0) +
+  geom_label_repel(aes(label = sprintf("%0.2f%%",freq)),
+                   position = position_stack(vjust = 0.5),
+                   colour ='white',
+                   label.size = 0.15,
+                   show.legend = F) +
+  scale_fill_discrete(name = 'Method') +
+  facet_wrap(.~method) +
+  theme_linedraw() +
+  theme(axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        plot.title = element_text(size = titles, hjust = 0.5),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.key.size = unit(3, "mm"),
+        legend.position = 'bottom',
+        strip.text = element_text(size = titles),
+        legend.box.spacing = unit(0.5,"mm"))
+
+
+all_results_sum$freq[all_results_sum$method == 'lid_emp' & all_results_sum$results == 'True Positive']/
+  sum(all_results_sum$freq[all_results_sum$method == 'lid_emp' & all_results_sum$results %in% c('True Positive', 'False Negative')]) * 100
+all_results_sum$freq[all_results_sum$method == 'lid_emp' & all_results_sum$results == 'True Negative']/
+  sum(all_results_sum$freq[all_results_sum$method == 'lid_emp' & all_results_sum$results %in% c('True Negative', 'False Positive')]) * 100
+
+all_results_sum$freq[all_results_sum$method == 'lid_wilcox' & all_results_sum$results == 'True Positive']/
+  sum(all_results_sum$freq[all_results_sum$method == 'lid_wilcox' & all_results_sum$results %in% c('True Positive', 'False Negative')]) * 100
+all_results_sum$freq[all_results_sum$method == 'lid_wilcox' & all_results_sum$results == 'True Negative']/
+  sum(all_results_sum$freq[all_results_sum$method == 'lid_wilcox' & all_results_sum$results %in% c('True Negative', 'False Positive')]) * 100
+
+
+all_results_sum$freq[all_results_sum$method == 'mcat_emp' & all_results_sum$results == 'True Positive']/
+  sum(all_results_sum$freq[all_results_sum$method == 'mcat_emp' & all_results_sum$results %in% c('True Positive', 'False Negative')]) * 100
+all_results_sum$freq[all_results_sum$method == 'mcat_emp' & all_results_sum$results == 'True Negative']/
+  sum(all_results_sum$freq[all_results_sum$method == 'mcat_emp' & all_results_sum$results %in% c('True Negative', 'False Positive')]) * 100
+
+all_results_sum$freq[all_results_sum$method == 'mcat_wilcox' & all_results_sum$results == 'True Positive']/
+  sum(all_results_sum$freq[all_results_sum$method == 'mcat_wilcox' & all_results_sum$results %in% c('True Positive', 'False Negative')]) * 100
+all_results_sum$freq[all_results_sum$method == 'mcat_wilcox' & all_results_sum$results == 'True Negative']/
+  sum(all_results_sum$freq[all_results_sum$method == 'mcat_wilcox' & all_results_sum$results %in% c('True Negative', 'False Positive')]) * 100
 
