@@ -27,7 +27,7 @@ library(ggpubr)
 library(stringr)
 
 sql.usr <- 'sbp29'
-sql.pwd <- 'Ku5hani@28'
+sql.pwd <- ''
 sql.db <- 'Branden'
 
 conn <- dbConnect(MariaDB(), dbname = sql.db,
