@@ -38,6 +38,31 @@ lbls <- 9
 
 ##### REVIEWER #1
 
+##### l. 101: Expt pipeline reducing source effect
+##### FIGURE S1. Prescreens Plate Effect
+load(sprintf('%s4C4PSDATA.RData',out_path))
+
+ps.sourceeffect <- ggplot(data.ps,
+                         aes(x = source, y = average-median_cs)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_hline(yintercept = 0, col = 'red', linetype = 'dashed') +
+  labs(x = 'Source Plate',
+       y = 'Plate Median Subtracted Pixel Counts') +
+  scale_x_discrete(breaks=c("1TL","2TR","3BL","4BR"),
+                   labels=c("Top Left","Top Right","Bottom Left","Bottom Right")) +
+  # stat_compare_means(label.x = 2.5, label.y = 700, hjust = 0.5, size = 1.5) +
+  facet_wrap(.~stage) +
+  theme_linedraw()+
+  theme(axis.title = element_text(size = titles),
+        axis.text = element_text(size = txt),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(size = txt,
+                                  margin = margin(2,0,2,0, "mm"))) +
+  coord_cartesian(ylim = c(-500,500))
+ggsave(sprintf("%sr2r/FIGURE_SOURCE_EFFECT.jpg",out_path), ps.sourceeffect,
+       height = one.c, width = one.c, units = 'mm',
+       dpi = 300)
+
 ##### l. 305: Using some other statistical testing in the virtual plates with random CS distribution
 ##### GATHER DATA
 rnd2_data <- dbGetQuery(conn, 'select lid.*, mcat.fitness mcat_fitness, mcat.mcat_p, mcat.mcat_stat
@@ -561,10 +586,10 @@ gc_data <- data.frame(outlier_data %>%
   summarise(cs = mean(average, na.rm = T)))
 
 gc.plot <- ggplot(gc_data[gc_data$colony != 'Gap',]) +
-  geom_line(aes(x = hours, y = cs, col = colony)) +
-  geom_point(aes(x = hours, y = cs, col = colony)) +
+  geom_line(aes(x = hours, y = cs)) +
+  geom_point(aes(x = hours, y = cs)) +
   labs(x = 'Time (hours)',
-       y = 'log10 Pixel Count') +
+       y = 'log10 mean Pixel Count') +
   # scale_color_discrete(name = '') +
   scale_y_log10() +
   theme_linedraw() +
@@ -797,17 +822,17 @@ head(ref_spe)
 # load(sprintf('%sLID_SPECIFICITY_DATA.RData',out_path))
 # lid.spe.data <- stats.tmp
 ref.specificity <- ggplot() +
-  # stat_summary(data = ref_spe,
-  #              aes(x = pthresh, y = (1-freq/1139)*100, group = 1),
-  #              fun.data=mean_sdl, fun.args = list(mult=1),
-  #              geom="ribbon", alpha = 0.4) +
+  stat_summary(data = ref_spe,
+               aes(x = pthresh, y = (1-freq/1139)*100, group = 1),
+               fun.data=mean_sdl, fun.args = list(mult=1),
+               geom="ribbon", alpha = 0.4) +
   stat_summary(data = ref_spe,
                aes(x = pthresh, y = (1-freq/1139)*100, col = 'Tester'),
                fun=mean, geom="line", lwd =0.7) +
-  # stat_summary(data = lid.spe.data[lid.spe.data$hours == lid.spe.data$cont_hrs,],
-  #              fun.data=mean_sdl, fun.args = list(mult=1),
-  #              aes(x = p, y = (1-fpr)*100, group = 1),
-  #              geom="ribbon", alpha = 0.4) +
+  stat_summary(data = lid.spe.data[lid.spe.data$hours == lid.spe.data$cont_hrs,],
+               fun.data=mean_sdl, fun.args = list(mult=1),
+               aes(x = p, y = (1-fpr)*100, group = 1),
+               geom="ribbon", alpha = 0.4) +
   stat_summary(data = lid.spe.data[lid.spe.data$hours == lid.spe.data$cont_hrs,],
                aes(x = p, y = (1-fpr)*100, col = 'Reference'),
                fun=mean, geom="line", lwd =0.7) +

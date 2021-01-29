@@ -443,9 +443,9 @@ load(sprintf('%sRMSE_REFREP.RData',out_path))
 rmse.rr$rep <- as.factor(rmse.rr$rep)
 rmse.rr$ref <- as.factor(rmse.rr$ref)
 
-fig.s8 <- ggplot(rmse.rr[rmse.rr$rep == 16 & rmse.rr$hours > 2,],
+fig.s8 <- ggplot(rmse.rr[rmse.rr$rep == 16 & rmse.rr$hours > 0,],
                  aes(x = hours, y = per, fill = ref), col = 'black') + 
-  geom_point(size = 2, alpha = 0.9, shape = 21) +
+  geom_point(size = 1.5, alpha = 0.9, shape = 21) +
   labs(x = 'Time (hour)', y = 'RMSE %') +
   scale_x_continuous(breaks = seq(0,12,2)) +
   scale_y_continuous(breaks = seq(0,100,2),
@@ -460,7 +460,8 @@ fig.s8 <- ggplot(rmse.rr[rmse.rr$rep == 16 & rmse.rr$hours > 2,],
   theme(axis.title = element_text(size = titles),
         axis.text = element_text(size = txt),
         legend.title = element_text(size = titles),
-        legend.text = element_text(size = txt))
+        legend.text = element_text(size = txt),
+        legend.margin = margin(0.5,0.5,0.5,0.5, "mm"))
 
 ggsave(sprintf("%sFIGURE_S8.jpg",out_path), fig.s8,
        height = 70, width = one.c, units = 'mm',

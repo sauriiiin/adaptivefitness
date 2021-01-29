@@ -153,9 +153,9 @@ fig2 <- annotate_figure(ggpubr::ggarrange(fig.2a, fig.2b,
                                           hjust=-1),
                         bottom = text_grob(expression("t"["R"]~"= Reference colony size time ,"~"t"["M"]~"= Mutant colony size time"),
                                            face = "bold", family = "sans", size = titles))
-ggsave(sprintf("%sFIGURE2.jpg",out_path), fig2,
+ggsave(sprintf("%sFIGURE2.png",out_path), fig2,
        height = two.c*0.9, width = two.c, units = 'mm',
-       dpi = 300)
+       dpi = 400)
 
 
 ##### FIGURE 3. SPECIFITICTY AND SENSITIVITY OF LID AND MCAT
@@ -294,9 +294,9 @@ fig3 <- ggpubr::ggarrange(fig.3a,
                           font.label = list(face = 'bold', size = lbls, family = "sans"),
                           hjust=-1)
 
-ggsave(sprintf("%sFIGURE3.jpg",out_path), fig3,
+ggsave(sprintf("%sFIGURE3.png",out_path), fig3,
        height = 140, width = two.c, units = 'mm',
-       dpi = 300)
+       dpi = 400)
 
 
 ##### FIGURE 4. SENSITIVITY WHEN UNDERLYING DFE IS RANDOM
@@ -571,9 +571,9 @@ fig4 <- ggpubr::ggarrange(fig.4a, fig.4b, fig.4c,
                           labels = c('A','B','C','D','E','F','G','H','I'),
                           font.label = list(face = 'bold', size = lbls, family = "sans"),
                           hjust=-1)
-ggsave(sprintf("%sFIGURE4.jpg",out_path), fig4,
+ggsave(sprintf("%sFIGURE4.png",out_path), fig4,
        height = two.c, width = two.c, units = 'mm',
-       dpi = 300)
+       dpi = 400)
 
 
 ##### FIGURE 5. SENSITIVITY'S RELATIONSHIP WITH REPLICATES AND REFERENCES
@@ -635,6 +635,6 @@ fig5 <- ggplot(rnd.v.data[round(rnd.v.data$abs_cen) == es,],
          legend.margin = margin(0.5,0.5,0.5,0.5, "mm"),
          strip.text = element_text(size = txt,
                                    margin = margin(0.1,0,0.1,0, "mm")))
-ggsave(sprintf("%sFIGURE5.jpg",out_path), fig5,
+ggsave(sprintf("%sFIGURE5.png",out_path), fig5,
        height = 70, width = two.c, units = 'mm',
-       dpi = 300)
+       dpi = 400)
