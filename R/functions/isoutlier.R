@@ -1,8 +1,8 @@
-isoutlier <- function (data) {
+isoutlier <- function (data, n) {
   m <- median(data, na.rm = T)
   md <- mad(data, na.rm = T)
-  ll <- m - 3 * md
-  ul <- m + 3 * md
+  ll <- m - n * md
+  ul <- m + n * md
   output <- data < ll | data > ul
   return(output)
 }
