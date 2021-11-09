@@ -37,7 +37,9 @@ source("~/R/Projects/adaptivefitness/R/functions/isoutlier.R")
 source("~/R/Projects/adaptivefitness/R/functions/initialize.sql.R")
 conn <- initialize.sql("saurin_test")
 
-load('output/translatome/AllData.RData')
+# load('output/translatome/AllData.RData')
+
+controls <- read.csv(file = 'rawdata/translatome/condition_controls.csv', stringsAsFactors = F)
 
 ##### FIGURE SIZE
 one.c <- 90 #single column
@@ -53,7 +55,8 @@ lbls <- 9
 tr.conds <- data.frame(arms = c('ONE','ONE','ONE','ONE','TWO','TWO','TWO','TWO'),
                        conds = c('GA','SA','HU','HO','GA','DM','TN','FL'))
 
-pgs <- dbGetQuery(conn, 'select orf_name from PROTOGENES where pg_2012 = 1')
+# pgs <- dbGetQuery(conn, 'select orf_name from PROTOGENES where pg_2012 = 1')
+pgs <- read.csv(file = '~/R/Projects/adaptivefitness/rawdata/translatome/oe_transient.csv', stringsAsFactors = F)
 tr_status <- read.csv(file = '~/R/Projects/adaptivefitness/rawdata/translatome/overexpression_collection_translation_status.csv',
                       stringsAsFactors = F)
 colnames(tr_status) <- c('orf_name','is_tr','on_list')
@@ -72,26 +75,13 @@ for (a in unique(tr.conds$arms)) {
     temp.fit$saturation <- max(temp.fit$hours)
     data.fit <- rbind(data.fit, temp.fit)
     
-    # temp.stats <- dbGetQuery(conn, sprintf('select a.*, b.p from
-    #                                        TR_OE_%s_FS_%s_6144_FITNESS_STATS a, TR_OE_%s_FS_%s_6144_PVALUE b
-    #                                        where a.hours = b.hours and a.strain_id = b.strain_id
-    #                                        order by a.hours, a.strain_id', a, c, a, c))
-    # temp.stats$arm <- a
-    # temp.stats$condition <- c
-    # temp.stats$saturation <- max(temp.stats$hours)
-    # data.stats <- rbind(data.stats, temp.stats)
   }
 }
-data.fit$orf_type[data.fit$orf_name %in% pgs$orf_name] <- 'Proto-gene'
+data.fit$orf_type[data.fit$orf_name %in% pgs$orf_name[pgs$is_transient == 1]] <- 'Transient'
 data.fit$orf_type[data.fit$orf_name == 'BF_control'] <- 'Reference'
-data.fit$orf_type[is.na(data.fit$orf_type)] <- 'Gene'
+data.fit$orf_type[is.na(data.fit$orf_type)] <- 'Not Transient'
 data.fit <- merge(data.fit, tr_status, by = 'orf_name', all.x = T)
 data.fit$rep <- as.numeric(str_trunc(as.character(data.fit$pos), 5, side = 'left', ellipsis = ''))
-
-# data.stats$orf_type[data.stats$orf_name %in% pgs$orf_name] <- 'Proto-gene'
-# data.stats$orf_type[data.stats$orf_name == 'BF_control'] <- 'Reference'
-# data.stats$orf_type[is.na(data.stats$orf_type)] <- 'Gene'
-# data.stats <- merge(data.stats, tr_status, by = 'orf_name', all = T)
 
 data.fit$saturation[data.fit$condition == 'FL'] <- 46
 # data.stats$saturation[data.stats$condition == 'FL'] <- 46
@@ -212,7 +202,7 @@ temp2 <- str_split(diff.dist2$id_ref, '_', simplify = T)
 colnames(temp2) <- c('arm2','cond2')
 diff.dist2 <- cbind(diff.dist2, temp1, temp2)
 
-fig.diff <- data.diff %>%
+fig.diff <- data.diff[!(data.diff$strain_id %in% controls$strain_id),] %>%
   filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')) %>%
   filter(!is.na(id_cond), !is.na(id_ref)) %>%
   ggplot(aes(x = fitness.median_cond, y = fitness.median_ref)) +
@@ -248,7 +238,17 @@ fig.diff <- data.diff %>%
        y = 'Relative Fitness in Reference Condition') +
   coord_cartesian(xlim = c(0, 2),
                   ylim = c(0, 2)) +
-  facet_wrap(.~id_ref * id_cond) +
+  facet_wrap(.~id_ref * id_cond,
+             labeller = labeller(id_ref = c('ONE_GA' = 'Ref.: Galactose',
+                                            'TWO_GA' = 'Ref.: Galactose',
+                                            'TWO_DM' = 'Ref.: DMSO'),
+                                 id_cond = c('ONE_HO' = 'Str.: Hydrogen Peroxide',
+                                             'ONE_HU' = 'Str.: Hydroxyurea',
+                                             'ONE_SA' = 'Str.: Salt',
+                                             'TWO_GA' = 'Str.: Galactose',
+                                             'TWO_DM' = 'Str.: DMSO',
+                                             'TWO_FL' = 'Str.: Fluconazole',
+                                             'TWO_TN' = 'Str.: Tunicamycin'))) +
   theme_linedraw() +
   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
         axis.title = element_text(size = titles),
@@ -304,9 +304,6 @@ ggsave(sprintf("%s/GALCorr.jpg",fig_path), fig.gal.corr,
 #   data.frame()
 
 ##### CONDITION CONTROLS
-controls <- read.csv(file = 'rawdata/translatome/condition_controls.csv', stringsAsFactors = F)
-head(controls)
-
 # merge(data.diff[data.diff$strain_id %in% controls$strain_id &
 #                   data.diff$arm1 == data.diff$arm2 &
 #                   !is.na(data.diff$id_cond) & !is.na(data.diff$id_ref) &
@@ -353,15 +350,15 @@ data.diff2 <- data.diff[!(data.diff$strain_id %in% controls$strain_id) &
                           data.diff$arm1 == data.diff$arm2 &
                           !is.na(data.diff$id_cond) & !is.na(data.diff$id_ref) &
                           data.diff$id_ref %in% c('ONE_GA','TWO_GA','TWO_DM'),]
-allgenes <- unique(data.diff2$orf_name)
-allgenes <- bitr(allgenes, fromType = "ORF",
-                 toType = c("ENTREZID","GENENAME","ENSEMBL"),
-                 OrgDb = org.Sc.sgd.db)
-allgenes <- allgenes[!is.na(allgenes$ENSEMBL),]
 
 goe <- data.frame()
 kegg <- data.frame()
 for (id_ref in c('ONE_GA','TWO_GA','TWO_DM')) {
+  allgenes <- unique(data.diff2$orf_name[data.diff2$id_ref == id_ref])
+  allgenes <- bitr(allgenes, fromType = "ORF",
+                   toType = c("ENTREZID","GENENAME","ENSEMBL"),
+                   OrgDb = org.Sc.sgd.db)
+  allgenes <- allgenes[!is.na(allgenes$ENSEMBL),]
   for (id_cond in unique(data.diff2$id_cond[data.diff2$id_ref == id_ref])) {
     for (p in unique(data.diff2$phenotype[data.diff2$id_cond == id_cond & data.diff2$id_ref == id_ref])) {
       temp.deg <- data.diff2$orf_name[data.diff2$id_ref == id_ref & data.diff2$id_cond == id_cond &
@@ -430,16 +427,11 @@ write.csv(kegg, file = 'output/translatome/kegg_enrichments.csv')
 ##### ORF_TYPE ENRICHMENT
 head(data.diff2)
 
-data.diff2 %>%
-  group_by(cond2, cond1, orf_type, is_tr, phenotype) %>%
-  count() %>%
-  data.frame()
-
 data.cnt.all <- merge(data.diff2 %>%
-  group_by(id_ref,id_cond,cond2, cond1, orf_type, phenotype) %>%
+  group_by(id_ref, id_cond, cond2, cond1, orf_type, phenotype) %>%
   count() %>%
   data.frame(), data.diff2 %>%
-    group_by(id_ref,id_cond,cond2, cond1, orf_type) %>%
+    group_by(id_ref, id_cond, cond2, cond1, orf_type) %>%
     count() %>%
     data.frame(), by = c('id_ref','id_cond','cond1','cond2','orf_type'),
   suffixes = c('','_total'))
@@ -483,43 +475,27 @@ ggsave(sprintf("%s/PhenotypeProportions.jpg",fig_path), fig.pheno.prop,
        dpi = 600)
 
 
-data.cnt.pgs <- merge(data.diff2 %>%
-                        filter(orf_type == 'Proto-gene') %>%
-                        group_by(cond2, cond1, is_tr, phenotype) %>%
-                        count() %>%
-                        data.frame(), data.diff2 %>%
-                        group_by(cond2, cond1, is_tr) %>%
-                        count() %>%
-                        data.frame(), by = c('cond1','cond2','is_tr'),
-                      suffixes = c('','_total'))
-data.cnt.pgs$percentage <- data.cnt.pgs$n/data.cnt.pgs$n_total * 100 
-
-data.cnt.pgs %>%
-  ggplot(aes(x = as.factor(is_tr), y = percentage, fill = phenotype)) +
-  geom_bar(stat="identity") +
-  facet_wrap(.~cond2*cond1)
-
 ##### PHENOTYPE ODDS RATIO
 data.or <- NULL
 for (id_ref in unique(data.cnt.all$cond2)) {
   for (id_cond in unique(data.cnt.all$cond1[data.cnt.all$cond2 == id_ref])) {
     for (p in data.cnt.all$phenotype[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond]) {
-      n_pg_effect <- data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Proto-gene']
+      n_pg_effect <- data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Transient']
       if (length(n_pg_effect) == 0) {
         n_pg_effect <- 0
-        n_pg_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == 'Neutral' & data.cnt.all$orf_type == 'Proto-gene']
+        n_pg_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == 'Neutral' & data.cnt.all$orf_type == 'Transient']
       } else {
-        n_pg_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Proto-gene'] -
-          data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Proto-gene']
+        n_pg_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Transient'] -
+          data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Transient']
       }
      
-      n_g_effect <- data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Gene']
+      n_g_effect <- data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Not Transient']
       if (length(n_g_effect) == 0) {
         n_g_effect <- 0
-        n_g_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == 'Neutral' & data.cnt.all$orf_type == 'Gene']
+        n_g_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == 'Neutral' & data.cnt.all$orf_type == 'Not Transient']
       } else {
-        n_g_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Gene'] -
-          data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Gene']
+        n_g_noeffect <- data.cnt.all$n_total[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Not Transient'] -
+          data.cnt.all$n[data.cnt.all$cond2 == id_ref & data.cnt.all$cond1 == id_cond & data.cnt.all$phenotype == p & data.cnt.all$orf_type == 'Not Transient']
       }
       
       ftest <- fisher.test(matrix(c(n_pg_effect, n_pg_noeffect, n_g_effect, n_g_noeffect),2,2))
@@ -575,7 +551,7 @@ ggsave(sprintf("%s/PHENOTYPE_ODDS.jpg",fig_path), plot.or,
        dpi = 600) 
 
 
-##### TRANSIENT PROTO-GENES
+##### TRANSIENT
 data.diff2 %>%
   filter(orf_name != 'BF_control', id_ref %in% c('ONE_GA','TWO_DM'),
          is_tr == 1) %>%
@@ -586,4 +562,16 @@ data.diff2 %>%
 
 ##### SAVE ALL
 # save(list = ls(.GlobalEnv), file = "output/translatome/AllData.RData")
+
+##### UPLOAD TO MySQL
+temp <- unique(data.diff$orf_name[!(data.diff$strain_id %in% controls$strain_id) & data.diff$orf_name != 'BF_control'])
+temp <- bitr(temp, fromType = "ORF",
+     toType = c("DESCRIPTION"),
+     OrgDb = org.Sc.sgd.db)
+dbWriteTable(conn, 'TR_OE_DIFF_FITNESS',
+             merge(data.diff[!(data.diff$strain_id %in% controls$strain_id),] %>% 
+               filter(orf_name != 'BF_control'), temp, by.x = 'orf_name', by.y = 'ORF', all = T), 
+             overwrite = T)
+
+
 
