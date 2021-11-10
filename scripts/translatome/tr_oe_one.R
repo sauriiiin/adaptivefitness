@@ -9,6 +9,7 @@ library(gridExtra)
 library(grid)
 library(tidyverse)
 library(ggpubr)
+library(ggridges)
 library(stringr)
 library(egg)
 library(zoo)
@@ -56,7 +57,7 @@ tr.conds <- data.frame(arms = c('ONE','ONE','ONE','ONE','TWO','TWO','TWO','TWO')
                        conds = c('GA','SA','HU','HO','GA','DM','TN','FL'))
 
 # pgs <- dbGetQuery(conn, 'select orf_name from PROTOGENES where pg_2012 = 1')
-pgs <- read.csv(file = '~/R/Projects/adaptivefitness/rawdata/translatome/oe_transient.csv', stringsAsFactors = F)
+pgs <- read.csv(file = '~/R/Projects/adaptivefitness/rawdata/translatome/oe_transient_translated.csv', stringsAsFactors = F)
 tr_status <- read.csv(file = '~/R/Projects/adaptivefitness/rawdata/translatome/overexpression_collection_translation_status.csv',
                       stringsAsFactors = F)
 colnames(tr_status) <- c('orf_name','is_tr','on_list')
@@ -77,6 +78,7 @@ for (a in unique(tr.conds$arms)) {
     
   }
 }
+data.fit$orf_type[data.fit$orf_name %in% pgs$orf_name[pgs$translated == 0]] <- 'Not Translated'
 data.fit$orf_type[data.fit$orf_name %in% pgs$orf_name[pgs$is_transient == 1]] <- 'Transient'
 data.fit$orf_type[data.fit$orf_name == 'BF_control'] <- 'Reference'
 data.fit$orf_type[is.na(data.fit$orf_type)] <- 'Not Transient'
@@ -125,6 +127,11 @@ data.lim <- data.fit %>%
 
 # data.stats <- merge(data.stats, data.lim[,-4], by = c('arm','condition','hours'))
 # data.stats$es <- abs(data.stats$cs_median - data.stats$fitness_m)/data.stats$fitness_m
+
+## YBR196C-A
+write.csv(merge(data.mad %>%
+        filter(orf_name == 'YBR196C-A', hours == saturation), data.lim[,-4], by = c('arm','condition','hours')),
+      file = 'output/translatome/ybr_fitness_data.csv')
 
 ##### DIFFERENTIAL FITNESS ANALYSIS
 data.ref.dist <- data.fit %>%
@@ -202,106 +209,98 @@ temp2 <- str_split(diff.dist2$id_ref, '_', simplify = T)
 colnames(temp2) <- c('arm2','cond2')
 diff.dist2 <- cbind(diff.dist2, temp1, temp2)
 
-fig.diff <- data.diff[!(data.diff$strain_id %in% controls$strain_id),] %>%
-  filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')) %>%
-  filter(!is.na(id_cond), !is.na(id_ref)) %>%
-  ggplot(aes(x = fitness.median_cond, y = fitness.median_ref)) +
-  geom_point(aes(col = phenotype), size = 1) +
-  geom_line(data = diff.dist2 %>% filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')),
-            aes(x = x , y = y.ul),
-            linetype = 'dashed', size = 0.5) +
-  geom_line(data = diff.dist2 %>% filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')),
-            aes(x = x , y = y.ll),
-            linetype = 'dashed', size = 0.5) +
-  geom_text_repel(data = data.diff %>%
-                    filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')) %>%
-                    filter(!is.na(id_cond), !is.na(id_ref), orf_name == 'YBR196C-A'),
-                  aes(x = fitness.median_cond, y = fitness.median_ref, label = orf_name), size = 2,
-                  force = 2, max.overlaps = 30) +
-  geom_point(data = data.diff %>%
-               filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')) %>%
-               filter(!is.na(id_cond), !is.na(id_ref), orf_name == 'YBR196C-A'),
-             aes(x = fitness.median_cond, y = fitness.median_ref, fill = phenotype),
-             col = 'black', shape = 21, size = 1) +
-  scale_color_manual(name = 'Differential Phenotype',
-                     values = c('Beneficial' = '#FFC107',
-                                'Deleterious' = '#3F51B5',
-                                'Neutral' = '#9E9E9E'),
-                     limits = c('Deleterious','Neutral','Beneficial')) +
-  scale_fill_manual(name = 'Differential Phenotype',
-                     values = c('Beneficial' = '#FFC107',
-                                'Deleterious' = '#3F51B5',
-                                'Neutral' = '#9E9E9E'),
-                     limits = c('Deleterious','Neutral','Beneficial'),
-                    guide = F) +
-  labs(x = 'Relative Fitness in Stress Condition',
-       y = 'Relative Fitness in Reference Condition') +
-  coord_cartesian(xlim = c(0, 2),
-                  ylim = c(0, 2)) +
-  facet_wrap(.~id_ref * id_cond,
-             labeller = labeller(id_ref = c('ONE_GA' = 'Ref.: Galactose',
-                                            'TWO_GA' = 'Ref.: Galactose',
-                                            'TWO_DM' = 'Ref.: DMSO'),
-                                 id_cond = c('ONE_HO' = 'Str.: Hydrogen Peroxide',
-                                             'ONE_HU' = 'Str.: Hydroxyurea',
-                                             'ONE_SA' = 'Str.: Salt',
-                                             'TWO_GA' = 'Str.: Galactose',
-                                             'TWO_DM' = 'Str.: DMSO',
-                                             'TWO_FL' = 'Str.: Fluconazole',
-                                             'TWO_TN' = 'Str.: Tunicamycin'))) +
-  theme_linedraw() +
-  theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
-        axis.title = element_text(size = titles),
-        axis.text = element_text(size = txt),
-        legend.title = element_text(size = titles),
-        legend.text = element_text(size = txt),
-        legend.position = 'bottom',
-        legend.key.size = unit(3, "mm"),
-        legend.box.spacing = unit(0.5,"mm"),
-        strip.text = element_text(size = txt,
-                                  face = 'bold',
-                                  margin = margin(0.1,0,0.1,0, "mm"))) +
-  guides(color = guide_legend(nrow=1, byrow=TRUE, order = 1,
-                              override.aes = list(size = 2)))
-ggsave(sprintf("%s/AllDifferentialFitness.jpg",fig_path), fig.diff,
-       height = two.c, width = two.c, units = 'mm',
-       dpi = 600)
+# fig.diff <- data.diff[!(data.diff$strain_id %in% controls$strain_id),] %>%
+#   filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')) %>%
+#   filter(!is.na(id_cond), !is.na(id_ref)) %>%
+#   ggplot(aes(x = fitness.median_cond, y = fitness.median_ref)) +
+#   geom_point(aes(col = phenotype), size = 1) +
+#   geom_line(data = diff.dist2 %>% filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')),
+#             aes(x = x , y = y.ul),
+#             linetype = 'dashed', size = 0.5) +
+#   geom_line(data = diff.dist2 %>% filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')),
+#             aes(x = x , y = y.ll),
+#             linetype = 'dashed', size = 0.5) +
+#   geom_text_repel(data = data.diff %>%
+#                     filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')) %>%
+#                     filter(!is.na(id_cond), !is.na(id_ref), orf_name == 'YBR196C-A'),
+#                   aes(x = fitness.median_cond, y = fitness.median_ref, label = orf_name), size = 2,
+#                   force = 2, max.overlaps = 30) +
+#   geom_point(data = data.diff %>%
+#                filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_GA','TWO_DM')) %>%
+#                filter(!is.na(id_cond), !is.na(id_ref), orf_name == 'YBR196C-A'),
+#              aes(x = fitness.median_cond, y = fitness.median_ref, fill = phenotype),
+#              col = 'black', shape = 21, size = 1) +
+#   scale_color_manual(name = 'Differential Phenotype',
+#                      values = c('Beneficial' = '#FFC107',
+#                                 'Deleterious' = '#3F51B5',
+#                                 'Neutral' = '#9E9E9E'),
+#                      limits = c('Deleterious','Neutral','Beneficial')) +
+#   scale_fill_manual(name = 'Differential Phenotype',
+#                      values = c('Beneficial' = '#FFC107',
+#                                 'Deleterious' = '#3F51B5',
+#                                 'Neutral' = '#9E9E9E'),
+#                      limits = c('Deleterious','Neutral','Beneficial'),
+#                     guide = F) +
+#   labs(x = 'Relative Fitness in Stress Condition',
+#        y = 'Relative Fitness in Reference Condition') +
+#   coord_cartesian(xlim = c(0, 2),
+#                   ylim = c(0, 2)) +
+#   facet_wrap(.~id_ref * id_cond,
+#              labeller = labeller(id_ref = c('ONE_GA' = 'Ref.: Galactose',
+#                                             'TWO_GA' = 'Ref.: Galactose',
+#                                             'TWO_DM' = 'Ref.: DMSO'),
+#                                  id_cond = c('ONE_HO' = 'Str.: Hydrogen Peroxide',
+#                                              'ONE_HU' = 'Str.: Hydroxyurea',
+#                                              'ONE_SA' = 'Str.: Salt',
+#                                              'TWO_GA' = 'Str.: Galactose',
+#                                              'TWO_DM' = 'Str.: DMSO',
+#                                              'TWO_FL' = 'Str.: Fluconazole',
+#                                              'TWO_TN' = 'Str.: Tunicamycin'))) +
+#   theme_linedraw() +
+#   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
+#         axis.title = element_text(size = titles),
+#         axis.text = element_text(size = txt),
+#         legend.title = element_text(size = titles),
+#         legend.text = element_text(size = txt),
+#         legend.position = 'bottom',
+#         legend.key.size = unit(3, "mm"),
+#         legend.box.spacing = unit(0.5,"mm"),
+#         strip.text = element_text(size = txt,
+#                                   face = 'bold',
+#                                   margin = margin(0.1,0,0.1,0, "mm"))) +
+#   guides(color = guide_legend(nrow=1, byrow=TRUE, order = 1,
+#                               override.aes = list(size = 2)))
+# ggsave(sprintf("%s/AllDifferentialFitness.jpg",fig_path), fig.diff,
+#        height = two.c, width = two.c, units = 'mm',
+#        dpi = 600)
 
 
-fig.gal.corr <- data.diff %>%
-  filter(id_ref == 'TWO_GA', id_cond == 'ONE_GA') %>%
-  filter(!is.na(id_cond), !is.na(id_ref)) %>%
-  ggplot(aes(x = fitness.median_cond, y = fitness.median_ref)) +
-  geom_point(col = '#9E9E9E', size = 1) +
-  geom_smooth(method = 'lm', size = 0.5, linetype = 'dashed', col = 'black') +
-  stat_cor(method = 'pearson', size = 3) +
-  labs(x = 'Relative Fitness in Arm 1',
-       y = 'Relative Fitness in Arm 2') +
-  coord_cartesian(xlim = c(0, 1.5),
-                  ylim = c(0, 1.5)) +
-  theme_linedraw() +
-  theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
-        axis.title = element_text(size = titles),
-        axis.text = element_text(size = txt),
-        legend.title = element_text(size = titles),
-        legend.text = element_text(size = txt),
-        legend.position = 'bottom',
-        legend.key.size = unit(3, "mm"),
-        legend.box.spacing = unit(0.5,"mm"),
-        strip.text = element_text(size = txt,
-                                  face = 'bold',
-                                  margin = margin(0.1,0,0.1,0, "mm")))
-ggsave(sprintf("%s/GALCorr.jpg",fig_path), fig.gal.corr,
-       height = one.c, width = one.c, units = 'mm',
-       dpi = 600)
-
-
-#####
-# data.diff %>%
-#   filter(arm1 == arm2, id_ref %in% c('ONE_GA','TWO_DM')) %>%
-#   group_by(cond2, cond1, orf_type, is_tr, phenotype) %>%
-#   count() %>%
-#   data.frame()
+# fig.gal.corr <- data.diff %>%
+#   filter(id_ref == 'TWO_GA', id_cond == 'ONE_GA') %>%
+#   filter(!is.na(id_cond), !is.na(id_ref)) %>%
+#   ggplot(aes(x = fitness.median_cond, y = fitness.median_ref)) +
+#   geom_point(col = '#9E9E9E', size = 1) +
+#   geom_smooth(method = 'lm', size = 0.5, linetype = 'dashed', col = 'black') +
+#   stat_cor(method = 'pearson', size = 3) +
+#   labs(x = 'Relative Fitness in Arm 1',
+#        y = 'Relative Fitness in Arm 2') +
+#   coord_cartesian(xlim = c(0, 1.5),
+#                   ylim = c(0, 1.5)) +
+#   theme_linedraw() +
+#   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
+#         axis.title = element_text(size = titles),
+#         axis.text = element_text(size = txt),
+#         legend.title = element_text(size = titles),
+#         legend.text = element_text(size = txt),
+#         legend.position = 'bottom',
+#         legend.key.size = unit(3, "mm"),
+#         legend.box.spacing = unit(0.5,"mm"),
+#         strip.text = element_text(size = txt,
+#                                   face = 'bold',
+#                                   margin = margin(0.1,0,0.1,0, "mm")))
+# ggsave(sprintf("%s/GALCorr.jpg",fig_path), fig.gal.corr,
+#        height = one.c, width = one.c, units = 'mm',
+#        dpi = 600)
 
 ##### CONDITION CONTROLS
 # merge(data.diff[data.diff$strain_id %in% controls$strain_id &
@@ -313,36 +312,36 @@ ggsave(sprintf("%s/GALCorr.jpg",fig_path), fig.gal.corr,
 #            variable.name = 'cond1', value.name = 'control_type'),
 #       by = c('cond1','strain_id','orf_name'))
 
-fig.conts <- merge(data.mad, melt(controls, id.vars = c('strain_id','standard_name','orf_name'), 
-                     variable.name = 'condition', value.name = 'control_type'), by = c('condition','strain_id','orf_name')) %>%
-  filter(hours %in% c(141, 36, 20, 125, 26), control_type != '') %>%
-  ggplot(aes(x = fitness.median, y = orf_name)) +
-  geom_boxplot(aes(fill = control_type, col = control_type), outlier.shape = NA, size = 0.6) +
-  labs(x = 'Fitness',
-       y = 'Control Mutant') +
-  scale_color_manual(name = 'Control Type',
-                       values = c('Resistant' = '#FFA000',
-                                  'Sensitive' = '#303F9F')) +
-  scale_fill_manual(name = 'Control Type',
-                     values = c('Resistant' = '#FFA000',
-                                'Sensitive' = '#303F9F')) +
-  # geom_jitter(size = 0.2) +
-  facet_wrap(.~condition, nrow = 1) +
-  theme_linedraw() +
-  theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
-        axis.title = element_text(size = titles),
-        axis.text = element_text(size = txt),
-        legend.title = element_text(size = titles),
-        legend.text = element_text(size = txt),
-        legend.position = 'bottom',
-        legend.key.size = unit(3, "mm"),
-        legend.box.spacing = unit(0.5,"mm"),
-        strip.text = element_text(size = txt,
-                                  face = 'bold',
-                                  margin = margin(0.1,0,0.1,0, "mm")))
-ggsave(sprintf("%s/CONDITIONCONTROLS.jpg",fig_path), fig.conts,
-       height = one.c, width = two.c, units = 'mm',
-       dpi = 600)
+# fig.conts <- merge(data.mad, melt(controls, id.vars = c('strain_id','standard_name','orf_name'), 
+#                      variable.name = 'condition', value.name = 'control_type'), by = c('condition','strain_id','orf_name')) %>%
+#   filter(hours %in% c(141, 36, 20, 125, 26), control_type != '') %>%
+#   ggplot(aes(x = fitness.median, y = orf_name)) +
+#   geom_boxplot(aes(fill = control_type, col = control_type), outlier.shape = NA, size = 0.6) +
+#   labs(x = 'Fitness',
+#        y = 'Control Mutant') +
+#   scale_color_manual(name = 'Control Type',
+#                        values = c('Resistant' = '#FFA000',
+#                                   'Sensitive' = '#303F9F')) +
+#   scale_fill_manual(name = 'Control Type',
+#                      values = c('Resistant' = '#FFA000',
+#                                 'Sensitive' = '#303F9F')) +
+#   # geom_jitter(size = 0.2) +
+#   facet_wrap(.~condition, nrow = 1) +
+#   theme_linedraw() +
+#   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
+#         axis.title = element_text(size = titles),
+#         axis.text = element_text(size = txt),
+#         legend.title = element_text(size = titles),
+#         legend.text = element_text(size = txt),
+#         legend.position = 'bottom',
+#         legend.key.size = unit(3, "mm"),
+#         legend.box.spacing = unit(0.5,"mm"),
+#         strip.text = element_text(size = txt,
+#                                   face = 'bold',
+#                                   margin = margin(0.1,0,0.1,0, "mm")))
+# ggsave(sprintf("%s/CONDITIONCONTROLS.jpg",fig_path), fig.conts,
+#        height = one.c, width = two.c, units = 'mm',
+#        dpi = 600)
 
 
 ##### GO/KEGG ENRICHMENT FOR THE DELETERIOUS AND BENEFICIAL MUTANTS
@@ -351,100 +350,163 @@ data.diff2 <- data.diff[!(data.diff$strain_id %in% controls$strain_id) &
                           !is.na(data.diff$id_cond) & !is.na(data.diff$id_ref) &
                           data.diff$id_ref %in% c('ONE_GA','TWO_GA','TWO_DM'),]
 
-goe <- data.frame()
-kegg <- data.frame()
-for (id_ref in c('ONE_GA','TWO_GA','TWO_DM')) {
-  allgenes <- unique(data.diff2$orf_name[data.diff2$id_ref == id_ref])
-  allgenes <- bitr(allgenes, fromType = "ORF",
-                   toType = c("ENTREZID","GENENAME","ENSEMBL"),
-                   OrgDb = org.Sc.sgd.db)
-  allgenes <- allgenes[!is.na(allgenes$ENSEMBL),]
-  for (id_cond in unique(data.diff2$id_cond[data.diff2$id_ref == id_ref])) {
-    for (p in unique(data.diff2$phenotype[data.diff2$id_cond == id_cond & data.diff2$id_ref == id_ref])) {
-      temp.deg <- data.diff2$orf_name[data.diff2$id_ref == id_ref & data.diff2$id_cond == id_cond &
-                                       data.diff2$phenotype == p]
-      temp.deg <- bitr(temp.deg, fromType = "ORF",
-                       toType = c("ENTREZID","GENENAME","ENSEMBL"),
-                       OrgDb = org.Sc.sgd.db)
-      temp.deg <- temp.deg[!is.na(temp.deg$ENSEMBL),]
-
-      temp.goe <- enrichGO(gene          = temp.deg$ENSEMBL,
-                           universe      = allgenes$ENSEMBL,
-                           OrgDb         = org.Sc.sgd.db,
-                           keyType       = "ENSEMBL",
-                           ont           = "ALL",
-                           pAdjustMethod = "BH",
-                           pvalueCutoff  = 0.01,
-                           qvalueCutoff  = 0.05)
-      if (length(temp.goe) == 1) {
-        if (dim(temp.goe)[1] == 0) {
-          cat(sprintf('There are no GO term enrichment for %s ORFs in REF: %s | COND: %s comparison.\n',
-                      p,id_ref,id_cond))
-        } else{
-          cat(sprintf('GO term enrichment for %s ORFs in REF: %s | COND: %s comparison are:\n%s\n',
-                      p,id_ref,id_cond,
-                      paste(temp.goe$Description,collapse = ', ')))
-          goe <- rbind(goe, data.frame(temp.goe, id_ref = id_ref, id_cond = id_cond, phenotype = p))
-        }
-      }
-
-      temp.kegg <- enrichKEGG(gene         = temp.deg$ENSEMBL,
-                              universe     = allgenes$ENSEMBL,
-                              organism     = 'sce',
-                              pvalueCutoff = 0.05)
-      if (length(temp.kegg) == 1) {
-        if (dim(temp.kegg)[1] == 0) {
-          cat(sprintf('There are no KEGG pathway enriched for %s ORFs in REF: %s | COND: %s comparison.\n',
-                      p,id_ref,id_cond))
-        } else{
-          cat(sprintf('KEGG pathway enrichment for %s ORFs in REF: %s | COND: %s comparison are:\n%s\n',
-                      p,id_ref,id_cond,
-                      paste(temp.kegg$Description,collapse = ', ')))
-          kegg <- rbind(kegg, data.frame(temp.kegg, id_ref = id_ref, id_cond = id_cond, phenotype = p))
-        }
-      }
-    }
-  }
-}
-goe$GeneRatio <- as.numeric(str_split(goe$GeneRatio,'/',simplify = T)[,1])/
-  as.numeric(str_split(goe$GeneRatio,'/',simplify = T)[,2])
-goe$BgRatio <- as.numeric(str_split(goe$BgRatio,'/',simplify = T)[,1])/
-  as.numeric(str_split(goe$BgRatio,'/',simplify = T)[,2])
-goe$GO <- paste0(goe$ONTOLOGY, '_', goe$Description)
-
-kegg$GeneRatio <- as.numeric(str_split(kegg$GeneRatio,'/',simplify = T)[,1])/
-  as.numeric(str_split(kegg$GeneRatio,'/',simplify = T)[,2])
-kegg$BgRatio <- as.numeric(str_split(kegg$BgRatio,'/',simplify = T)[,1])/
-  as.numeric(str_split(kegg$BgRatio,'/',simplify = T)[,2])
-
-goe <- goe[order(goe$id_ref,goe$id_cond,goe$phenotype,-goe$GeneRatio,-goe$Count,goe$qvalue),]
-kegg <- kegg[order(kegg$id_ref,kegg$id_cond,kegg$phenotype,-kegg$GeneRatio,-kegg$Count,kegg$qvalue),]
-
-write.csv(goe, file = 'output/translatome/go_enrichments.csv')
-write.csv(kegg, file = 'output/translatome/kegg_enrichments.csv')
+# goe <- data.frame()
+# kegg <- data.frame()
+# for (id_ref in c('ONE_GA','TWO_GA','TWO_DM')) {
+#   allgenes <- unique(data.diff2$orf_name[data.diff2$id_ref == id_ref])
+#   allgenes <- bitr(allgenes, fromType = "ORF",
+#                    toType = c("ENTREZID","GENENAME","ENSEMBL"),
+#                    OrgDb = org.Sc.sgd.db)
+#   allgenes <- allgenes[!is.na(allgenes$ENSEMBL),]
+#   for (id_cond in unique(data.diff2$id_cond[data.diff2$id_ref == id_ref])) {
+#     for (p in unique(data.diff2$phenotype[data.diff2$id_cond == id_cond & data.diff2$id_ref == id_ref])) {
+#       temp.deg <- data.diff2$orf_name[data.diff2$id_ref == id_ref & data.diff2$id_cond == id_cond &
+#                                        data.diff2$phenotype == p]
+#       temp.deg <- bitr(temp.deg, fromType = "ORF",
+#                        toType = c("ENTREZID","GENENAME","ENSEMBL"),
+#                        OrgDb = org.Sc.sgd.db)
+#       temp.deg <- temp.deg[!is.na(temp.deg$ENSEMBL),]
+# 
+#       temp.goe <- enrichGO(gene          = temp.deg$ENSEMBL,
+#                            universe      = allgenes$ENSEMBL,
+#                            OrgDb         = org.Sc.sgd.db,
+#                            keyType       = "ENSEMBL",
+#                            ont           = "ALL",
+#                            pAdjustMethod = "BH",
+#                            pvalueCutoff  = 0.01,
+#                            qvalueCutoff  = 0.05)
+#       if (length(temp.goe) == 1) {
+#         if (dim(temp.goe)[1] == 0) {
+#           cat(sprintf('There are no GO term enrichment for %s ORFs in REF: %s | COND: %s comparison.\n',
+#                       p,id_ref,id_cond))
+#         } else{
+#           cat(sprintf('GO term enrichment for %s ORFs in REF: %s | COND: %s comparison are:\n%s\n',
+#                       p,id_ref,id_cond,
+#                       paste(temp.goe$Description,collapse = ', ')))
+#           goe <- rbind(goe, data.frame(temp.goe, id_ref = id_ref, id_cond = id_cond, phenotype = p))
+#         }
+#       }
+# 
+#       temp.kegg <- enrichKEGG(gene         = temp.deg$ENSEMBL,
+#                               universe     = allgenes$ENSEMBL,
+#                               organism     = 'sce',
+#                               pvalueCutoff = 0.05)
+#       if (length(temp.kegg) == 1) {
+#         if (dim(temp.kegg)[1] == 0) {
+#           cat(sprintf('There are no KEGG pathway enriched for %s ORFs in REF: %s | COND: %s comparison.\n',
+#                       p,id_ref,id_cond))
+#         } else{
+#           cat(sprintf('KEGG pathway enrichment for %s ORFs in REF: %s | COND: %s comparison are:\n%s\n',
+#                       p,id_ref,id_cond,
+#                       paste(temp.kegg$Description,collapse = ', ')))
+#           kegg <- rbind(kegg, data.frame(temp.kegg, id_ref = id_ref, id_cond = id_cond, phenotype = p))
+#         }
+#       }
+#     }
+#   }
+# }
+# goe$GeneRatio <- as.numeric(str_split(goe$GeneRatio,'/',simplify = T)[,1])/
+#   as.numeric(str_split(goe$GeneRatio,'/',simplify = T)[,2])
+# goe$BgRatio <- as.numeric(str_split(goe$BgRatio,'/',simplify = T)[,1])/
+#   as.numeric(str_split(goe$BgRatio,'/',simplify = T)[,2])
+# goe$GO <- paste0(goe$ONTOLOGY, '_', goe$Description)
+# 
+# kegg$GeneRatio <- as.numeric(str_split(kegg$GeneRatio,'/',simplify = T)[,1])/
+#   as.numeric(str_split(kegg$GeneRatio,'/',simplify = T)[,2])
+# kegg$BgRatio <- as.numeric(str_split(kegg$BgRatio,'/',simplify = T)[,1])/
+#   as.numeric(str_split(kegg$BgRatio,'/',simplify = T)[,2])
+# 
+# goe <- goe[order(goe$id_ref,goe$id_cond,goe$phenotype,-goe$GeneRatio,-goe$Count,goe$qvalue),]
+# kegg <- kegg[order(kegg$id_ref,kegg$id_cond,kegg$phenotype,-kegg$GeneRatio,-kegg$Count,kegg$qvalue),]
+# 
+# write.csv(goe, file = 'output/translatome/go_enrichments.csv')
+# write.csv(kegg, file = 'output/translatome/kegg_enrichments.csv')
 
 
 ##### ORF_TYPE ENRICHMENT
+## NOT TRANSLATED VS TRANSIENT VS NOT TRANSIENT
+# head(data.diff2)
+# 
+# data.cnt.all <- merge(data.diff2 %>%
+#   group_by(id_ref, id_cond, cond2, cond1, orf_type, phenotype) %>%
+#   count() %>%
+#   data.frame(), data.diff2 %>%
+#     group_by(id_ref, id_cond, cond2, cond1, orf_type) %>%
+#     count() %>%
+#     data.frame(), by = c('id_ref','id_cond','cond1','cond2','orf_type'),
+#   suffixes = c('','_total'))
+# data.cnt.all$percentage <- data.cnt.all$n/data.cnt.all$n_total * 100 
+# 
+# fig.pheno.prop <- data.cnt.all %>%
+#   filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+#   ggplot(aes(x = orf_type, y = percentage, fill = phenotype)) +
+#   geom_bar(stat="identity") +
+#   geom_text(aes(label = sprintf('%0.2f%%',percentage)),
+#             col = 'black', size = 2,
+#             position = position_stack(vjust = 0.5)) +
+#   facet_wrap(.~cond2*cond1, nrow = 1,
+#              labeller = labeller(cond2 = c('DM' = 'Ref: DMSO',
+#                                            'GA' = 'Ref: Galactose'),
+#                                  cond1 = c('FL' = 'Str: Fluconazole',
+#                                            'TN' = 'Str: Tunicamycin',
+#                                            'HO' = 'Str: Hydrogen Peroxide',
+#                                            'HU' = 'Str: Hydroxyurea',
+#                                            'SA' = 'Str: Salt'))) +
+#   labs(x = 'ORF Type',
+#        y = 'Phenotype Proportion') +
+#   scale_fill_manual(name = 'Phenotype',
+#                     values = c('Beneficial' = '#FFA000',
+#                                'Neutral' = '#757575',
+#                                'Deleterious' = '#303F9F')) +
+#   theme_linedraw() +
+#   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
+#         axis.title = element_text(size = titles),
+#         axis.text = element_text(size = txt),
+#         legend.title = element_text(size = titles),
+#         legend.text = element_text(size = txt),
+#         legend.position = 'bottom',
+#         legend.key.size = unit(3, "mm"),
+#         legend.box.spacing = unit(0.5,"mm"),
+#         strip.text = element_text(size = txt,
+#                                   face = 'bold',
+#                                   margin = margin(0.1,0,0.1,0, "mm")))
+# ggsave(sprintf("%s/PhenotypeProportions.jpg",fig_path), fig.pheno.prop,
+#        height = one.c, width = two.c, units = 'mm',
+#        dpi = 600)
+
+## ANNOTATED VS NOT ANNOTATED
 head(data.diff2)
+data.diff2$annotation[str_detect(data.diff2$orf_name, 'sm')] <- 'Unannotated'
+data.diff2$annotation[is.na(data.diff2$annotation)] <- 'Annotated'
 
-data.cnt.all <- merge(data.diff2 %>%
-  group_by(id_ref, id_cond, cond2, cond1, orf_type, phenotype) %>%
-  count() %>%
-  data.frame(), data.diff2 %>%
-    group_by(id_ref, id_cond, cond2, cond1, orf_type) %>%
-    count() %>%
-    data.frame(), by = c('id_ref','id_cond','cond1','cond2','orf_type'),
-  suffixes = c('','_total'))
-data.cnt.all$percentage <- data.cnt.all$n/data.cnt.all$n_total * 100 
+length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Not Translated' & data.diff2$annotation == 'Annotated']))
+length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Not Translated' & data.diff2$annotation == 'Unannotated']))
+length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Transient' & data.diff2$annotation == 'Annotated']))
+length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Transient' & data.diff2$annotation == 'Unannotated']))
+length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Not Transient' & data.diff2$annotation == 'Annotated']))
+length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Not Transient' & data.diff2$annotation == 'Unannotated']))
 
-fig.pheno.prop <- data.cnt.all %>%
+data.cnt.ann <- merge(data.diff2 %>%
+                        group_by(id_ref, id_cond, cond2, cond1, orf_type, annotation, phenotype) %>%
+                        count() %>%
+                        data.frame(), data.diff2 %>%
+                        group_by(id_ref, id_cond, cond2, cond1, orf_type, annotation) %>%
+                        count() %>%
+                        data.frame(), by = c('id_ref','id_cond','cond1','cond2','orf_type','annotation'),
+                      suffixes = c('','_total'))
+data.cnt.ann$percentage <- data.cnt.ann$n/data.cnt.ann$n_total * 100 
+
+fig.pheno.prop.ann <- data.cnt.ann %>%
   filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
   ggplot(aes(x = orf_type, y = percentage, fill = phenotype)) +
   geom_bar(stat="identity") +
-  geom_text(aes(label = sprintf('%0.2f%%',percentage)),
-            col = 'black', size = 2,
+  geom_label_repel(aes(label = sprintf('%0.2f%%\n%d',percentage,n), fill = phenotype),
+            col = 'white', size = 2, direction = 'y', label.size = 0.15,
+            force = 2, seed = 111,
             position = position_stack(vjust = 0.5)) +
-  facet_wrap(.~cond2*cond1, nrow = 1,
+  scale_x_discrete(limits = c('Not Translated','Not Transient','Transient')) +
+  scale_y_continuous(breaks = seq(0,200,10)) +
+  facet_wrap(.~annotation*cond2*cond1, nrow = 2,
              labeller = labeller(cond2 = c('DM' = 'Ref: DMSO',
                                            'GA' = 'Ref: Galactose'),
                                  cond1 = c('FL' = 'Str: Fluconazole',
@@ -461,7 +523,7 @@ fig.pheno.prop <- data.cnt.all %>%
   theme_linedraw() +
   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
         axis.title = element_text(size = titles),
-        axis.text = element_text(size = txt),
+        axis.text = element_text(size = txt, angle = 30, hjust = 1, vjust = 1),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
         legend.position = 'bottom',
@@ -469,10 +531,28 @@ fig.pheno.prop <- data.cnt.all %>%
         legend.box.spacing = unit(0.5,"mm"),
         strip.text = element_text(size = txt,
                                   face = 'bold',
-                                  margin = margin(0.1,0,0.1,0, "mm")))
-ggsave(sprintf("%s/PhenotypeProportions.jpg",fig_path), fig.pheno.prop,
-       height = one.c, width = two.c, units = 'mm',
+                                  margin = margin(0.1,0,0.1,0, "mm"))) +
+  coord_cartesian(ylim = c(0,110))
+ggsave(sprintf("%s/PhenotypeProportionsAnnotation.jpg",fig_path), fig.pheno.prop.ann,
+       height = two.c, width = two.c, units = 'mm',
        dpi = 600)
+
+
+##### PHENOTYPE COUNTS DENSITY
+data.diff2 %>%
+  filter(orf_type != 'Reference') %>%
+  group_by(id_ref, orf_type, annotation, orf_name, strain_id, phenotype) %>%
+  count() %>% data.frame() %>%
+  filter(phenotype == 'Beneficial') %>%
+  ggplot(aes(x = n, y = orf_type)) +
+  geom_density_ridges() +
+  facet_wrap(.~annotation)
+
+write.csv(data.diff2 %>%
+            filter(on_list == 1) %>%
+            group_by(id_cond, condition, rep, orf_name, orf_type, fitness.median_cond, cs.median_cond, phenotype) %>%
+            data.frame(), file = 'output/translatome/orfs_on_list_phenotype.csv')
+
 
 
 ##### PHENOTYPE ODDS RATIO
@@ -550,16 +630,6 @@ ggsave(sprintf("%s/PHENOTYPE_ODDS.jpg",fig_path), plot.or,
        height = one.5c, width = one.5c, units = 'mm',
        dpi = 600) 
 
-
-##### TRANSIENT
-data.diff2 %>%
-  filter(orf_name != 'BF_control', id_ref %in% c('ONE_GA','TWO_DM'),
-         is_tr == 1) %>%
-  group_by(rep, orf_name, is_tr, on_list, phenotype) %>%
-  count() %>%
-  filter(phenotype == 'Beneficial', n > 1) %>%
-  data.frame()
-
 ##### SAVE ALL
 # save(list = ls(.GlobalEnv), file = "output/translatome/AllData.RData")
 
@@ -568,10 +638,13 @@ temp <- unique(data.diff$orf_name[!(data.diff$strain_id %in% controls$strain_id)
 temp <- bitr(temp, fromType = "ORF",
      toType = c("DESCRIPTION"),
      OrgDb = org.Sc.sgd.db)
+
 dbWriteTable(conn, 'TR_OE_DIFF_FITNESS',
              merge(data.diff[!(data.diff$strain_id %in% controls$strain_id),] %>% 
-               filter(orf_name != 'BF_control'), temp, by.x = 'orf_name', by.y = 'ORF', all = T), 
+               filter(orf_name != 'BF_control', arm1 == arm2, 
+                      id_ref %in% c('ONE_GA','TWO_DM'), id_cond != 'TWO_GA'), temp, by.x = 'orf_name', by.y = 'ORF', all = T), 
              overwrite = T)
+
 
 
 
