@@ -388,7 +388,9 @@ fig.csvsfit <- data.mad[!(data.mad$strain_id %in% controls$strain_id),] %>%
   geom_point(data = data.mad %>% filter(orf_name == 'YBR196C-A', hours == saturation),
              aes(x = fitness.median, y = cs.median),
              col = 'black', shape = 21, size = 1) +
-  stat_cor(method = 'pearson', label.x = 0.3, label.y = 2200) +
+  stat_cor(method = 'pearson', label.x = 0, label.y = 2200,
+           # aes(label = paste('Pearson',..r.label.., sep = "~`,`~")),
+           size = 2) +
   labs(x = 'Relative Fitness in Stress Condition',
        y = 'Colony Size in Stress Condition (pixels)') +
   coord_cartesian(xlim = c(0, 2),
