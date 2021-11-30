@@ -86,6 +86,7 @@ data.fit <- merge(data.fit, tr_status, by = 'orf_name', all.x = T)
 data.fit$rep <- as.numeric(str_trunc(as.character(data.fit$pos), 5, side = 'left', ellipsis = ''))
 
 data.fit$saturation[data.fit$condition == 'FL'] <- 46
+data.fit$saturation[data.fit$condition == 'HO'] <- 23
 # data.stats$saturation[data.stats$condition == 'FL'] <- 46
 time.sat <- data.fit %>%
   group_by(arm, condition) %>%
@@ -94,7 +95,7 @@ time.sat <- data.fit %>%
 
 ##### FITNESS PLATEMAPS
 data.fit %>%
-  filter(condition == 'TN', hours == saturation) %>%
+  filter(condition == 'HO', hours == saturation) %>%
   ggplot(aes(x = col, y = row, fill = fitness)) +
   geom_tile() +
   scale_y_reverse() +
@@ -119,6 +120,11 @@ data.fit$average[data.fit$average < (data.fit$cs.median - 2*data.fit$cs.mad) |
                    data.fit$average > (data.fit$cs.median + 2*data.fit$cs.mad)] <- NA
 
 data.mad <- merge(data.mad, time.sat, by = c('arm','condition'))
+
+colnames(data.fit)
+
+write.csv(data.fit[data.fit$hours == data.fit$saturation & !is.na(data.fit$average) & !is.na(data.fit$fitness),
+                   colnames(data.fit)[c(1:10,12,13)]], file = 'output/translatome/tr_oe_fitandcs.csv')
 
 ##### REFERENCE LIMITS
 data.lim <- data.fit %>%
@@ -197,6 +203,8 @@ for (id1 in unique(data.mad$id)) {
     diff.dist <- rbind(diff.dist, temp.diff.dist)
   }
 }
+head(data.diff)
+head(diff.dist)
 data.diff <- merge(data.diff, diff.dist, by = c('id_cond','id_ref'), all = T)
 
 data.diff$phenotype[data.diff$fitness_diff >= data.diff$ul] <- 'Beneficial'
@@ -423,32 +431,32 @@ ggsave(sprintf("%s/AllColonySizeVSFitness.jpg",fig_path), fig.csvsfit,
        dpi = 600)
 
 
-fig.gal.corr <- data.diff %>%
-  filter(id_ref == 'TWO_GA', id_cond == 'ONE_GA') %>%
-  filter(!is.na(id_cond), !is.na(id_ref), orf_type != 'Reference') %>%
-  ggplot(aes(x = fitness.median_cond, y = fitness.median_ref)) +
-  geom_point(col = '#9E9E9E', size = 1) +
-  geom_smooth(method = 'lm', size = 0.5, linetype = 'dashed', col = 'black') +
-  stat_cor(method = 'pearson', size = 3) +
-  labs(x = 'Relative Fitness in Arm 1',
-       y = 'Relative Fitness in Arm 2') +
-  coord_cartesian(xlim = c(0, 1.5),
-                  ylim = c(0, 1.5)) +
-  theme_linedraw() +
-  theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
-        axis.title = element_text(size = titles),
-        axis.text = element_text(size = txt),
-        legend.title = element_text(size = titles),
-        legend.text = element_text(size = txt),
-        legend.position = 'bottom',
-        legend.key.size = unit(3, "mm"),
-        legend.box.spacing = unit(0.5,"mm"),
-        strip.text = element_text(size = txt,
-                                  face = 'bold',
-                                  margin = margin(0.1,0,0.1,0, "mm")))
-ggsave(sprintf("%s/GALCorr.jpg",fig_path), fig.gal.corr,
-       height = one.c, width = one.c, units = 'mm',
-       dpi = 600)
+# fig.gal.corr <- data.diff %>%
+#   filter(id_ref == 'TWO_GA', id_cond == 'ONE_GA') %>%
+#   filter(!is.na(id_cond), !is.na(id_ref), orf_type != 'Reference') %>%
+#   ggplot(aes(x = fitness.median_cond, y = fitness.median_ref)) +
+#   geom_point(col = '#9E9E9E', size = 1) +
+#   geom_smooth(method = 'lm', size = 0.5, linetype = 'dashed', col = 'black') +
+#   stat_cor(method = 'pearson', size = 3) +
+#   labs(x = 'Relative Fitness in Arm 1',
+#        y = 'Relative Fitness in Arm 2') +
+#   coord_cartesian(xlim = c(0, 1.5),
+#                   ylim = c(0, 1.5)) +
+#   theme_linedraw() +
+#   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
+#         axis.title = element_text(size = titles),
+#         axis.text = element_text(size = txt),
+#         legend.title = element_text(size = titles),
+#         legend.text = element_text(size = txt),
+#         legend.position = 'bottom',
+#         legend.key.size = unit(3, "mm"),
+#         legend.box.spacing = unit(0.5,"mm"),
+#         strip.text = element_text(size = txt,
+#                                   face = 'bold',
+#                                   margin = margin(0.1,0,0.1,0, "mm")))
+# ggsave(sprintf("%s/GALCorr.jpg",fig_path), fig.gal.corr,
+#        height = one.c, width = one.c, units = 'mm',
+#        dpi = 600)
 
 ##### CONDITION CONTROLS
 # merge(data.diff[data.diff$strain_id %in% controls$strain_id &
@@ -462,8 +470,10 @@ ggsave(sprintf("%s/GALCorr.jpg",fig_path), fig.gal.corr,
 
 fig.conts <- merge(data.mad, melt(controls, id.vars = c('strain_id','standard_name','orf_name'),
                      variable.name = 'condition', value.name = 'control_type'), by = c('condition','strain_id','orf_name')) %>%
-  filter(hours %in% c(141, 36, 20, 125, 26), control_type != '') %>%
-  ggplot(aes(x = fitness.median, y = orf_name)) +
+  filter(hours %in% c(46, 23, 20, 125, 26), control_type != '', standard_name != 'ALD3') %>%
+  ggplot(aes(x = fitness.median, y = standard_name)) +
+  geom_vline(aes(xintercept = fitness_ll), size = 0.5, linetype = 'dashed', col = 'red') +
+  geom_vline(aes(xintercept = fitness_ul), size = 0.5, linetype = 'dashed', col = 'red') +
   geom_boxplot(aes(fill = control_type, col = control_type), outlier.shape = NA, size = 0.6) +
   labs(x = 'Fitness',
        y = 'Control Mutant') +
@@ -635,9 +645,11 @@ length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Not Transient' & data.
 length(unique(data.diff2$orf_name[data.diff2$orf_type == 'Not Transient' & data.diff2$annotation == 'Unannotated']))
 
 data.cnt.ann <- merge(data.diff2 %>%
+                        filter(orf_type != 'Reference') %>%
                         group_by(id_ref, id_cond, cond2, cond1, orf_type, annotation, phenotype) %>%
                         count() %>%
                         data.frame(), data.diff2 %>%
+                        filter(orf_type != 'Reference') %>%
                         group_by(id_ref, id_cond, cond2, cond1, orf_type, annotation) %>%
                         count() %>%
                         data.frame(), by = c('id_ref','id_cond','cond1','cond2','orf_type','annotation'),
@@ -663,7 +675,7 @@ fig.pheno.prop.ann <- data.cnt.ann %>%
                                            'HU' = 'Str: Hydroxyurea',
                                            'SA' = 'Str: Salt'))) +
   labs(x = 'ORF Type',
-       y = 'Phenotype Proportion') +
+       y = 'Phenotype Proportion (%)') +
   scale_fill_manual(name = 'Phenotype',
                     values = c('Beneficial' = '#FFA000',
                                'Neutral' = '#757575',
@@ -671,7 +683,8 @@ fig.pheno.prop.ann <- data.cnt.ann %>%
   theme_linedraw() +
   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
         axis.title = element_text(size = titles),
-        axis.text = element_text(size = txt, angle = 30, hjust = 1, vjust = 1),
+        axis.text.y = element_text(size = txt),
+        axis.text.x = element_text(size = txt, angle = 30, hjust = 1, vjust = 1),
         legend.title = element_text(size = titles),
         legend.text = element_text(size = txt),
         legend.position = 'bottom',
@@ -682,6 +695,58 @@ fig.pheno.prop.ann <- data.cnt.ann %>%
                                   margin = margin(0.1,0,0.1,0, "mm"))) +
   coord_cartesian(ylim = c(0,110))
 ggsave(sprintf("%s/PhenotypeProportionsAnnotation.jpg",fig_path), fig.pheno.prop.ann,
+       height = two.c, width = two.c, units = 'mm',
+       dpi = 600)
+
+
+##### FDR
+head(data.cnt.ann)
+data.cnt.ann$fd <- data.cnt.ann$n_total * 0.025
+data.cnt.ann$fdr <- NULL
+data.cnt.ann$fdr[data.cnt.ann$n > data.cnt.ann$fd] <- 
+  data.cnt.ann$fd[data.cnt.ann$n > data.cnt.ann$fd]/data.cnt.ann$n[data.cnt.ann$n > data.cnt.ann$fd] * 100
+data.cnt.ann$fdr[is.na(data.cnt.ann$fdr)] <- 100
+data.cnt.ann$fdr[data.cnt.ann$phenotype == 'Neutral'] <- NA
+  
+fig.pheno.prop.ann.fdr <- data.cnt.ann %>%
+  filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+  ggplot(aes(x = orf_type, y = percentage, fill = phenotype)) +
+  geom_bar(stat="identity") +
+  geom_label_repel(aes(label = sprintf('%0.2f%%\n%d\n%0.2f%%',percentage,n,fdr), fill = phenotype),
+                   col = 'white', size = 1.5, direction = 'y', label.size = 0.15,
+                   force = 2, seed = 111,
+                   position = position_stack(vjust = 0.5)) +
+  scale_x_discrete(limits = c('Not Translated','Not Transient','Transient')) +
+  scale_y_continuous(breaks = seq(0,200,10)) +
+  facet_wrap(.~annotation*cond2*cond1, nrow = 2,
+             labeller = labeller(cond2 = c('DM' = 'Ref: DMSO',
+                                           'GA' = 'Ref: Galactose'),
+                                 cond1 = c('FL' = 'Str: Fluconazole',
+                                           'TN' = 'Str: Tunicamycin',
+                                           'HO' = 'Str: Hydrogen Peroxide',
+                                           'HU' = 'Str: Hydroxyurea',
+                                           'SA' = 'Str: Salt'))) +
+  labs(x = 'ORF Type',
+       y = 'Phenotype Proportion (%)') +
+  scale_fill_manual(name = 'Phenotype',
+                    values = c('Beneficial' = '#FFA000',
+                               'Neutral' = '#757575',
+                               'Deleterious' = '#303F9F')) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
+        axis.title = element_text(size = titles),
+        axis.text.y = element_text(size = txt),
+        axis.text.x = element_text(size = txt, angle = 30, hjust = 1, vjust = 1),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom',
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm"),
+        strip.text = element_text(size = txt,
+                                  face = 'bold',
+                                  margin = margin(0.1,0,0.1,0, "mm"))) +
+  coord_cartesian(ylim = c(0,110))
+ggsave(sprintf("%s/PhenotypeProportionsAnnotationFDR.jpg",fig_path), fig.pheno.prop.ann.fdr,
        height = two.c, width = two.c, units = 'mm',
        dpi = 600)
 
@@ -722,15 +787,115 @@ ggsave(sprintf("%s/DifferentialFitnessDensity.jpg",fig_path), fig.den,
        height = one.5c, width = two.c, units = 'mm',
        dpi = 600)
 
-##### PHENOTYPE COUNTS DENSITY
-data.diff2 %>%
-  filter(orf_type != 'Reference') %>%
-  group_by(id_ref, orf_type, annotation, orf_name, strain_id, phenotype) %>%
-  count() %>% data.frame() %>%
-  filter(phenotype == 'Beneficial') %>%
-  ggplot(aes(x = n, y = orf_type)) +
-  geom_density_ridges() +
-  facet_wrap(.~annotation)
+##### PHENOTYPE COUNTS
+data.cnt <-  merge(data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+        group_by(orf_type, annotation, phenotype) %>%
+        count() %>%
+        data.frame(), 
+      data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+        group_by(orf_type, annotation) %>%
+        count() %>%
+        data.frame(), by = c('orf_type','annotation'),
+      suffixes = c('','_total'))
+data.cnt$percentage <- data.cnt$n/data.cnt$n_total * 100 
+
+
+merge(merge(data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>% 
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>%
+        group_by(orf_type, annotation, phenotype) %>%
+        count() %>%
+        data.frame(),
+      data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA', id_cond != 'TWO_FL') %>%
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>% 
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>%
+        group_by(orf_type, annotation, phenotype) %>%
+        count() %>%
+        data.frame(), by = c('orf_type','annotation','phenotype'), suffixes = c('','_noFL')),
+      data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+        group_by(orf_name, annotation, orf_type) %>%
+        count() %>%
+        group_by(orf_name, annotation, orf_type) %>%
+        count() %>%
+        group_by(orf_type, annotation) %>%
+        count() %>%
+        data.frame(),
+      by = c('orf_type'), suffixes = c('','_total'))
+
+write.csv(merge(merge(data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>% 
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>%
+        group_by(orf_type, phenotype) %>%
+        count() %>%
+        data.frame(),
+      data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA', id_cond != 'TWO_FL') %>%
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>% 
+        group_by(orf_name, orf_type, annotation, phenotype) %>%
+        count() %>%
+        group_by(orf_type, phenotype) %>%
+        count() %>%
+        data.frame(), by = c('orf_type','phenotype'), suffixes = c('','_noFL')),
+      data.diff2 %>%
+        filter(orf_type != 'Reference', id_ref != 'TWO_GA', id_cond != 'TWO_GA') %>%
+        group_by(orf_name, orf_type) %>%
+        count() %>%
+        group_by(orf_name, orf_type) %>%
+        count() %>%
+        group_by(orf_type) %>%
+        count() %>%
+        data.frame(),
+      by = c('orf_type'), suffixes = c('','_total')), file = 'output/translatome/atleastonephenotype.csv')
+
+
+
+
+fig.pheno.prop <- data.cnt %>%
+  ggplot(aes(x = orf_type, y = percentage, fill = phenotype)) +
+  geom_bar(stat="identity") +
+  geom_label_repel(aes(label = sprintf('%0.2f%%',percentage), fill = phenotype),
+                   col = 'white', size = 2, direction = 'y', label.size = 0.15,
+                   force = 2, seed = 111,
+                   position = position_stack(vjust = 0.5)) +
+  scale_x_discrete(limits = c('Not Translated','Not Transient','Transient')) +
+  scale_y_continuous(breaks = seq(0,200,10)) +
+  facet_wrap(.~annotation, nrow = 1) +
+  labs(x = 'ORF Type',
+       y = 'Phenotype Proportion (%)') +
+  scale_fill_manual(name = 'Phenotype',
+                    values = c('Beneficial' = '#FFA000',
+                               'Neutral' = '#757575',
+                               'Deleterious' = '#303F9F')) +
+  theme_linedraw() +
+  theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
+        axis.title = element_text(size = titles),
+        axis.text.y = element_text(size = txt),
+        axis.text.x = element_text(size = txt, angle = 30, hjust = 1, vjust = 1),
+        legend.title = element_text(size = titles),
+        legend.text = element_text(size = txt),
+        legend.position = 'bottom',
+        legend.key.size = unit(3, "mm"),
+        legend.box.spacing = unit(0.5,"mm"),
+        strip.text = element_text(size = txt,
+                                  face = 'bold',
+                                  margin = margin(0.1,0,0.1,0, "mm"))) +
+  coord_cartesian(ylim = c(0,110))
+ggsave(sprintf("%s/PhenotypeProportionsALL.jpg",fig_path), fig.pheno.prop,
+       height = one.c, width = two.c, units = 'mm',
+       dpi = 600)
 
 # write.csv(data.diff2 %>%
 #             filter(on_list == 1) %>%
