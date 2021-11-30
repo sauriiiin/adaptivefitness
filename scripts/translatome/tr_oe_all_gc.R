@@ -3,6 +3,7 @@
 `%notin%` <- Negate(`%in%`)
 
 #####
+# data.fit.all is all the fitness data after outlier removal
 
 data.fit.cs <- merge(data.fit.all[,c(1:21)], data.fit.lim[,-4], by = c('arm','condition','hours'))
 
@@ -40,19 +41,19 @@ for (a in unique(data.temp$arm)) {
                             data.temp$rep == r &
                             data.temp$strain_id == s,]
         if (sum(is.na(temp$norm_cs)) <= 5) {
-          # lo <- loess.smooth(temp$hours, log(temp$norm_cs),
-          #                    span = 0.6, evaluation = 100, degree = 2,
-          #                    family = 'gaussian')
-          # data.pred <- cbind(data.pred,exp(lo$y))
-          data.pred <- cbind(data.pred, temp$norm_cs)
+          lo <- loess.smooth(temp$hours, log(temp$norm_cs),
+                             span = 0.6, evaluation = 100, degree = 2,
+                             family = 'gaussian')
+          data.pred <- cbind(data.pred,exp(lo$y))
+          # data.pred <- cbind(data.pred, temp$norm_cs)
           col.names <- cbind(col.names,paste(a,c,r,s,sep = ','))
           
           # temp.plot <- ggplot() +
           #   geom_line(data = data.frame(lo), aes(x = x, y = y)) +
-          #   geom_point(data = temp, aes(x = hours, y = log(average)), shape = 1) +
+          #   geom_point(data = temp, aes(x = hours, y = log(norm_cs)), shape = 1) +
           #   labs(y = 'Log( Colony Size (pixels) )',
           #        x = 'Time (hours)',
-          #        title = paste(o,c,b,sep = ' | ')) +
+          #        title = paste(a,c,r,s,sep = ' | ')) +
           #   theme_linedraw() +
           #   theme(plot.title = element_text(size = titles + 2, face = 'bold', hjust = 0.5),
           #         axis.title = element_text(size = titles),
@@ -72,8 +73,8 @@ for (a in unique(data.temp$arm)) {
         }
       }
     }
-    # data.pred <- cbind(lo$x, data.pred)
-    data.pred <- cbind(temp$hours, data.pred)
+    data.pred <- cbind(lo$x, data.pred)
+    # data.pred <- cbind(temp$hours, data.pred)
     data.pred <- data.frame(data.pred)
     colnames(data.pred) <- c('Time',col.names)
     head(data.pred)
