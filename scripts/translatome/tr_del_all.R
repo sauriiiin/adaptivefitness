@@ -53,8 +53,8 @@ txt <- 8
 lbls <- 9
 
 ##### INITIALIZE
-tr.conds <- data.frame(arms = c('R1','R2','R1','R2','R1','R2','R1','R2','R3','R1','R2','R3','R1','R2','R3','R1','R2','R3'),
-                       conds = c('YPDA','YPDA','DM','DM','HU','HU','HO','HO','HO','TN','TN','TN','FL','FL','FL','SA','SA','SA'))
+tr.conds <- data.frame(arms = c('R1','R2','R1','R2','R1','R2','R1','R2','R3','R1','R2','R3','R1','R2','R1','R2','R3'),
+                       conds = c('YPDA','YPDA','DM','DM','HU','HU','HO','HO','HO','TN','TN','TN','FL','FL','SA','SA','SA'))
 
 borders <- dbGetQuery(conn, 'select * from TR_DEL_borderpos')
 
@@ -73,7 +73,9 @@ for (c in unique(tr.conds$conds)) {
   }
 }
 data.fit.all$average[data.fit.all$pos %in% borders$pos] <- NA
+data.fit.all <- data.fit.all[!(data.fit.all$condition == 'FL' & data.fit.all$arm == 'R1'),]
 data.fit.all <- data.fit.all[!(data.fit.all$condition == 'FL' & data.fit.all$arm == 'R3'),]
+data.fit.all <- data.fit.all[!(data.fit.all$condition == 'HO' & data.fit.all$arm == 'R3'),]
 
 data.fit.all$rep <- as.numeric(str_trunc(as.character(data.fit.all$pos), 4, side = 'left', ellipsis = ''))
 
@@ -111,9 +113,6 @@ data.fit.sum <- data.fit.sum[!is.na(data.fit.sum$orf_name) & data.fit.sum$orf_na
 data.fit.all <- merge(data.fit.all[,c(1:15)], data.fit.sum,
                       by = c('arm','condition','hours','rep','strain_id','orf_name'), all = T)
 
-##### SAVE PRELIM DATA
-# write.csv(data.fit.all[,c(1:15)], file = 'output/translatome/tr_del_fitandcs_highres_all.csv')
-# write.csv(data.fit.sum, file = 'output/translatome/tr_del_fitandcs_highres_summary_armwise.csv')
 
 ##### REFERENCE LIMITS
 data.fit.lim <- data.fit.all %>%
@@ -134,9 +133,14 @@ data.fit.lim <- data.fit.all %>%
 
 data.fit.all <- merge(data.fit.all, data.fit.lim[,-4], by = c('arm','condition','hours'))
 
+##### SAVE PRELIM DATA
+write.csv(data.fit.all[,c(1:16)], file = 'output/translatome/tr_del_fitandcs_highres_all.csv')
+write.csv(data.fit.sum, file = 'output/translatome/tr_del_fitandcs_highres_summary_armwise.csv')
+
 ##### GROWTH CURVES FOR AARON'S HITS
 del.hits <- read_delim(file = 'output/translatome/deletion/deletion_mutant_highly_deleterious.txt', delim = ' ')
 match.ids <- read_delim(file = 'rawdata/translatome/match_orf_ids_2012', delim = ' ')
+match.ids$full_orf_id <- str_replace(match.ids$full_orf_id, 'chr_','chr')
 
 data.fit.hit.all <- merge(data.fit.all, del.hits[,c(2,3,5:7)], by = c('condition','arm','rep','strain_id','orf_name'))
 
@@ -154,8 +158,18 @@ data.fit.all %>%
 
 ##### PLATE MAPS
 data.fit.all %>%
-  filter(condition == 'HO', hours == 32, orf_name == 'HO') %>%
+  filter(condition == 'SA', hours == 32) %>%
   ggplot(aes(x = col, y = row)) +
   geom_tile(aes(fill = fitness), col = 'black') +
   scale_y_reverse() +
   facet_wrap(.~arm)
+
+#####
+s2o.tbl <- readxl::read_excel('/home/sbp29/MATLAB/TR_DEL_S2O.xlsx') %>% data.frame()
+
+write.csv(merge(s2o.tbl, match.ids, by.x = 'orf_name', by.y = 'full_orf_id', all.x = T),
+          file = 'output/translatome/deletion/del_mutants.csv')
+write.csv(merge(merge(s2o.tbl, match.ids, by.x = 'orf_name', by.y = 'full_orf_id', all.x = T), del.hits[,c(2,3,7)], by = 'orf_name'),
+          file = 'output/translatome/deletion/del_mutants_hits.csv')
+
+write.csv(oe.hits[,c(3,7)], file = 'output/translatome/oe_mutant_fitness_hits.csv')
