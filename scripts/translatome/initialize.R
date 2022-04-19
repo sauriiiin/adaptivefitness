@@ -37,6 +37,7 @@ library(corrplot)
 library(PoiClaClu)
 library(RColorBrewer)
 library(effsize)
+library(readxl)
 
 out_path <- "~/R/Projects/adaptivefitness/output/translatome/"
 fig_path <- "~/R/Projects/adaptivefitness/figs/translatome/"
